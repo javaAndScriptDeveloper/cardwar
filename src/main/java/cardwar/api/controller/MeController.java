@@ -1,0 +1,39 @@
+package cardwar.api.controller;
+
+import cardwar.account.service.AccountService;
+import cardwar.api.dto.MeView;
+import cardwar.monetization.service.EntitlementService;
+import cardwar.security.PlayerIdentity;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+/**
+ * The caller's own profile, assembled from the account and monetization modules. The identity comes from the
+ * verified token, never from a path variable, so there is no id here for a caller to swap for somebody else's.
+ */
+@RestController
+@RequestMapping("/api/v1/me")
+@Tag(name = "Profile", description = "The authenticated player's own account")
+public class MeController {
+
+    private final AccountService accounts;
+    private final EntitlementService entitlements;
+
+    public MeController(AccountService accounts, EntitlementService entitlements) {
+        this.accounts = accounts;
+        this.entitlements = entitlements;
+    }
+
+    @GetMapping
+    @Operation(summary = "Profile, progress and collection for the authenticated player")
+    public MeView me(@AuthenticationPrincipal PlayerIdentity caller) {
+        return new MeView(
+                accounts.summary(caller.playerId()),
+                accounts.progressOf(caller.playerId()),
+                entitlements.collection(caller.playerId()));
+    }
+}
