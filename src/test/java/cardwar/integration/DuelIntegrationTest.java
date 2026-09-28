@@ -201,6 +201,22 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
         assertThat(delivered).contains("\"duelId\":\"" + duelId + "\"");
     }
 
+    @Test
+    void anIdleStreamStillReceivesAKeepaliveComment() throws Exception {
+        DuelView start = view(api.createDuel(alice, bob.username()));
+
+        MvcResult stream = mvc.perform(get("/api/v1/duels/{id}/events", start.duelId())
+                        .headers(ApiDriver.bearer(alice))
+                        .accept(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(request().asyncStarted())
+                .andReturn();
+
+        // Nobody moves. The test profile shortens the heartbeat to a second so this stays quick.
+        await().atMost(Duration.ofSeconds(5))
+                .untilAsserted(() ->
+                        assertThat(stream.getResponse().getContentAsString()).contains(":keepalive"));
+    }
+
     // --- illegal moves (11.4) -------------------------------------------------------------------------------
 
     @Test
