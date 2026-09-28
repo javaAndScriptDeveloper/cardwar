@@ -154,8 +154,20 @@ public class EntitlementService {
         if (granted.currencySpent() > 0) {
             accounts.spendCurrency(playerId, granted.currencySpent());
         }
-        var entitlement =
-                new Entitlement(UUID.randomUUID(), playerId, targetType, targetId, granted.source(), Instant.now());
+        Instant now = Instant.now();
+        // The table allows one row per (player, target). If one exists here it is necessarily expired — owns()
+        // said no — so the grant refreshes it in place; inserting would only trip the unique constraint and
+        // lock the player out of a target they no longer own.
+        var entitlement = entitlements
+                .findByPlayerIdAndTargetTypeAndTargetId(playerId, targetType, targetId)
+                .map(expired -> {
+                    expired.setSource(granted.source());
+                    expired.setGrantedAt(now);
+                    expired.setExpiresAt(null);
+                    return expired;
+                })
+                .orElseGet(() ->
+                        new Entitlement(UUID.randomUUID(), playerId, targetType, targetId, granted.source(), now));
         try {
             entitlements.saveAndFlush(entitlement);
         } catch (DataIntegrityViolationException raced) {
