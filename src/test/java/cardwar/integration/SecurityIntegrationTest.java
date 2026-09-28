@@ -58,9 +58,12 @@ class SecurityIntegrationTest extends AbstractIntegrationTest {
     @Test
     void tamperedTokenIs401() throws Exception {
         String token = alice.token();
-        // Flip the last character of the signature. If the token happened to end in 'A' the flip still changes it.
-        char last = token.charAt(token.length() - 1);
-        String tampered = token.substring(0, token.length() - 1) + (last == 'A' ? 'B' : 'A');
+        // Flip a character in the middle of the signature segment. Not the last one: a base64url decoder ignores
+        // its padding bits, so changing only those leaves the decoded signature intact and the token valid.
+        int signatureStart = token.lastIndexOf('.') + 1;
+        int target = signatureStart + (token.length() - signatureStart) / 2;
+        char original = token.charAt(target);
+        String tampered = token.substring(0, target) + (original == 'A' ? 'B' : 'A') + token.substring(target + 1);
 
         mvc.perform(get("/api/v1/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + tampered))
                 .andExpect(status().isUnauthorized());

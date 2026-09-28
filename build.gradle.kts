@@ -1,7 +1,7 @@
 plugins {
     id("java")
     id("jacoco")
-    id("org.springframework.boot") version "4.1.0"
+    id("org.springframework.boot") version "4.1.1"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.diffplug.spotless") version "7.2.1"
     // Dependency vulnerability scanning. Deliberately NOT wired into `check`: it pulls an external
@@ -22,6 +22,14 @@ java {
 repositories {
     mavenCentral()
 }
+
+// Managed-version overrides above what Spring Boot 4.1.1 ships, taken from the dependency-check report's fix
+// versions (Tomcat needs 11.0.25+, Netty 4.2.18+). Remove each once a Boot patch manages at least that version.
+extra["tomcat.version"] = "11.0.26"
+extra["netty.version"] = "4.2.18.Final"
+// Jackson 2 is only here transitively (springdoc -> swagger-core, which asks for 2.22.x); 2.21.5+ fixes
+// CVE-2026-54515, and 2.22.3 avoids downgrading what springdoc requests.
+extra["jackson-2-bom.version"] = "2.22.3"
 
 dependencies {
     // Lombok
@@ -60,7 +68,7 @@ dependencies {
     implementation("com.bucket4j:bucket4j-core:8.10.1")
 
     // API Documentation (OpenAPI 3 / Swagger UI)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 
     // Database Migration. Boot 4 split the Liquibase auto-configuration into its own module: liquibase-core
     // alone puts the library on the classpath but leaves nothing to run it at startup.
