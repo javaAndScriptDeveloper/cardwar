@@ -27,6 +27,7 @@ import tools.jackson.databind.ObjectMapper;
  */
 class EntitlementIntegrationTest extends AbstractIntegrationTest {
 
+    private static final UUID CLASSIC_THEME_ID = UUID.fromString("dcacddbc-9f49-539c-b13b-ad1407dc03d6");
     private static final UUID VANGUARD_THEME_ID = UUID.fromString("a6f01eaf-0a83-5f44-a5e9-7733d81b6236");
     private static final UUID VANGUARD_ACE_CLUBS_ID = UUID.fromString("5792ee0e-6ff4-5f94-bfed-195d9179d6e2");
     private static final String CURRENCY_SKIN = "VANGUARD_ACE_SPADES";
@@ -157,6 +158,31 @@ class EntitlementIntegrationTest extends AbstractIntegrationTest {
         @SuppressWarnings("unchecked")
         var owned = (List<Map<String, Object>>) body.get("owned");
         assertThat(owned).extracting(row -> row.get("targetId")).doesNotContain(VANGUARD_ACE_CLUBS_ID.toString());
+    }
+
+    @Test
+    void expiredEntitlementCanBeRegainedByUnlockingAgain() throws Exception {
+        var expired = new Entitlement(
+                UUID.randomUUID(),
+                player.id(),
+                TargetType.THEME,
+                CLASSIC_THEME_ID,
+                EntitlementSource.PROGRESS,
+                Instant.now().minusSeconds(7200));
+        expired.setExpiresAt(Instant.now().minusSeconds(3600));
+        entitlements.saveAndFlush(expired);
+
+        api.unlockTheme(player, "CLASSIC")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.source").value("FREE"))
+                .andExpect(jsonPath("$.expiresAt").doesNotExist());
+
+        assertThat(entitlements.findAllByPlayerId(player.id())).hasSize(1);
+        assertThat(entitlementService.owns(player.id(), TargetType.THEME, CLASSIC_THEME_ID))
+                .isTrue();
+        api.collection(player)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.owned[?(@.code == 'CLASSIC')].source").value("FREE"));
     }
 
     @Test
