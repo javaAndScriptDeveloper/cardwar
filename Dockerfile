@@ -18,6 +18,12 @@ RUN --mount=type=cache,target=/root/.gradle ./gradlew --no-daemon clean bootJar 
 FROM eclipse-temurin:25-jre AS runtime
 WORKDIR /application
 
+# The JRE image ships neither curl nor wget; the compose healthcheck needs one. Installed as root, before the
+# switch to the unprivileged user, and with the apt lists removed so the layer stays small.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system spring && useradd --system --gid spring spring
 USER spring:spring
 

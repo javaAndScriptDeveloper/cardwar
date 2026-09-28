@@ -1,0 +1,12 @@
+# Local development only. Docker Compose merges this file automatically when no `-f` is given, which is exactly
+# what `./gradlew bootRun` (spring-boot-docker-compose) does — so a developer's app on the host can reach the
+# datastores on the loopback interface. `make up` passes `-f docker-compose.yml` explicitly and never loads this,
+# so on a server nothing but nginx is published.
+services:
+  db:
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
+
+  redis:
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
