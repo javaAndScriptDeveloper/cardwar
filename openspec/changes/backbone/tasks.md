@@ -128,7 +128,7 @@
 ## 13. Verification
 
 - [x] 13.1 Run `./gradlew spotlessApply && ./gradlew build` — unit and integration tests green, ArchUnit rules pass, coverage gate passes
-- [ ] 13.2 Run `./gradlew dependencyCheckAnalyze` and confirm it produces a report without gating the build
+- [x] 13.2 Run `./gradlew dependencyCheckAnalyze` and confirm it produces a report without gating the build
 - [x] 13.3 Run `cp .env.example .env && make certs && make up` and confirm all four services reach healthy and the API answers through nginx over HTTPS
 - [x] 13.4 Run `scripts/smoke.sh` against the live stack: two players, live SSE delivery, duel played to completion, result row present in Postgres and the duel key gone from Redis
 - [x] 13.5 Confirm an in-progress duel's Redis key reports a positive TTL, and manually verify the negative paths — 401 unauthenticated, 403 non-participant, 400 illegal move, 429 login flood

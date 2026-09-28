@@ -164,6 +164,10 @@ dependencyCheck {
     failBuildOnCVSS = 11.0f
     // Optional but strongly recommended: an NVD API key lifts the feed's unauthenticated rate limit.
     nvd.apiKey = System.getenv("NVD_API_KEY") ?: ""
+    // Sonatype OSS Index rejects unauthenticated component-report requests and the plugin treats an analyzer
+    // error as a failed analysis, which turned a report-only task into a hard failure. NVD is the source that
+    // matters here; the OSS Index cross-check can be re-enabled once credentials are configured.
+    analyzers.ossIndex.enabled = false
 }
 
 spotless {
