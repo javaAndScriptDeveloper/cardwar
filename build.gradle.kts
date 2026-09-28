@@ -4,9 +4,12 @@ plugins {
     id("org.springframework.boot") version "4.1.0"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.diffplug.spotless") version "7.2.1"
+    // Dependency vulnerability scanning. Deliberately NOT wired into `check`: it pulls an external
+    // advisory feed, and a feed outage must never be able to break an ordinary local build.
+    id("org.owasp.dependencycheck") version "12.1.3"
 }
 
-group = "com.example.company"
+group = "cardwar"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -19,8 +22,6 @@ java {
 repositories {
     mavenCentral()
 }
-
-extra["springCloudVersion"] = "2025.1.2"
 
 dependencies {
     // Lombok
@@ -44,16 +45,27 @@ dependencies {
     // AOP: Boot 4 dropped spring-boot-starter-aop; spring-aspects pulls AspectJ + enables @Aspect support
     implementation("org.springframework:spring-aspects")
 
-    // Spring Cloud
-    implementation("org.springframework.cloud:spring-cloud-starter-openfeign")
-    // Resilience4j circuit breaker + retry, integrated with Feign via feign.circuitbreaker.enabled
-    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
+    // Authentication, authorization and the filter chain
+    implementation("org.springframework.boot:spring-boot-starter-security")
+
+    // Active duel state and the per-duel event channel
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // JWT issuing and verification (impl + jackson are runtime-only by JJWT's own convention)
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
+
+    // In-memory token buckets backing the API rate limiter
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
 
     // API Documentation (OpenAPI 3 / Swagger UI)
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 
-    // Database Migration
+    // Database Migration. Boot 4 split the Liquibase auto-configuration into its own module: liquibase-core
+    // alone puts the library on the classpath but leaves nothing to run it at startup.
     implementation("org.liquibase:liquibase-core")
+    implementation("org.springframework.boot:spring-boot-liquibase")
 
     // PostgreSQL Driver
     runtimeOnly("org.postgresql:postgresql")
@@ -73,6 +85,9 @@ dependencies {
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:postgresql")
 
+    // Integration testing against a real Redis via Testcontainers
+    testImplementation("com.redis:testcontainers-redis:2.2.4")
+
     // Random, fully-populated test objects — the project convention over hand-built fixtures
     testImplementation("org.instancio:instancio-junit:5.4.1")
     // Architecture rules enforced as tests (layering, naming, no field injection)
@@ -81,7 +96,6 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.cloud:spring-cloud-dependencies:${property("springCloudVersion")}")
         // Boot 4.1 no longer manages Testcontainers versions; pin them via the Testcontainers BOM.
         mavenBom("org.testcontainers:testcontainers-bom:1.21.4")
     }
@@ -105,7 +119,7 @@ tasks.withType<Test> {
 }
 
 // Classes with no meaningful branches to cover — excluded from the coverage report and gate.
-val coverageExclusions = listOf("com/example/company/Application.class", "com/example/company/config/**")
+val coverageExclusions = listOf("cardwar/Application.class", "cardwar/config/**")
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
@@ -129,8 +143,11 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             limit {
-                // Bootstrap threshold: this is a near-empty template. Raise it as domain code lands.
-                minimum = "0.0".toBigDecimal()
+                // The suite covers ~94% of instructions; the floor sits a little below so that an ordinary change
+                // does not trip it while a change that ships untested code does.
+                counter = "INSTRUCTION"
+                value = "COVEREDRATIO"
+                minimum = "0.85".toBigDecimal()
             }
         }
     }
@@ -140,10 +157,21 @@ tasks.check {
     dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
+// Report-only by design: `failBuildOnCVSS` above every possible score means the scan reports and never
+// fails. Run it with `./gradlew dependencyCheckAnalyze`; CI runs it as its own job.
+dependencyCheck {
+    formats = listOf("HTML", "JSON")
+    failBuildOnCVSS = 11.0f
+    // Optional but strongly recommended: an NVD API key lifts the feed's unauthenticated rate limit.
+    nvd.apiKey = System.getenv("NVD_API_KEY") ?: ""
+}
+
 spotless {
     java {
         target("src/*/java/**/*.java")
-        palantirJavaFormat()
+        // Pinned: palantir-java-format below 2.71.0 crashes on JDK 25 (javac's
+        // DeferredDiagnosticHandler.getDiagnostics changed its return type)
+        palantirJavaFormat("2.74.0")
         importOrder()
         removeUnusedImports()
         trimTrailingWhitespace()

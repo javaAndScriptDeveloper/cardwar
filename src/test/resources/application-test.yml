@@ -11,6 +11,17 @@ spring:
     compose:
       enabled: false
 
+cardwar:
+  security:
+    jwt:
+      # A fixed, obviously-fake test secret. Production has no default at all and refuses to start without one.
+      secret: dGVzdC1vbmx5LXNlY3JldC1ub3QtZm9yLXByb2R1Y3Rpb24tdXNl
+      ttl: 15m
+    rate-limit:
+      # Effectively off for the suite; the throttling test asks for its own tight limits and its own context.
+      capacity: 100000
+      auth-capacity: 100000
+
 logging:
   level:
     org.testcontainers: INFO

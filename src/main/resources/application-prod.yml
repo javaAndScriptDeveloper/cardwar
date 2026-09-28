@@ -22,4 +22,4 @@ management:
 logging:
   level:
     root: INFO
-    com.example.company: INFO
+    cardwar: INFO
