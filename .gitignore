@@ -32,3 +32,6 @@ nginx/certs/*
 
 ### JVM heap dumps ###
 *.hprof
+
+### Agent worktrees (Claude Code) ###
+.claude/worktrees/
