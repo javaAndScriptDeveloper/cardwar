@@ -1,10 +1,14 @@
 package cardwar.session.event;
 
 import cardwar.engine.DuelId;
+import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.connection.MessageListener;
@@ -18,17 +22,38 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * <p>No redaction happens here, and that is deliberate rather than an omission: engine events carry only public
  * facts, so a single serialized event is safe for both participants. Anything private would have to be added
  * to {@code DuelEventView} first, and that type is where the rule is documented and tested.
+ *
+ * <p>A stream also gets a periodic comment while nothing happens. Proxies, browsers and mobile networks drop an
+ * idle connection silently, and the player would then miss the opponent's next move; a comment is invisible to
+ * SSE clients but keeps every hop convinced the connection is alive.
  */
 @Slf4j
 @Component
 public class DuelStreams implements MessageListener {
 
-    private static final long TIMEOUT_MILLIS = 30 * 60 * 1000L;
-
     private final Map<UUID, Map<UUID, SseEmitter>> byDuel = new ConcurrentHashMap<>();
+    private final DuelStreamProperties properties;
+    private final ScheduledExecutorService heartbeat;
+
+    public DuelStreams(DuelStreamProperties properties) {
+        this.properties = properties;
+        // A daemon thread, so a stuck emitter can never keep the JVM from exiting.
+        this.heartbeat = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "duel-stream-heartbeat");
+            thread.setDaemon(true);
+            return thread;
+        });
+        long period = properties.heartbeat().toMillis();
+        heartbeat.scheduleAtFixedRate(this::sendKeepalives, period, period, TimeUnit.MILLISECONDS);
+    }
+
+    @PreDestroy
+    void shutdown() {
+        heartbeat.shutdownNow();
+    }
 
     public SseEmitter open(DuelId duelId, UUID subscriber) {
-        var emitter = new SseEmitter(TIMEOUT_MILLIS);
+        var emitter = new SseEmitter(properties.timeout().toMillis());
         UUID duel = duelId.value();
         UUID registration = UUID.randomUUID();
         byDuel.computeIfAbsent(duel, ignored -> new ConcurrentHashMap<>()).put(registration, emitter);
@@ -58,6 +83,16 @@ public class DuelStreams implements MessageListener {
                 remove(duel, registration);
             }
         });
+    }
+
+    private void sendKeepalives() {
+        byDuel.forEach((duel, emitters) -> emitters.forEach((registration, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event().comment("keepalive"));
+            } catch (IOException | IllegalStateException disconnected) {
+                remove(duel, registration);
+            }
+        }));
     }
 
     private void remove(UUID duel, UUID registration) {
