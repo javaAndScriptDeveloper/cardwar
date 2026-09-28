@@ -91,6 +91,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/auth/register`       | Create an account; returns id, username, token                       |
 | `POST /api/v1/auth/login`          | Exchange credentials for a token (one generic `401` on failure)       |
 | `GET  /api/v1/me`                  | Own profile, progress (duels played/won, currency) and collection     |
+| `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent, WON/LOST/DRAW, reason)    |
 | `GET  /api/v1/catalog/themes`      | Active deck themes                                                    |
 | `GET  /api/v1/catalog/themes/{code}` | One theme's rank+suit → skin mapping, with rarity and multiplier   |
 | `GET  /api/v1/collection`          | What the caller owns, and the unlock rule for everything they do not  |
@@ -99,7 +100,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/duels`               | Challenge another player by username                                  |
 | `GET  /api/v1/duels/{id}`          | The caller's redacted view                                            |
 | `POST /api/v1/duels/{id}/moves`    | Submit a move; the engine re-validates it against the stored state    |
-| `GET  /api/v1/duels/{id}/events`   | Server-sent events for the duel                                       |
+| `GET  /api/v1/duels/{id}/events`   | Server-sent events for the duel (keepalive comment every 20s)         |
 
 Everything except registration, login, health and the API docs requires a bearer token. Participation in a duel
 is checked in the service layer, so a non-participant gets `403` on every duel endpoint regardless of transport.
