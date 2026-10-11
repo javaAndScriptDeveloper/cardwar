@@ -1,6 +1,8 @@
 package cardwar.session.store;
 
 import cardwar.engine.DuelId;
+import cardwar.engine.PlayerId;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -26,4 +28,10 @@ public interface GameStateStore {
     void save(StoredDuel duel, long expectedVersion);
 
     void delete(DuelId duelId);
+
+    /**
+     * The duels {@code player} takes part in that are still in the store. A reopened client asks this to find its
+     * way back to the table; a duel that has expired is never returned, even if an index still mentions it.
+     */
+    List<StoredDuel> findActive(PlayerId player);
 }

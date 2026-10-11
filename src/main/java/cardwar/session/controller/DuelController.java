@@ -4,6 +4,7 @@ import cardwar.engine.DuelId;
 import cardwar.engine.PlayerId;
 import cardwar.security.PlayerIdentity;
 import cardwar.session.dto.CreateDuelRequest;
+import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
 import cardwar.session.dto.MoveRequest;
 import cardwar.session.event.DuelStreams;
@@ -11,6 +12,7 @@ import cardwar.session.service.DuelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -47,6 +49,12 @@ public class DuelController {
     public DuelView create(
             @AuthenticationPrincipal PlayerIdentity caller, @Valid @RequestBody CreateDuelRequest request) {
         return duels.create(actor(caller), request.opponentUsername());
+    }
+
+    @GetMapping("/active")
+    @Operation(summary = "The caller's in-progress duels, so a reopened client can return to the table")
+    public List<DuelSummary> active(@AuthenticationPrincipal PlayerIdentity caller) {
+        return duels.active(actor(caller));
     }
 
     @GetMapping("/{id}")

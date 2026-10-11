@@ -154,9 +154,55 @@ class RedisGameStateStoreIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    @Test
+    void bothPlayersIndexAnActiveDuelUntilItIsDeleted() {
+        var carol = new PlayerId(UUID.randomUUID());
+        var dave = new PlayerId(UUID.randomUUID());
+        StoredDuel duel = freshDuel(carol, dave);
+        store.save(duel, GameStateStore.ABSENT);
+        store.save(afterOneMove(duel), duel.state().version());
+
+        assertThat(store.findActive(carol))
+                .extracting(found -> found.state().duelId())
+                .containsExactly(duelId(duel));
+        assertThat(store.findActive(dave))
+                .extracting(found -> found.state().version())
+                .containsExactly(1L);
+        assertThat(redis.getExpire("cardwar:player:" + carol.value() + ":duels", TimeUnit.SECONDS))
+                .isGreaterThan(ttl.toSeconds() - 60);
+
+        store.delete(duelId(duel));
+
+        assertThat(store.findActive(carol)).isEmpty();
+        assertThat(store.findActive(dave)).isEmpty();
+    }
+
+    @Test
+    void anExpiredDuelIsDroppedFromTheIndexOnRead() {
+        var erin = new PlayerId(UUID.randomUUID());
+        StoredDuel expired = freshDuel(erin, new PlayerId(UUID.randomUUID()));
+        StoredDuel live = freshDuel(erin, new PlayerId(UUID.randomUUID()));
+        store.save(expired, GameStateStore.ABSENT);
+        store.save(live, GameStateStore.ABSENT);
+        redis.delete(key(expired));
+
+        assertThat(store.findActive(erin))
+                .extracting(found -> found.state().duelId())
+                .containsExactly(duelId(live));
+        assertThat(redis.opsForSet().members("cardwar:player:" + erin.value() + ":duels"))
+                .containsExactly(duelId(live).value().toString());
+    }
+
+    private static DuelId duelId(StoredDuel duel) {
+        return duel.state().duelId();
+    }
+
     private StoredDuel freshDuel() {
-        DuelState state =
-                engine.start(new DuelId(UUID.randomUUID()), ALICE, BOB).state();
+        return freshDuel(ALICE, BOB);
+    }
+
+    private StoredDuel freshDuel(PlayerId one, PlayerId two) {
+        DuelState state = engine.start(new DuelId(UUID.randomUUID()), one, two).state();
         return new StoredDuel(state, Instant.now().minusSeconds(1));
     }
 

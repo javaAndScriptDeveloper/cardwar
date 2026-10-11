@@ -45,6 +45,17 @@ The system SHALL let an authenticated player create an invite (`POST /api/v1/due
 - **WHEN** a player who neither created nor accepted an invite reads its status
 - **THEN** the API responds with 403
 
+### Requirement: Listing the caller's active duels
+The system SHALL expose `GET /api/v1/duels/active`, returning the caller's in-progress duels as summaries (duel id, opponent id and username, attacker, phase, version) without any card. The state store SHALL keep a per-player index with the same TTL as the duels, and SHALL never return a duel whose state has expired or been deleted.
+
+#### Scenario: Both participants list the duel
+- **WHEN** a duel between A and B is in progress
+- **THEN** both A's and B's active lists contain it and a third player's does not
+
+#### Scenario: Finished or expired duel
+- **WHEN** a duel finishes, or its state expires
+- **THEN** neither participant's active list contains it
+
 ### Requirement: In-progress state lives behind a store abstraction
 Active duel state SHALL be read and written exclusively through a `GameStateStore` interface. Session and engine logic MUST NOT reference Redis types directly, so the backing store can be replaced by configuration rather than by rewriting game logic.
 

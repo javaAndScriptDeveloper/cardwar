@@ -8,11 +8,13 @@ import cardwar.engine.PlayerId;
 import cardwar.exception.BadRequestException;
 import cardwar.exception.ForbiddenException;
 import cardwar.exception.NotFoundException;
+import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
 import cardwar.session.event.DuelEventPublisher;
 import cardwar.session.store.GameStateStore;
 import cardwar.session.store.StoredDuel;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -89,6 +91,24 @@ public class DuelService {
             store.delete(next.state().duelId());
         }
         return DuelView.of(next.state(), caller);
+    }
+
+    /** Only the caller's own duels: the index is per player, so there is nothing else to filter out. */
+    public List<DuelSummary> active(PlayerId caller) {
+        return store.findActive(caller).stream()
+                .map(StoredDuel::state)
+                .filter(state -> state.hasParticipant(caller))
+                .map(state -> {
+                    PlayerId opponent = state.opponentOf(caller);
+                    return new DuelSummary(
+                            state.duelId().value(),
+                            opponent.value(),
+                            accounts.summary(opponent.value()).username(),
+                            state.attackerId().value(),
+                            state.phase(),
+                            state.version());
+                })
+                .toList();
     }
 
     public DuelView viewFor(UUID duelId, PlayerId caller) {
