@@ -58,3 +58,57 @@ h1 {
     color: var(--hint);
     font-size: 0.85rem;
 }
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+    border-radius: 12px;
+    background: var(--surface);
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: var(--hint);
+}
+
+input {
+    font: inherit;
+    font-size: 1rem;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--hint) 40%, transparent);
+    background: var(--bg);
+    color: var(--text);
+}
+
+button {
+    font: inherit;
+    font-weight: 600;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: none;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+}
+
+button.primary {
+    background: var(--accent);
+    color: var(--accent-text);
+}
+
+button:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.error {
+    margin: 0;
+    color: var(--danger);
+    font-size: 0.9rem;
+}
