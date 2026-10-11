@@ -43,6 +43,21 @@ The system SHALL authenticate a player by username and password and, on success,
 - **WHEN** a client posts a username that does not exist
 - **THEN** the API responds with 401 with the same response shape as a wrong password
 
+### Requirement: Password-less Telegram accounts
+The system SHALL provision an account from a verified Telegram user id alone, with no password. The account SHALL be found again by that Telegram id on every later sign-in, and SHALL get a generated unique username (`tg_<telegramId>`, with a short random suffix if that name is already taken). Password login SHALL reject an account that has no password hash with the same 401 as a wrong password.
+
+#### Scenario: First Telegram sign-in creates the account
+- **WHEN** a verified Telegram user signs in for the first time
+- **THEN** a player record is created with the Telegram user id, no password hash and zeroed progress
+
+#### Scenario: Repeat Telegram sign-in is idempotent
+- **WHEN** the same Telegram user signs in again
+- **THEN** the existing player is returned and no second record is created
+
+#### Scenario: Password login on a Telegram-only account
+- **WHEN** a client posts any password for the username of a Telegram-only account
+- **THEN** the API responds with 401 with the same response shape as an unknown username
+
 ### Requirement: Player profile and progress
 The system SHALL track per-player progress covering duels played, duels won and in-game currency balance, and SHALL expose the authenticated player's own profile, progress and skin collection. A player MUST NOT be able to read another player's profile through this endpoint.
 

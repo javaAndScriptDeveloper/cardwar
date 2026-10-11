@@ -11,7 +11,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** A player account. The password is present only as a BCrypt hash — there is no plaintext field to leak. */
+/**
+ * A player account. The password is present only as a BCrypt hash — there is no plaintext field to leak. An account
+ * created through Telegram sign-in has no hash at all and is identified by {@code telegramUserId} instead.
+ */
 @Entity
 @Table(name = "player")
 @Getter
@@ -25,8 +28,11 @@ public class Player {
     @Column(nullable = false, unique = true)
     private String username;
 
-    @Column(name = "password_hash", nullable = false)
+    @Column(name = "password_hash")
     private String passwordHash;
+
+    @Column(name = "telegram_user_id", unique = true)
+    private Long telegramUserId;
 
     @Column(name = "display_name", nullable = false)
     private String displayName;
@@ -40,5 +46,13 @@ public class Player {
         this.passwordHash = passwordHash;
         this.displayName = displayName;
         this.createdAt = createdAt;
+    }
+
+    /** A password-less account owned by a Telegram user. */
+    public static Player telegram(
+            UUID id, String username, long telegramUserId, String displayName, Instant createdAt) {
+        var player = new Player(id, username, null, displayName, createdAt);
+        player.telegramUserId = telegramUserId;
+        return player;
     }
 }

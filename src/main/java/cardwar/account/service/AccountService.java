@@ -59,15 +59,67 @@ public class AccountService {
     }
 
     /**
+     * Finds or creates the account for a Telegram user whose identity the caller has already verified. Idempotent:
+     * a returning user gets the same account, and a changed Telegram name does not rename it.
+     *
+     * <p>Two first sign-ins for the same Telegram user racing each other meet at the unique constraint; the loser
+     * gets a 409 and its client simply signs in again, which then finds the account.
+     */
+    @Transactional
+    public PlayerIdentity registerTelegram(long telegramUserId, String displayName) {
+        Optional<Player> existing = players.findByTelegramUserId(telegramUserId);
+        if (existing.isPresent()) {
+            return identityOf(existing.get());
+        }
+        String username = telegramUsername(telegramUserId);
+        var now = Instant.now();
+        var player =
+                Player.telegram(UUID.randomUUID(), username, telegramUserId, displayNameOr(displayName, username), now);
+        try {
+            players.saveAndFlush(player);
+        } catch (DataIntegrityViolationException raced) {
+            throw new ConflictException("This Telegram account is being signed in already; try again");
+        }
+        progress.save(new PlayerProgress(player.getId(), now));
+        log.info("Registered Telegram player {}", player.getId());
+        return identityOf(player);
+    }
+
+    /**
+     * {@code tg_<id>} reads well and is unique among Telegram accounts. A password account may have registered that
+     * exact name first, since nothing reserves the prefix, so a short random suffix settles the collision.
+     */
+    private String telegramUsername(long telegramUserId) {
+        String base = "tg_" + telegramUserId;
+        if (!players.existsByUsername(base)) {
+            return base;
+        }
+        return base + "_" + UUID.randomUUID().toString().substring(0, 4);
+    }
+
+    private static String displayNameOr(String displayName, String fallback) {
+        if (displayName == null || displayName.isBlank()) {
+            return fallback;
+        }
+        String trimmed = displayName.strip();
+        return trimmed.length() > MAX_DISPLAY_NAME ? trimmed.substring(0, MAX_DISPLAY_NAME) : trimmed;
+    }
+
+    private static PlayerIdentity identityOf(Player player) {
+        return new PlayerIdentity(player.getId(), player.getUsername());
+    }
+
+    /**
      * Verifies credentials without revealing which half was wrong. The hash comparison runs even for an unknown
      * username so that response timing does not become a username oracle.
      */
     @Transactional(readOnly = true)
     public Optional<PlayerIdentity> authenticate(String username, String rawPassword) {
         Optional<Player> found = players.findByUsername(username);
-        String hash = found.map(Player::getPasswordHash).orElse(DUMMY_HASH);
-        boolean matches = passwordEncoder.matches(rawPassword, hash);
-        if (found.isEmpty() || !matches) {
+        // A Telegram-only account has no hash; it is compared like an unknown username so both fail identically.
+        String hash = found.map(Player::getPasswordHash).orElse(null);
+        boolean matches = passwordEncoder.matches(rawPassword, hash == null ? DUMMY_HASH : hash);
+        if (hash == null || !matches) {
             log.debug("Failed authentication attempt");
             return Optional.empty();
         }
@@ -139,5 +191,8 @@ public class AccountService {
      * A valid BCrypt hash of a value nobody knows, compared against when the username does not exist so that the
      * work done is the same either way.
      */
+    /** Mirrors the {@code display_name} column width. */
+    private static final int MAX_DISPLAY_NAME = 64;
+
     private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 }
