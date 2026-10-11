@@ -12,17 +12,14 @@ import cardwar.engine.Deck;
 import cardwar.engine.DuelPhase;
 import cardwar.engine.DurakEngine;
 import cardwar.engine.DurakRules;
-import cardwar.engine.Rank;
 import cardwar.session.domain.DuelResult;
 import cardwar.session.dto.DuelView;
 import cardwar.session.repository.DuelResultRepository;
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +35,6 @@ import tools.jackson.databind.ObjectMapper;
  * its own redacted view, exactly as two clients would.
  */
 class DuelIntegrationTest extends AbstractIntegrationTest {
-
-    private static final int MOVE_LIMIT = 1_000;
 
     @Autowired
     MockMvc mvc;
@@ -99,7 +94,7 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
         String stateKey = "cardwar:duel:" + duelId;
         assertThat(redis.hasKey(stateKey)).isTrue();
 
-        DuelView finished = playToCompletion(duelId);
+        DuelView finished = api.playToCompletion(alice, bob, duelId);
 
         assertThat(finished.phase()).isEqualTo(DuelPhase.FINISHED);
         assertThat(finished.outcome()).isNotNull();
@@ -190,7 +185,7 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
                 .andReturn();
 
         Card lead = view(api.viewDuel(attacker, duelId)).hand().getFirst();
-        api.move(attacker, duelId, attack(lead)).andExpect(status().isOk());
+        api.move(attacker, duelId, Moves.attack(lead)).andExpect(status().isOk());
 
         await().atMost(Duration.ofSeconds(10))
                 .untilAsserted(() -> assertThat(stream.getResponse().getContentAsString())
@@ -225,7 +220,7 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
         ApiDriver.Player defender = start.attacker().equals(alice.id()) ? bob : alice;
         Card anyCard = view(api.viewDuel(defender, start.duelId())).hand().getFirst();
 
-        api.move(defender, start.duelId(), attack(anyCard))
+        api.move(defender, start.duelId(), Moves.attack(anyCard))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.reason").value("NOT_YOUR_TURN"));
@@ -243,7 +238,7 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
                 .findFirst()
                 .orElseThrow();
 
-        api.move(attacker, start.duelId(), attack(notHeld))
+        api.move(attacker, start.duelId(), Moves.attack(notHeld))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.reason").value("CARD_NOT_IN_HAND"));
 
@@ -276,9 +271,9 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
                 .as("a losing defence should exist for some opening card")
                 .isNotNull();
 
-        DuelView afterAttack =
-                view(api.move(attacker, start.duelId(), attack(attackCard)).andExpect(status().isOk()));
-        api.move(defender, start.duelId(), defend(attackCard, weakDefence))
+        DuelView afterAttack = view(
+                api.move(attacker, start.duelId(), Moves.attack(attackCard)).andExpect(status().isOk()));
+        api.move(defender, start.duelId(), Moves.defend(attackCard, weakDefence))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.reason").value("CANNOT_BEAT"));
 
@@ -298,82 +293,6 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         assertThat(view(api.viewDuel(alice, start.duelId())).version()).isEqualTo(start.version());
-    }
-
-    // --- a simple two-client strategy -----------------------------------------------------------------------
-
-    /**
-     * Attack whenever legal, otherwise end the attack. Defend the first unresolved card with the cheapest card
-     * that beats it, otherwise take. Each decision uses only the acting player's own redacted view.
-     */
-    private DuelView playToCompletion(UUID duelId) throws Exception {
-        DuelView view = view(api.viewDuel(alice, duelId));
-        int moves = 0;
-        while (view.phase() != DuelPhase.FINISHED) {
-            assertThat(moves++).as("duel %s did not terminate", duelId).isLessThan(MOVE_LIMIT);
-            ApiDriver.Player attacker = view.attacker().equals(alice.id()) ? alice : bob;
-            ApiDriver.Player defender = attacker == alice ? bob : alice;
-            ApiDriver.Player actor = view.phase() == DuelPhase.DEFEND ? defender : attacker;
-            DuelView own = view(api.viewDuel(actor, duelId));
-            view = view(api.move(actor, duelId, nextMove(own)).andExpect(status().isOk()));
-        }
-        return view;
-    }
-
-    private static Map<String, Object> nextMove(DuelView own) {
-        if (own.phase() == DuelPhase.DEFEND) {
-            Card target = own.table().stream()
-                    .filter(pair -> pair.defence() == null)
-                    .findFirst()
-                    .orElseThrow()
-                    .attack();
-            return own.hand().stream()
-                    .filter(card -> DurakRules.beats(target, card, own.trumpSuit()))
-                    .min((a, b) -> a.rank().compareTo(b.rank()))
-                    .map(card -> defend(target, card))
-                    .orElseGet(() -> Map.of("type", "TAKE"));
-        }
-        if (own.table().isEmpty()) {
-            return attack(own.hand().stream()
-                    .min((a, b) -> a.rank().compareTo(b.rank()))
-                    .orElseThrow());
-        }
-        Set<Rank> ranksOnTable = own.table().stream()
-                .flatMap(pair -> pair.defence() == null
-                        ? java.util.stream.Stream.of(pair.attack().rank())
-                        : java.util.stream.Stream.of(
-                                pair.attack().rank(), pair.defence().rank()))
-                .collect(Collectors.toSet());
-        long undefended =
-                own.table().stream().filter(pair -> pair.defence() == null).count();
-        boolean roomOnTable = own.table().size() < DurakEngine.MAX_ATTACK_CARDS && undefended < own.opponentHandCount();
-        if (roomOnTable) {
-            Optional<Card> throwIn = own.hand().stream()
-                    .filter(card -> ranksOnTable.contains(card.rank()))
-                    .findFirst();
-            if (throwIn.isPresent()) {
-                return attack(throwIn.get());
-            }
-        }
-        return Map.of("type", "END_ATTACK");
-    }
-
-    // --- payload helpers ------------------------------------------------------------------------------------
-
-    private static Map<String, Object> attack(Card card) {
-        return Map.of("type", "ATTACK", "card", cardRef(card));
-    }
-
-    private static Map<String, Object> defend(Card attackCard, Card defenceCard) {
-        Map<String, Object> payload = new HashMap<>();
-        payload.put("type", "DEFEND");
-        payload.put("attackCard", cardRef(attackCard));
-        payload.put("card", cardRef(defenceCard));
-        return payload;
-    }
-
-    private static Map<String, Object> cardRef(Card card) {
-        return Map.of("rank", card.rank().name(), "suit", card.suit().name());
     }
 
     private static String cardJson(Card card) {

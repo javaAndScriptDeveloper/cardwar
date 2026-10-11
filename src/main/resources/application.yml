@@ -94,6 +94,8 @@ cardwar:
   duel:
     # Abandoned duels expire on their own; refreshed on every accepted move.
     state-ttl: ${DUEL_STATE_TTL:2h}
+    # How long a shared invite can be accepted. Fixed at creation, never refreshed.
+    invite-ttl: ${DUEL_INVITE_TTL:15m}
 
 springdoc:
   swagger-ui:

@@ -22,6 +22,29 @@ The system SHALL create a duel between exactly two distinct registered player ac
 - **WHEN** a player creates a duel naming an opponent that does not exist
 - **THEN** the API responds with 404 and no duel is created
 
+### Requirement: Duel invites
+The system SHALL let an authenticated player create an invite (`POST /api/v1/duels/invites`) that any other authenticated player can accept once (`POST /api/v1/duels/invites/{id}/accept`), starting a duel between the two and returning the acceptor's view. Invites SHALL live behind a store abstraction in Redis with a fixed TTL (default 15 minutes) and SHALL be accepted atomically. The creator SHALL learn the duel id by polling `GET /api/v1/duels/invites/{id}`, which only the creator and the acceptor may read.
+
+#### Scenario: Invite accepted
+- **WHEN** player B accepts player A's pending invite
+- **THEN** a duel between A and B starts, B receives their view, and A's next status read shows `ACCEPTED` with the same duel id
+
+#### Scenario: Own invite
+- **WHEN** a player accepts their own invite
+- **THEN** the API responds with 400 and the invite stays pending
+
+#### Scenario: Second acceptance
+- **WHEN** a player accepts an invite that has already been accepted
+- **THEN** the API responds with 409 and no second duel starts
+
+#### Scenario: Expired or unknown invite
+- **WHEN** a player accepts or reads an invite that does not exist or has expired
+- **THEN** the API responds with 404
+
+#### Scenario: Third party reads an invite
+- **WHEN** a player who neither created nor accepted an invite reads its status
+- **THEN** the API responds with 403
+
 ### Requirement: In-progress state lives behind a store abstraction
 Active duel state SHALL be read and written exclusively through a `GameStateStore` interface. Session and engine logic MUST NOT reference Redis types directly, so the backing store can be replaced by configuration rather than by rewriting game logic.
 

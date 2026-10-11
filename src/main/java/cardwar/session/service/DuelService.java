@@ -50,11 +50,18 @@ public class DuelService {
     /** Every duel is between two real accounts; there is deliberately no way to ask for a bot here. */
     public DuelView create(PlayerId caller, String opponentUsername) {
         UUID opponentId = accounts.requireIdByUsername(opponentUsername);
-        if (opponentId.equals(caller.value())) {
+        return start(caller, new PlayerId(opponentId), new DuelId(UUID.randomUUID()));
+    }
+
+    /**
+     * Starts a duel between two known players under a caller-chosen id. The invite flow picks the id before the duel
+     * exists so it can record it atomically with the acceptance.
+     */
+    public DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId) {
+        if (opponent.equals(caller)) {
             throw new BadRequestException("A duel needs two different players");
         }
-        var duelId = new DuelId(UUID.randomUUID());
-        var result = engine.start(duelId, caller, new PlayerId(opponentId));
+        var result = engine.start(duelId, caller, opponent);
         var stored = new StoredDuel(result.state(), Instant.now());
 
         store.save(stored, GameStateStore.ABSENT);

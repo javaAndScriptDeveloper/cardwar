@@ -77,6 +77,7 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN must be set (see .env.example)}
       TELEGRAM_INIT_DATA_MAX_AGE: ${TELEGRAM_INIT_DATA_MAX_AGE:-1h}
       DUEL_STATE_TTL: ${DUEL_STATE_TTL:-2h}
+      DUEL_INVITE_TTL: ${DUEL_INVITE_TTL:-15m}
     healthcheck:
       # Readiness, not liveness: the container is healthy only once it can actually serve a request.
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health/readiness"]

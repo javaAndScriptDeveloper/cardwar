@@ -1,8 +1,12 @@
 package cardwar.integration;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import cardwar.engine.DuelPhase;
+import cardwar.session.dto.DuelView;
 import java.util.Map;
 import java.util.UUID;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +20,8 @@ import tools.jackson.databind.ObjectMapper;
  * chain and the controllers rather than reaching past them into the services.
  */
 final class ApiDriver {
+
+    private static final int MOVE_LIMIT = 1_000;
 
     /** Long enough to satisfy the registration constraint, and obviously not a real secret. */
     static final String PASSWORD = "correct-horse-battery";
@@ -66,6 +72,22 @@ final class ApiDriver {
                 .content(json(Map.of("opponentUsername", opponentUsername))));
     }
 
+    ResultActions createInvite(Player caller) throws Exception {
+        return mvc.perform(post("/api/v1/duels/invites").headers(bearer(caller)));
+    }
+
+    ResultActions acceptInvite(Player caller, String inviteId) throws Exception {
+        return mvc.perform(post("/api/v1/duels/invites/{id}/accept", inviteId).headers(bearer(caller)));
+    }
+
+    ResultActions inviteStatus(Player caller, String inviteId) throws Exception {
+        return mvc.perform(get("/api/v1/duels/invites/{id}", inviteId).headers(bearer(caller)));
+    }
+
+    ResultActions activeDuels(Player caller) throws Exception {
+        return mvc.perform(get("/api/v1/duels/active").headers(bearer(caller)));
+    }
+
     ResultActions viewDuel(Player caller, UUID duelId) throws Exception {
         return mvc.perform(get("/api/v1/duels/{id}", duelId).headers(bearer(caller)));
     }
@@ -91,6 +113,25 @@ final class ApiDriver {
 
     ResultActions me(Player caller) throws Exception {
         return mvc.perform(get("/api/v1/me").headers(bearer(caller)));
+    }
+
+    /** Plays the duel to its end with {@link Moves#next}, each side acting on its own view. */
+    DuelView playToCompletion(Player one, Player two, UUID duelId) throws Exception {
+        DuelView view = duelView(viewDuel(one, duelId));
+        int moves = 0;
+        while (view.phase() != DuelPhase.FINISHED) {
+            assertThat(moves++).as("duel %s did not terminate", duelId).isLessThan(MOVE_LIMIT);
+            Player attacker = view.attacker().equals(one.id()) ? one : two;
+            Player defender = attacker == one ? two : one;
+            Player actor = view.phase() == DuelPhase.DEFEND ? defender : attacker;
+            DuelView own = duelView(viewDuel(actor, duelId));
+            view = duelView(move(actor, duelId, Moves.next(own)).andExpect(status().isOk()));
+        }
+        return view;
+    }
+
+    DuelView duelView(ResultActions actions) throws Exception {
+        return mapper.readValue(actions.andReturn().getResponse().getContentAsString(), DuelView.class);
     }
 
     static HttpHeaders bearer(Player caller) {
