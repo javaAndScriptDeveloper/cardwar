@@ -20,6 +20,12 @@ databases, so the REST API here is one adapter and a Telegram Mini App can be th
 | Testing             | JUnit 5, Testcontainers (Postgres + Redis), ArchUnit, JaCoCo gate      |
 | Deployment          | Docker Compose: `db` + `redis` + `app` + `nginx` (TLS termination)     |
 
+## Working on this repo
+
+`CLAUDE.md` is the operating manual (rules, loop, commands, gotchas). The current phase is planned as GitHub
+issues under the milestone `PoC: Telegram Mini App demo`; `docs/poc-telegram-plan.md` mirrors that plan and the
+decisions behind it. The behavioural contract lives in `openspec/specs/`.
+
 ## Prerequisites
 
 - **JDK 25** — or nothing at all; Gradle downloads the right JDK via the toolchain resolver.
