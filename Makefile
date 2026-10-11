@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image smoke clean
+.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image e2e smoke clean
 
 # Prefer .env if present, otherwise fall back to the committed example.
 ENV_FILE := $(if $(wildcard .env),.env,.env.example)
@@ -12,7 +12,7 @@ export
 COMPOSE_FULL := docker compose -f docker-compose.yml --env-file $(ENV_FILE) --profile full
 
 help: ## Show this help
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
 # --- local development -------------------------------------------------------------------------------------
 
@@ -80,6 +80,9 @@ certs-prod: ## Obtain/renew a Let's Encrypt certificate for $(DOMAIN) via the ng
 
 image: ## Build the OCI image (tag: cardwar)
 	docker build -t cardwar .
+
+e2e: ## Two browsers play a duel through the Mini App against the running stack (E2E_BASE_URL, default https://localhost)
+	cd client && npm run e2e
 
 smoke: ## Drive a two-player duel end to end against the running stack (BASE_URL, default https://localhost)
 	scripts/smoke.sh

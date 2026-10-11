@@ -10,7 +10,8 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "vitest run",
-    "gen:cards": "node scripts/gen-cards.mjs"
+    "gen:cards": "node scripts/gen-cards.mjs",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "preact": "^11.0.1"

@@ -70,6 +70,53 @@ jobs:
       - run: npm test
       - run: npm run build
 
+  # The whole stack as `make up` builds it (nginx with the client, app, Postgres, Redis), then the API smoke test and
+  # two browsers playing a duel through the Mini App. Slow by nature; it runs beside the build, not inside it.
+  client-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install client dependencies and Chromium
+        working-directory: client
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Start the stack
+        run: |
+          cp .env.example .env
+          make certs
+          make up
+
+      - name: Two players play a duel through the Mini App
+        # Before the smoke test: its login flood drains the per-address auth bucket for a minute.
+        working-directory: client
+        run: npm run e2e
+
+      - name: API smoke test
+        run: scripts/smoke.sh
+
+      - name: Stack logs
+        if: failure()
+        run: docker compose -f docker-compose.yml --env-file .env --profile full logs --tail=300
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: client/playwright-report/
+          if-no-files-found: ignore
+
   # Report-only by design and deliberately its own job: the scan pulls the NVD advisory feed, and a feed outage
   # or a slow first sync must never be able to fail the build job above.
   dependency-scan:
