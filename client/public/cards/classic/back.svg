@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
+<defs>
+<pattern id="lattice" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+<rect width="16" height="16" fill="#1e4f9c"/><path d="M0 8 H16 M8 0 V16" stroke="#3f74c9" stroke-width="3"/>
+</pattern>
+</defs>
+<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="url(#lattice)"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="none" stroke="#163c78" stroke-width="4"/>
+</svg>

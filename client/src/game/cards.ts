@@ -1,0 +1,28 @@
+/** Mirrors the backend's engine enums; declaration order is the rank order the rules use. */
+export const RANKS = ['SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'JACK', 'QUEEN', 'KING', 'ACE'] as const;
+export const SUITS = ['CLUBS', 'DIAMONDS', 'HEARTS', 'SPADES'] as const;
+
+export type Rank = (typeof RANKS)[number];
+export type Suit = (typeof SUITS)[number];
+
+export interface Card {
+    rank: Rank;
+    suit: Suit;
+}
+
+export const FULL_DECK: readonly Card[] = SUITS.flatMap((suit) => RANKS.map((rank) => ({ rank, suit })));
+
+export function sameCard(a: Card, b: Card): boolean {
+    return a.rank === b.rank && a.suit === b.suit;
+}
+
+export function rankValue(rank: Rank): number {
+    return RANKS.indexOf(rank);
+}
+
+const capitalised = (word: string) => word.charAt(0) + word.slice(1).toLowerCase();
+
+/** "Six of Clubs": the same display name the catalog seed uses. */
+export function cardName(card: Card): string {
+    return `${capitalised(card.rank)} of ${capitalised(card.suit)}`;
+}
