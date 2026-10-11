@@ -303,3 +303,19 @@ button.big {
 .result.lost h1 {
     color: var(--danger);
 }
+
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: 140px;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px);
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: rgb(20 20 24 / 90%);
+    color: #fff;
+    font-size: 0.9rem;
+    text-align: center;
+    box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
+}

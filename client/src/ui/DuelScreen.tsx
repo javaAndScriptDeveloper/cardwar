@@ -1,7 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { DuelResult, DuelView } from '../api/types';
+import type { DuelResult, DuelView, MoveRequest } from '../api/types';
+import { type Card, sameCard } from '../game/cards';
+import { reasonMessage } from '../game/reasons';
+import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import type { Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 import { Table } from './Table';
@@ -57,7 +60,7 @@ function explain(result: Result, opponentName: string): string {
  * <p>The backend deletes a duel the moment it finishes. Whoever did not make the last move therefore gets a 404 on
  * the re-fetch, and the result comes from their history instead.
  */
-export function DuelScreen({ duelId, api, openStream, onExit }: Props) {
+export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props) {
     const [state, setState] = useState<State>({ kind: 'loading' });
     const [opponentName, setOpponentName] = useState('Opponent');
     const version = useRef(-1);
@@ -119,6 +122,77 @@ export function DuelScreen({ duelId, api, openStream, onExit }: Props) {
         return () => closeStream.current();
     }, [api, duelId, openStream, refresh]);
 
+    const [selectedTarget, setSelectedTarget] = useState<Card>();
+    const [busy, setBusy] = useState(false);
+    const [toast, setToast] = useState<string>();
+    const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    const say = (message: string) => {
+        setToast(message);
+        clearTimeout(toastTimer.current);
+        toastTimer.current = setTimeout(() => setToast(undefined), 3000);
+    };
+    useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+    /** One move in flight at a time; the returned view is the new truth, a rejection leaves the table as it was. */
+    const play = async (move: MoveRequest) => {
+        if (busy) {
+            return;
+        }
+        setBusy(true);
+        try {
+            show(await api.move(duelId, move));
+            setSelectedTarget(undefined);
+            setToast(undefined);
+            telegram.haptic('tap');
+        } catch (error) {
+            if (error instanceof ApiError && error.status === 409) {
+                // Somebody else's move landed first: re-read rather than retry a move made against a stale table.
+                await refresh();
+            } else if (error instanceof ApiError && error.status === 404) {
+                await refresh();
+            } else {
+                telegram.haptic('error');
+                say(
+                    error instanceof ApiError
+                        ? (reasonMessage(error.reason) ?? describeError(error))
+                        : describeError(error),
+                );
+            }
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    const onHandCard = (view: DuelView, card: Card) => {
+        const open = undefendedAttacks(view);
+        if (role(view) === 'attacker' || open.length === 0) {
+            // A defender with nothing to beat is out of turn; the engine says so, which beats silently ignoring the tap.
+            void play({ type: 'ATTACK', card });
+            return;
+        }
+        const target =
+            selectedTarget ??
+            (open.length === 1
+                ? open[0]
+                : (() => {
+                      const candidates = targetsFor(view, card);
+                      return candidates.length === 1 ? candidates[0] : undefined;
+                  })());
+        if (!target) {
+            say('Tap the card you want to beat first.');
+            return;
+        }
+        void play({ type: 'DEFEND', attackCard: target, card });
+    };
+
+    const onTableCard = (view: DuelView, attack: Card) => {
+        if (role(view) !== 'defender' || !undefendedAttacks(view).some((open) => sameCard(open, attack))) {
+            return;
+        }
+        setSelectedTarget(selectedTarget && sameCard(selectedTarget, attack) ? undefined : attack);
+    };
+
     const exit = () => {
         closeStream.current();
         onExit();
@@ -148,14 +222,23 @@ export function DuelScreen({ duelId, api, openStream, onExit }: Props) {
             );
         case 'playing':
             return (
-                <Table
-                    view={state.view}
-                    opponentName={opponentName}
-                    onHandCard={() => {}}
-                    onTableCard={() => {}}
-                    onTake={() => {}}
-                    onEndAttack={() => {}}
-                />
+                <>
+                    <Table
+                        view={state.view}
+                        opponentName={opponentName}
+                        selectedTarget={selectedTarget}
+                        busy={busy}
+                        onHandCard={(card) => onHandCard(state.view, card)}
+                        onTableCard={(attack) => onTableCard(state.view, attack)}
+                        onTake={() => void play({ type: 'TAKE' })}
+                        onEndAttack={() => void play({ type: 'END_ATTACK' })}
+                    />
+                    {toast && (
+                        <p class="toast" role="alert">
+                            {toast}
+                        </p>
+                    )}
+                </>
             );
     }
 }
