@@ -74,6 +74,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (see .env.example)}
       JWT_TTL: ${JWT_TTL:-2h}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN must be set (see .env.example)}
+      TELEGRAM_INIT_DATA_MAX_AGE: ${TELEGRAM_INIT_DATA_MAX_AGE:-1h}
       DUEL_STATE_TTL: ${DUEL_STATE_TTL:-2h}
     healthcheck:
       # Readiness, not liveness: the container is healthy only once it can actually serve a request.

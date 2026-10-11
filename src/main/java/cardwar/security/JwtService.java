@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,6 +25,8 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
+// The bearer filter's resolver. The Telegram resolver only ever runs at the initData exchange endpoint.
+@Primary
 public class JwtService implements PrincipalResolver {
 
     private static final String USERNAME_CLAIM = "usr";

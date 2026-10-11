@@ -3,7 +3,9 @@ package cardwar.account.controller;
 import cardwar.account.dto.AuthResponse;
 import cardwar.account.dto.LoginRequest;
 import cardwar.account.dto.RegisterRequest;
+import cardwar.account.dto.TelegramAuthRequest;
 import cardwar.account.service.AccountService;
+import cardwar.account.service.TelegramSignInService;
 import cardwar.exception.ApplicationException;
 import cardwar.security.JwtService;
 import cardwar.security.PlayerIdentity;
@@ -17,17 +19,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** Registration and login. Neither endpoint ever echoes a password or a hash back to the caller. */
+/** Registration, password login and Telegram sign-in. Neither endpoint ever echoes a password or a hash back to the caller. */
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "Account registration and bearer-token issue")
 public class AuthController {
 
     private final AccountService accounts;
+    private final TelegramSignInService telegram;
     private final JwtService jwt;
 
-    public AuthController(AccountService accounts, JwtService jwt) {
+    public AuthController(AccountService accounts, TelegramSignInService telegram, JwtService jwt) {
         this.accounts = accounts;
+        this.telegram = telegram;
         this.jwt = jwt;
     }
 
@@ -47,6 +51,18 @@ public class AuthController {
     @Operation(summary = "Exchange credentials for a bearer token")
     public AuthResponse login(@Valid @RequestBody LoginRequest request) {
         return accounts.authenticate(request.username(), request.password())
+                .map(this::tokenFor)
+                .orElseThrow(() -> new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+    }
+
+    /**
+     * Exchanges a Mini App's signed initData for the same bearer token a password login returns, creating the
+     * account on first sign-in. Anything unverifiable is the same generic 401 as a failed login.
+     */
+    @PostMapping("/telegram")
+    @Operation(summary = "Exchange Telegram Mini App initData for a bearer token")
+    public AuthResponse telegram(@Valid @RequestBody TelegramAuthRequest request) {
+        return telegram.resolve(request.initData())
                 .map(this::tokenFor)
                 .orElseThrow(() -> new ApplicationException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
     }

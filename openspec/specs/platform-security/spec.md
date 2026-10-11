@@ -36,6 +36,21 @@ Authentication SHALL resolve the acting player through a `PrincipalResolver` pro
 - **WHEN** an external identity provider is introduced in a later phase
 - **THEN** it is added as an additional resolver implementation with no change to existing service signatures
 
+### Requirement: Telegram Mini App sign-in
+The system SHALL accept a Telegram Mini App `initData` string at `POST /api/v1/auth/telegram`, verify it with HMAC-SHA256 keyed by the bot token as Telegram specifies, reject it when `auth_date` is older than a configurable maximum age (default one hour) or more than a minute in the future, and on success return the same token response as password login, provisioning a password-less account on first sign-in. The endpoint SHALL be public and SHALL share the stricter authentication rate limit. Unverifiable initData SHALL be the same generic 401 as a failed login. Neither initData nor the bot token SHALL be logged.
+
+#### Scenario: Valid initData exchanged for a token
+- **WHEN** a client posts initData signed by Telegram for this bot within the allowed age
+- **THEN** the response contains a bearer token that authenticates later requests as that Telegram user's player
+
+#### Scenario: Forged or tampered initData
+- **WHEN** a client posts initData whose hash does not match its fields under this bot's token
+- **THEN** the API responds with 401 and issues no token
+
+#### Scenario: Stale initData
+- **WHEN** a client posts correctly signed initData whose `auth_date` is older than the maximum age
+- **THEN** the API responds with 401
+
 ### Requirement: Stateless session policy
 The API SHALL be stateless: no server-side HTTP session SHALL be created for authenticated requests, and CSRF protection SHALL be disabled only because authentication is bearer-token based rather than cookie based.
 
@@ -101,6 +116,10 @@ Database credentials, the Redis password and the token signing secret SHALL be s
 #### Scenario: Missing signing secret fails fast
 - **WHEN** the application starts in the production profile without a token signing secret configured
 - **THEN** startup fails with a clear error rather than falling back to a default secret
+
+#### Scenario: Missing Telegram bot token fails fast
+- **WHEN** the application starts in the production profile without a Telegram bot token configured
+- **THEN** startup fails with a clear error
 
 ### Requirement: Logging hygiene
 Hands, individual card contents, credentials, password hashes and tokens MUST NOT be logged at INFO level or above. Logs SHALL be structured and SHALL identify players and duels by identifier only.

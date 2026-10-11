@@ -78,6 +78,12 @@ cardwar:
       secret: ${JWT_SECRET:}
       ttl: ${JWT_TTL:2h}
       issuer: cardwar
+    telegram:
+      # The bot's token from BotFather: the HMAC key Telegram signs Mini App initData with. No default; the prod
+      # profile refuses to start without it, and elsewhere a missing token rejects every Telegram sign-in.
+      bot-token: ${TELEGRAM_BOT_TOKEN:}
+      # A signed initData is a login; this bounds how long a leaked one stays usable.
+      init-data-max-age: ${TELEGRAM_INIT_DATA_MAX_AGE:1h}
     rate-limit:
       # General API bucket, per authenticated principal.
       capacity: ${RATE_LIMIT_CAPACITY:120}
