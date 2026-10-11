@@ -123,10 +123,9 @@ gh project item-list 3 --owner javaAndScriptDeveloper
 - Stack is deployed and healthy as of 2026-10-11 (`main` at 9404516). Image is built on the box (`make up`);
   about 8 minutes on 2 vCPU. Run it detached and tail `/opt/cardwar/deploy.log`. Verify with `make ps` (all four
   healthy) and `BASE_URL=https://cardwar-gaming.duckdns.org scripts/smoke.sh` from your machine (passes today).
-- GitHub Actions is **disabled on this repository** (owner's decision, 2026-10-12: the account's Actions quota
-  is blocked by billing, unrelated to this code). Do not expect CI runs and do not re-enable it. Verification is
-  local: `./gradlew build`, `client` lint/test/build, and `scripts/smoke.sh` against the server. Keep
-  `.github/workflows/ci.yml` maintained anyway so it works the day Actions comes back.
+- The repository is **public** (since 2026-10-12) so GitHub Actions minutes are free and unlimited; CI runs on
+  every push to `main`. Never commit anything secret: secrets live only in `/opt/cardwar/.env` on the server and
+  in the owner's local `.env`, both gitignored. Treat a red CI as a real signal again; check `gh run list`.
 
 ## Definition of done for the milestone
 
