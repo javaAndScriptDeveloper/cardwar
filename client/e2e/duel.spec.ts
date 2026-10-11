@@ -7,7 +7,9 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 
 const PASSWORD = 'correct-horse-battery';
 const RANKS = ['Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
-const MAX_ACTIONS = 600;
+const MAX_MOVES = 600;
+/** Waiting for the other side's view to catch up does not count as a move, so the loop is bounded by time too. */
+const PLAY_DEADLINE_MS = 3 * 60_000;
 
 interface Card {
     rank: number;
@@ -63,6 +65,28 @@ async function fingerprint(page: Page): Promise<string> {
 
 type Move = 'ATTACK' | 'DEFEND' | 'TAKE' | 'END_ATTACK';
 
+/**
+ * Whether the page moved on from `before` within 15 s: 'moved', or 'retry' when the page reported the move lost to
+ * the network or throttled (its toast only stays up for a few seconds, so it is watched for while waiting).
+ */
+async function outcomeOf(page: Page, before: string): Promise<'moved' | 'retry' | 'stuck'> {
+    const deadline = Date.now() + 15_000;
+    while (Date.now() < deadline) {
+        if ((await fingerprint(page)) !== before) {
+            return 'moved';
+        }
+        const alert = page.getByRole('alert');
+        if (
+            (await alert.isVisible()) &&
+            /Connection lost|slow down/.test((await alert.textContent()) ?? '')
+        ) {
+            return 'retry';
+        }
+        await page.waitForTimeout(100);
+    }
+    return 'stuck';
+}
+
 test('two players play a duel to a result through the Mini App', async ({ browser }) => {
     const suffix = `${Date.now() % 1_000_000}`;
     const alice = await signIn(browser, `e2e-a-${suffix}`);
@@ -86,7 +110,9 @@ test('two players play a duel to a result through the Mini App', async ({ browse
     const played: Record<Move, number> = { ATTACK: 0, DEFEND: 0, TAKE: 0, END_ATTACK: 0 };
     let forcedTake = false;
 
-    for (let action = 0; action < MAX_ACTIONS; action++) {
+    const deadline = Date.now() + PLAY_DEADLINE_MS;
+    let moves = 0;
+    while (moves < MAX_MOVES && Date.now() < deadline) {
         if ((await result(alice).isVisible()) && (await result(bob).isVisible())) {
             break;
         }
@@ -102,6 +128,7 @@ test('two players play a duel to a result through the Mini App', async ({ browse
             const move = await act(page, text);
             if (move) {
                 played[move]++;
+                moves++;
                 acted = true;
                 break;
             }
@@ -174,7 +201,12 @@ test('two players play a duel to a result through the Mini App', async ({ browse
             }
         }
         if (move) {
-            await expect.poll(() => fingerprint(page), { timeout: 15_000 }).not.toBe(before);
+            const outcome = await outcomeOf(page, before);
+            expect(outcome, `${move} had no effect`).not.toBe('stuck');
+            if (outcome === 'retry') {
+                // Lost to the network or throttled: decide again, as a player would tap again.
+                return null;
+            }
         }
         return move;
     }

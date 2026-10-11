@@ -141,6 +141,29 @@ describe('moves', () => {
         expect(api.move).toHaveBeenCalledTimes(1);
     });
 
+    it('re-reads the duel and says so when a move is lost to the network', async () => {
+        const { api } = setup(view());
+        api.move.mockRejectedValue(new ApiError(0, { detail: 'Network unavailable' }));
+        api.duel.mockResolvedValue(
+            view({ version: 1, phase: 'DEFEND', table: [{ attack: c('SIX', 'CLUBS') }] }),
+        );
+
+        await tap('Six of Clubs');
+
+        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/connection/i));
+        // The move may have reached the server before the connection dropped; the re-read shows whether it did.
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('bob is defending'));
+    });
+
+    it('asks to slow down when the server throttles a move', async () => {
+        const { api } = setup(view());
+        api.move.mockRejectedValue(new ApiError(429, { detail: 'Rate limit exceeded. Try again shortly.' }));
+
+        await tap('Six of Clubs');
+
+        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/slow down/i));
+    });
+
     it('shows the result straight away when its own move ends the duel', async () => {
         const { api } = setup(view({ hand: [c('SIX', 'CLUBS')], talonCount: 0 }));
         api.move.mockResolvedValue(

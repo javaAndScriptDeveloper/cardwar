@@ -42,6 +42,9 @@ function resultOf(view: DuelView): Result {
     return { result: outcome.winner === view.you ? 'WON' : 'LOST', reason: outcome.reason };
 }
 
+/** Delay before re-trying a re-fetch that failed (429 or no network). */
+const RETRY_MS = 1500;
+
 const HEADINGS: Record<DuelResult, string> = { WON: 'You won', LOST: 'You lost', DRAW: 'Draw' };
 
 function explain(result: Result, opponentName: string): string {
@@ -93,17 +96,50 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
         }
     }, []);
 
-    const refresh = useCallback(async () => {
+    // One re-fetch in flight at a time. A move produces a burst of events, and each is a nudge; they collapse into
+    // at most one follow-up fetch, which keeps a fast game well inside the per-player rate limit.
+    const inFlight = useRef(false);
+    const again = useRef(false);
+    const retryTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+    const fetchOnce = useCallback(async (): Promise<boolean> => {
         try {
             show(await api.duel(duelId));
+            return true;
         } catch (error) {
             if (error instanceof ApiError && error.status === 404) {
                 closeStream.current();
                 await finishFromHistory();
+                return true;
             }
-            // Anything else is transient: the next nudge or reconnect fetches again.
+            return false;
         }
     }, [api, duelId, show, finishFromHistory]);
+
+    const refresh = useCallback(async (): Promise<void> => {
+        if (inFlight.current) {
+            again.current = true;
+            return;
+        }
+        inFlight.current = true;
+        clearTimeout(retryTimer.current);
+        let ok: boolean;
+        try {
+            do {
+                again.current = false;
+                ok = await fetchOnce();
+            } while (again.current && ok);
+        } finally {
+            inFlight.current = false;
+        }
+        if (!ok) {
+            // Throttled or offline. The nudge that brought us here will not come again, so retry rather than leave a
+            // stale table waiting for an event that already happened.
+            retryTimer.current = setTimeout(() => void refresh(), RETRY_MS);
+        }
+    }, [fetchOnce]);
+
+    useEffect(() => () => clearTimeout(retryTimer.current), []);
 
     useEffect(() => {
         void refresh();
@@ -150,6 +186,10 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                 // Somebody else's move landed first: re-read rather than retry a move made against a stale table.
                 await refresh();
             } else if (error instanceof ApiError && error.status === 404) {
+                await refresh();
+            } else if (error instanceof ApiError && error.status === 0) {
+                // The move may or may not have reached the server before the connection dropped; re-read to find out.
+                say('Connection lost. Check the table and try again.');
                 await refresh();
             } else {
                 telegram.haptic('error');

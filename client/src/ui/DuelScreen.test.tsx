@@ -110,4 +110,38 @@ describe('DuelScreen', () => {
 
         await waitFor(() => expect(screen.getByRole('heading', { name: 'Draw' })).toBeTruthy());
     });
+
+    it('coalesces a burst of nudges into one follow-up fetch', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockClear();
+        let release: (value: unknown) => void = () => {};
+        api.duel.mockImplementationOnce(() => new Promise((resolve) => (release = resolve)));
+        api.duel.mockResolvedValue(view({ version: 5, attacker: 'them' }));
+
+        nudge();
+        nudge();
+        nudge();
+        nudge();
+        release(view({ version: 4 }));
+
+        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'));
+        expect(api.duel).toHaveBeenCalledTimes(2);
+    });
+
+    it('retries a failed re-fetch on its own, so a lost nudge cannot freeze the table', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockRejectedValueOnce(new ApiError(429));
+        api.duel.mockResolvedValue(view({ version: 7, attacker: 'them' }));
+
+        nudge();
+
+        await waitFor(
+            () => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'),
+            {
+                timeout: 4000,
+            },
+        );
+    });
 });
