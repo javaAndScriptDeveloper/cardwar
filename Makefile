@@ -1,8 +1,11 @@
 .DEFAULT_GOAL := help
-.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs image smoke clean
+.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image smoke clean
 
 # Prefer .env if present, otherwise fall back to the committed example.
 ENV_FILE := $(if $(wildcard .env),.env,.env.example)
+# Expose the env file's variables to recipes (certs-prod needs DOMAIN).
+include $(ENV_FILE)
+export
 
 # The full stack is always started from the base file alone: docker-compose.override.yml publishes the datastores
 # on loopback for local `bootRun` and must never be loaded on a server.
@@ -66,6 +69,14 @@ certs: ## Generate a self-signed certificate for nginx into nginx/certs (gitigno
 		-subj "/CN=$(or $(CERT_CN),localhost)" \
 		-addext "subjectAltName=DNS:$(or $(CERT_CN),localhost),DNS:localhost,IP:127.0.0.1"
 	@echo "Self-signed certificate written to nginx/certs/. For production, mount a real one at the same paths."
+
+certs-prod: ## Obtain/renew a Let's Encrypt certificate for $(DOMAIN) via the nginx webroot and install it for nginx
+	@test -n "$(DOMAIN)" || { echo "DOMAIN is not set (put it in .env)"; exit 1; }
+	certbot certonly --webroot -w $(CURDIR)/nginx/acme -d $(DOMAIN) --non-interactive --agree-tos \
+		--register-unsafely-without-email --keep-until-expiring
+	install -m 600 /etc/letsencrypt/live/$(DOMAIN)/fullchain.pem nginx/certs/fullchain.pem
+	install -m 600 /etc/letsencrypt/live/$(DOMAIN)/privkey.pem nginx/certs/privkey.pem
+	-$(COMPOSE_FULL) exec -T nginx nginx -s reload
 
 image: ## Build the OCI image (tag: cardwar)
 	docker build -t cardwar .

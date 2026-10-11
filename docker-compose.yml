@@ -100,6 +100,8 @@ services:
       # Self-signed from `make certs` for local use. For production, mount the real certificate and key at the
       # same paths — e.g. a certbot volume: /etc/letsencrypt/live/<domain>:/etc/nginx/certs:ro
       - ./nginx/certs:/etc/nginx/certs:ro
+      # Webroot for Let's Encrypt renewals: certbot writes the challenge here, nginx serves it on port 80.
+      - ./nginx/acme:/var/www/certbot:ro
     healthcheck:
       # 127.0.0.1 rather than localhost: inside the container localhost resolves to ::1 first and nginx binds IPv4.
       test: ["CMD-SHELL", "wget -qO- --no-check-certificate https://127.0.0.1/healthz | grep -q ok"]
