@@ -112,3 +112,21 @@ button:disabled {
     color: var(--danger);
     font-size: 0.9rem;
 }
+
+.lobby {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+button.big {
+    padding: 16px;
+    font-size: 1.05rem;
+}
+
+.invite-code {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    user-select: all;
+}

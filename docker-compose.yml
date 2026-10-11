@@ -93,6 +93,9 @@ services:
     build:
       context: .
       dockerfile: nginx/Dockerfile
+      args:
+        TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+        TELEGRAM_APP_NAME: ${TELEGRAM_APP_NAME:-}
     image: cardwar-nginx:local
     container_name: cardwar-nginx
     depends_on:
