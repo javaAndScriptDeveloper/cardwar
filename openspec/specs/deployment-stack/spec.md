@@ -69,6 +69,13 @@ The stack SHALL run nginx as the public entry point, terminating TLS and forward
 - **WHEN** an operator prepares a production deployment
 - **THEN** the configuration states exactly where to mount a real certificate and key
 
+### Requirement: Mini App served on the same origin
+The nginx image SHALL be built with the Mini App client baked in and SHALL serve it at `/app/` on the same origin as `/api`, with a fallback to the client shell for unknown paths under `/app/`, `index.html` never cached and content-hashed assets cached long-term. Responses under `/app/` SHALL carry a Content-Security-Policy that permits Telegram's SDK script and framing by Telegram web clients, and connections only to the same origin.
+
+#### Scenario: Client shell served
+- **WHEN** a client requests `/app/` or any path below it through nginx
+- **THEN** nginx answers 200 with the client shell and a CSP containing `frame-ancestors` for Telegram
+
 ### Requirement: Application healthcheck and startup ordering
 The application service SHALL declare a healthcheck against its readiness endpoint and SHALL start only after Postgres and Redis report healthy.
 

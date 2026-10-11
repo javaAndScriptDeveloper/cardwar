@@ -89,7 +89,11 @@ services:
 
   nginx:
     profiles: ["full"]
-    image: nginx:1.27-alpine
+    # nginx plus the built Mini App client (nginx/Dockerfile), served at /app/ on the same origin as /api.
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    image: cardwar-nginx:local
     container_name: cardwar-nginx
     depends_on:
       app:
