@@ -114,15 +114,19 @@ gh project item-list 3 --owner javaAndScriptDeveloper
 - Repo at `/opt/cardwar`, cloned over a read-only deploy key (`~/.ssh/cardwar_deploy`, registered on GitHub as
   "cardwar-vps"). Deploy = `ssh root@2.31.48.136 'cd /opt/cardwar && git pull && make up'`.
 - Secrets live only in `/opt/cardwar/.env` (mode 600): Postgres/Redis passwords, `JWT_SECRET`, `DOMAIN`,
-  `TELEGRAM_BOT_TOKEN`. Never copy them into the repo, logs, issues or chat. Read a variable with
+  `TELEGRAM_BOT_TOKEN`; plus the non-secret `TELEGRAM_BOT_USERNAME=cardwar_gaming_bot` (nginx build arg). Never copy secrets into the repo, logs, issues or chat. Read a variable with
   `grep '^NAME=' /opt/cardwar/.env` only when you need it.
 - Certificates: a real Let's Encrypt certificate is installed (issued 2026-10-11, valid to 2027-01-09) by
   `make certs-prod`, which renews through the nginx ACME webroot and reloads nginx. `/etc/cron.weekly/cardwar-certs`
   runs it weekly; log at `/var/log/cardwar-certs.log`. Never run `make certs` (self-signed) on the server again;
   it would overwrite the real pair.
-- Stack is deployed and healthy as of 2026-10-11 (`main` at 9404516). Image is built on the box (`make up`);
+- Stack is deployed and healthy as of 2026-10-12 with the whole PoC milestone (Mini App at `/app/`). Image is built on the box (`make up`);
   about 8 minutes on 2 vCPU. Run it detached and tail `/opt/cardwar/deploy.log`. Verify with `make ps` (all four
-  healthy) and `BASE_URL=https://cardwar-gaming.duckdns.org scripts/smoke.sh` from your machine (passes today).
+  healthy), then `E2E_BASE_URL=https://cardwar-gaming.duckdns.org make e2e` and
+  `BASE_URL=https://cardwar-gaming.duckdns.org scripts/smoke.sh` from your machine, in that order (the smoke test's
+  login flood throttles sign-ins from your address for a minute).
+- Bot `@cardwar_gaming_bot`: menu button "Play" -> `/app/` set through the Bot API (`setChatMenuButton`). The
+  Main Mini App (needed for `?startapp=` invite links to open the app) can only be enabled in BotFather by the owner.
 - The repository is **public** (since 2026-10-12) so GitHub Actions minutes are free and unlimited; CI runs on
   every push to `main`. Never commit anything secret: secrets live only in `/opt/cardwar/.env` on the server and
   in the owner's local `.env`, both gitignored. Treat a red CI as a real signal again; check `gh run list`.

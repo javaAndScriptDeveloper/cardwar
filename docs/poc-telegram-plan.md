@@ -53,6 +53,24 @@ VPS ordered and bootstrapped (see CLAUDE.md "Production server"): Docker, swap, 
 renewal cron, stack deployed and `scripts/smoke.sh` green over the public URL. Issue #6 therefore reduces to: BotFather
 registration of `https://cardwar-gaming.duckdns.org/app/` once the client exists (#5, #7), and a redeploy.
 
+## Outcome (2026-10-12)
+
+All fourteen issues are implemented on `main` and deployed to the VPS. Decisions taken along the way, each recorded on
+its issue:
+
+- SSE authenticates with the bearer header through `fetch` streaming (#8); no query-string token exists.
+- Invites are claimed atomically, not deleted, so the polling creator can read the duel id (#3); `InviteStore` sits
+  in `session.store` beside `GameStateStore`, where Redis is already allowed.
+- The Telegram resolver lives in `account` (`TelegramSignInService`), because `security` must not depend on
+  `account` (#2). `JwtService` stays the bearer filter's resolver.
+- A finished duel is deleted at once, so the player who did not make the last move reads the result from
+  `GET /me/duels` (#11). No backend change.
+- The bot has no Main Mini App yet, which `startapp` links need and only BotFather can enable; the start screen
+  therefore also accepts a pasted invite code (#10). The menu button was set through the Bot API (#6).
+
+Owner-only steps left (no API exists for them): in BotFather enable the Main Mini App for `@cardwar_gaming_bot`
+with URL `https://cardwar-gaming.duckdns.org/app/` (makes the shared links open the app), and the two-phone check.
+
 ## Known follow-ups that may surface
 
 - `EventSource` cannot send an `Authorization` header. Issue 8 must pick: fetch-based streaming with the bearer
