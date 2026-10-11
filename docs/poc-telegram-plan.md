@@ -46,6 +46,12 @@ Backend track and client track run in parallel. Infra anytime. Docs last.
 
 Critical path: 1 → 2 → 8 → 10 → 12 → 13. Start 1, 3, 4, 7, 9 immediately.
 
+## Infrastructure state (2026-10-12)
+
+VPS ordered and bootstrapped (see CLAUDE.md "Production server"): Docker, swap, firewall, deploy key, repo at
+`/opt/cardwar`, production `.env`, DNS for `cardwar-gaming.duckdns.org`. Issue #6 therefore reduces to: real
+certificate (`make certs-prod`), BotFather registration, smoke test over the public URL, renewal cron.
+
 ## Known follow-ups that may surface
 
 - `EventSource` cannot send an `Authorization` header. Issue 8 must pick: fetch-based streaming with the bearer

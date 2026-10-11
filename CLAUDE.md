@@ -105,6 +105,28 @@ gh project item-list 3 --owner javaAndScriptDeveloper
   spawn worktree agents, tell them to `git reset --hard main` first and to run only their own test classes.
 - `gh` is logged in as `javaAndScriptDeveloper` with `repo`, `workflow`, `project` scopes.
 
+## Production server (Hetzner CX22, provisioned 2026-10-12)
+
+- Host `2.31.48.136`, `ssh root@2.31.48.136` (key auth from this machine). Ubuntu 26.04, 2 vCPU, 3.7 GB + 2 GB swap,
+  Docker 29 + Compose v5, ufw allows 22/80/443 only.
+- Domain `cardwar-gaming.duckdns.org` → that IP (and `www.`). Register the Mini App URL as
+  `https://cardwar-gaming.duckdns.org/app/` in BotFather.
+- Repo at `/opt/cardwar`, cloned over a read-only deploy key (`~/.ssh/cardwar_deploy`, registered on GitHub as
+  "cardwar-vps"). Deploy = `ssh root@2.31.48.136 'cd /opt/cardwar && git pull && make up'`.
+- Secrets live only in `/opt/cardwar/.env` (mode 600): Postgres/Redis passwords, `JWT_SECRET`, `DOMAIN`,
+  `TELEGRAM_BOT_TOKEN`. Never copy them into the repo, logs, issues or chat. Read a variable with
+  `grep '^NAME=' /opt/cardwar/.env` only when you need it.
+- Certificates: `make certs` wrote a self-signed pair so nginx could start; `make certs-prod` (on the server, in
+  `/opt/cardwar`) obtains the real Let's Encrypt certificate through the nginx ACME webroot and reloads nginx.
+  Renewal: `certbot renew` + the same install/reload steps; put `make -C /opt/cardwar certs-prod` in a weekly
+  root cron once the first real certificate is in place.
+- Image is built on the box (`make up --build`); it takes 10+ minutes on 2 vCPU. Run it detached and tail
+  `/opt/cardwar/deploy.log`. Verify with `make ps` (all four healthy) and `BASE_URL=https://cardwar-gaming.duckdns.org
+  scripts/smoke.sh` from your machine.
+- GitHub Actions is currently blocked by the account's billing ("recent account payments have failed or your
+  spending limit needs to be increased"). Until the owner fixes billing, CI is red for a reason unrelated to code;
+  rely on local `./gradlew build` and the smoke test, and say so in issue comments.
+
 ## Definition of done for the milestone
 
 Two phones, two Telegram accounts, bot menu button opens the Mini App over a valid certificate, A invites B via
