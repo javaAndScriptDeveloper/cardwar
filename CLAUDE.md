@@ -116,13 +116,13 @@ gh project item-list 3 --owner javaAndScriptDeveloper
 - Secrets live only in `/opt/cardwar/.env` (mode 600): Postgres/Redis passwords, `JWT_SECRET`, `DOMAIN`,
   `TELEGRAM_BOT_TOKEN`. Never copy them into the repo, logs, issues or chat. Read a variable with
   `grep '^NAME=' /opt/cardwar/.env` only when you need it.
-- Certificates: `make certs` wrote a self-signed pair so nginx could start; `make certs-prod` (on the server, in
-  `/opt/cardwar`) obtains the real Let's Encrypt certificate through the nginx ACME webroot and reloads nginx.
-  Renewal: `certbot renew` + the same install/reload steps; put `make -C /opt/cardwar certs-prod` in a weekly
-  root cron once the first real certificate is in place.
-- Image is built on the box (`make up --build`); it takes 10+ minutes on 2 vCPU. Run it detached and tail
-  `/opt/cardwar/deploy.log`. Verify with `make ps` (all four healthy) and `BASE_URL=https://cardwar-gaming.duckdns.org
-  scripts/smoke.sh` from your machine.
+- Certificates: a real Let's Encrypt certificate is installed (issued 2026-10-11, valid to 2027-01-09) by
+  `make certs-prod`, which renews through the nginx ACME webroot and reloads nginx. `/etc/cron.weekly/cardwar-certs`
+  runs it weekly; log at `/var/log/cardwar-certs.log`. Never run `make certs` (self-signed) on the server again;
+  it would overwrite the real pair.
+- Stack is deployed and healthy as of 2026-10-11 (`main` at 9404516). Image is built on the box (`make up`);
+  about 8 minutes on 2 vCPU. Run it detached and tail `/opt/cardwar/deploy.log`. Verify with `make ps` (all four
+  healthy) and `BASE_URL=https://cardwar-gaming.duckdns.org scripts/smoke.sh` from your machine (passes today).
 - GitHub Actions is currently blocked by the account's billing ("recent account payments have failed or your
   spending limit needs to be increased"). Until the owner fixes billing, CI is red for a reason unrelated to code;
   rely on local `./gradlew build` and the smoke test, and say so in issue comments.

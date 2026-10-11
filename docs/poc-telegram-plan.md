@@ -49,8 +49,9 @@ Critical path: 1 → 2 → 8 → 10 → 12 → 13. Start 1, 3, 4, 7, 9 immediate
 ## Infrastructure state (2026-10-12)
 
 VPS ordered and bootstrapped (see CLAUDE.md "Production server"): Docker, swap, firewall, deploy key, repo at
-`/opt/cardwar`, production `.env`, DNS for `cardwar-gaming.duckdns.org`. Issue #6 therefore reduces to: real
-certificate (`make certs-prod`), BotFather registration, smoke test over the public URL, renewal cron.
+`/opt/cardwar`, production `.env`, DNS for `cardwar-gaming.duckdns.org`, real Let's Encrypt certificate with weekly
+renewal cron, stack deployed and `scripts/smoke.sh` green over the public URL. Issue #6 therefore reduces to: BotFather
+registration of `https://cardwar-gaming.duckdns.org/app/` once the client exists (#5, #7), and a redeploy.
 
 ## Known follow-ups that may surface
 
