@@ -1,9 +1,11 @@
 import { render } from 'preact';
 import { ApiClient } from './api/client';
+import { openDuelStream } from './api/events';
 import { Session } from './auth/session';
 import { linkConfigFromEnv } from './telegram/links';
 import { resolveTelegram, type TelegramHost } from './telegram/webapp';
 import { App } from './ui/App';
+import { DuelScreen, type StreamOpener } from './ui/DuelScreen';
 import { Home } from './ui/Home';
 import './ui/styles.css';
 
@@ -18,6 +20,12 @@ const api = new ApiClient(
 // Telegram hands the invite over as start_param; the browser dev shim uses ?invite= in the URL instead.
 const invite = telegram.startParam ?? new URLSearchParams(window.location.search).get('invite') ?? undefined;
 const links = linkConfigFromEnv(window.location.origin);
+const openStream: StreamOpener = (duelId, options) =>
+    openDuelStream(duelId, {
+        ...options,
+        fetchImpl: (input, init) => fetch(input, init),
+        headers: () => api.authHeaders(),
+    });
 
 const root = document.getElementById('app');
 if (root) {
@@ -33,7 +41,16 @@ if (root) {
                     telegram={telegram}
                     invite={invite}
                     links={links}
-                    table={(duelId) => <p class="notice">Duel {duelId}</p>}
+                    table={(duelId, exit) => (
+                        <DuelScreen
+                            key={duelId}
+                            duelId={duelId}
+                            api={api}
+                            telegram={telegram}
+                            openStream={openStream}
+                            onExit={exit}
+                        />
+                    )}
                 />
             )}
         />,

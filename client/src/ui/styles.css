@@ -130,3 +130,176 @@ button.big {
     word-break: break-all;
     user-select: all;
 }
+
+/* ---- The table ---------------------------------------------------------------------------------------------- */
+
+.card {
+    display: block;
+    width: 64px;
+    aspect-ratio: 5 / 7;
+    border-radius: 6px;
+    user-select: none;
+}
+
+.card.small {
+    width: 40px;
+}
+
+.card.empty {
+    border: 2px dashed color-mix(in srgb, var(--hint) 50%, transparent);
+}
+
+.table {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: calc(100vh - 32px);
+}
+
+.opponent {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    align-items: center;
+    gap: 8px;
+}
+
+.opponent .name {
+    font-weight: 600;
+}
+
+.count {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--hint);
+}
+
+.fan {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.fan .card + .card {
+    margin-left: -26px;
+}
+
+.felt {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    background: radial-gradient(circle at 50% 40%, #2a8a5a, var(--felt));
+    color: #e9f5ee;
+    min-height: 220px;
+}
+
+.deck {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.deck .trump {
+    transform: rotate(90deg);
+    margin: 0 8px;
+}
+
+.hint {
+    font-size: 0.75rem;
+    opacity: 0.8;
+}
+
+.pairs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 18px;
+    justify-content: center;
+    align-content: flex-start;
+    flex: 1;
+}
+
+.pair {
+    position: relative;
+    padding: 0;
+    background: none;
+    border-radius: 8px;
+    width: 64px;
+    height: 108px;
+}
+
+.pair .defence {
+    position: absolute;
+    left: 14px;
+    top: 18px;
+    transform: rotate(8deg);
+    box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+}
+
+.pair.selected {
+    outline: 3px solid #ffd54a;
+    outline-offset: 2px;
+}
+
+.status {
+    margin: 0;
+    text-align: center;
+    font-weight: 600;
+}
+
+.actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.hand {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 6px 2px 10px;
+    scroll-snap-type: x proximity;
+}
+
+.hand-card {
+    flex: none;
+    padding: 0;
+    background: none;
+    border-radius: 8px;
+    opacity: 0.55;
+    transition:
+        transform 120ms,
+        opacity 120ms;
+    scroll-snap-align: start;
+}
+
+.hand-card .card {
+    width: 100%;
+}
+
+.hand-card.usable {
+    opacity: 1;
+    transform: translateY(-6px);
+}
+
+.result {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+    padding-top: 20vh;
+}
+
+.result h1 {
+    font-size: 2rem;
+}
+
+.result.won h1 {
+    color: #2e9b5f;
+}
+
+.result.lost h1 {
+    color: var(--danger);
+}
