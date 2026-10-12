@@ -54,7 +54,7 @@ The system SHALL let an authenticated player create an invite (`POST /api/v1/due
 - **THEN** the API responds with 403
 
 ### Requirement: Listing the caller's active duels
-The system SHALL expose `GET /api/v1/duels/active`, returning the caller's in-progress duels as summaries (duel id, opponent id and username, attacker, phase, version) without any card. The state store SHALL keep a per-player index with the same TTL as the duels, and SHALL never return a duel whose state has expired or been deleted.
+The system SHALL expose `GET /api/v1/duels/active`, returning the caller's in-progress duels as summaries (duel id, opponent id, username, display name and, when present, handle and photo URL, attacker, phase, version) without any card. The full duel view (`GET /api/v1/duels/{id}`) SHALL carry the same opponent profile as `opponentProfile`, and the finished-duel history (`GET /api/v1/me/duels`) SHALL carry it per row as `opponentDisplayName`, `opponentHandle` and `opponentPhotoUrl` next to `opponentUsername`. The state store SHALL keep a per-player index with the same TTL as the duels, and SHALL never return a duel whose state has expired or been deleted.
 
 #### Scenario: Both participants list the duel
 - **WHEN** a duel between A and B is in progress

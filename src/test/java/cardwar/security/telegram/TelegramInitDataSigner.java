@@ -50,6 +50,11 @@ public final class TelegramInitDataSigner {
                         "c2lnbmF0dXJlLW5vdC1jaGVja2Vk"));
     }
 
+    /** A signed payload carrying exactly the given {@code user} JSON, for tests about which fields are read. */
+    public static String forUserJson(String botToken, String userJson, long authDate) {
+        return sign(botToken, Map.of("user", userJson, "auth_date", Long.toString(authDate)));
+    }
+
     private static byte[] hmac(byte[] key, String data) {
         try {
             var mac = Mac.getInstance("HmacSHA256");

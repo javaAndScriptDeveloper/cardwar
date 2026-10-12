@@ -71,6 +71,28 @@ class TelegramAuthIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void everySignInRefreshesTheNameHandleAndPhotoButNeverTheUsername() throws Exception {
+        long telegramId = ThreadLocalRandom.current().nextLong(1_000_000L, 9_999_999_999L);
+        var player = api.signInTelegram("{\"id\":" + telegramId + ",\"first_name\":\"Olena\",\"username\":\"olena\","
+                + "\"photo_url\":\"https://t.me/i/userpic/320/olena.svg\"}");
+
+        api.me(player)
+                .andExpect(jsonPath("$.player.username").value("tg_" + telegramId))
+                .andExpect(jsonPath("$.player.displayName").value("Olena"))
+                .andExpect(jsonPath("$.player.handle").value("olena"))
+                .andExpect(jsonPath("$.player.photoUrl").value("https://t.me/i/userpic/320/olena.svg"));
+
+        var renamed = api.signInTelegram("{\"id\":" + telegramId + ",\"first_name\":\"Olena\",\"last_name\":\"K\"}");
+
+        assertThat(renamed.id()).isEqualTo(player.id());
+        api.me(renamed)
+                .andExpect(jsonPath("$.player.username").value("tg_" + telegramId))
+                .andExpect(jsonPath("$.player.displayName").value("Olena K"))
+                .andExpect(jsonPath("$.player.handle").doesNotExist())
+                .andExpect(jsonPath("$.player.photoUrl").doesNotExist());
+    }
+
+    @Test
     void forgedInitDataIsTheGeneric401() throws Exception {
         String forged = TelegramInitDataSigner.forUser(
                 "111:some-other-bot", 5L, "Mallory", Instant.now().getEpochSecond());

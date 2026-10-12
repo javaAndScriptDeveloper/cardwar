@@ -17,6 +17,7 @@ import cardwar.metrics.GameMetrics.StartMode;
 import cardwar.monetization.service.ShopService;
 import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
+import cardwar.session.dto.PlayerProfileView;
 import cardwar.session.event.DuelEventPublisher;
 import cardwar.session.store.GameStateStore;
 import cardwar.session.store.StoredDuel;
@@ -188,10 +189,14 @@ public class DuelService {
                 .map(stored -> {
                     var state = stored.state();
                     PlayerId opponent = state.opponentOf(caller);
+                    var who = accounts.summary(opponent.value());
                     return new DuelSummary(
                             state.duelId().value(),
                             opponent.value(),
-                            accounts.summary(opponent.value()).username(),
+                            who.username(),
+                            who.displayName(),
+                            who.handle(),
+                            who.photoUrl(),
                             state.attackerId().value(),
                             state.phase(),
                             state.version(),
@@ -203,7 +208,9 @@ public class DuelService {
     public DuelView viewFor(UUID duelId, PlayerId caller) {
         StoredDuel stored = requireParticipation(duelId, caller);
         PlayerId opponent = stored.state().opponentOf(caller);
-        return DuelView.of(stored, caller).withOpponentCosmetics(shop.cosmeticsOf(opponent.value()));
+        return DuelView.of(stored, caller)
+                .withOpponent(
+                        shop.cosmeticsOf(opponent.value()), PlayerProfileView.of(accounts.summary(opponent.value())));
     }
 
     /** Used by the event stream, which needs the participation check without needing the state itself. */

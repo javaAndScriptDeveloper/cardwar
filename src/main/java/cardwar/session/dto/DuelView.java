@@ -37,10 +37,14 @@ public record DuelView(
         Instant deadline,
         UUID toMove,
         StrikesView strikes,
-        CosmeticsView opponentCosmetics) {
+        CosmeticsView opponentCosmetics,
+        PlayerProfileView opponentProfile) {
 
-    /** The same view with the opponent's visible cosmetics (card back, frame) attached. */
-    public DuelView withOpponentCosmetics(CosmeticsView cosmetics) {
+    /**
+     * The same view with what the table shows of the opponent attached: their visible cosmetics (card back, frame)
+     * and their profile (name, handle, photo). Only the full read carries these; a move's response does not need to.
+     */
+    public DuelView withOpponent(CosmeticsView cosmetics, PlayerProfileView profile) {
         return new DuelView(
                 duelId,
                 you,
@@ -60,7 +64,8 @@ public record DuelView(
                 deadline,
                 toMove,
                 strikes,
-                cosmetics);
+                cosmetics,
+                profile);
     }
 
     /** Clocks that ran out on each side; the third one forfeits. */
@@ -100,6 +105,7 @@ public record DuelView(
                 deadline,
                 toMove,
                 strikes,
+                null,
                 null);
     }
 }

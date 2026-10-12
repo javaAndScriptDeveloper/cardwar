@@ -99,8 +99,8 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/auth/register`       | Create an account; returns id, username, token                       |
 | `POST /api/v1/auth/login`          | Exchange credentials for a token (one generic `401` on failure)       |
 | `POST /api/v1/auth/telegram`       | Exchange Mini App `initData` for a token; creates the account once    |
-| `GET  /api/v1/me`                  | Own profile, progress (duels played/won, currency) and collection     |
-| `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent, WON/LOST/DRAW, reason, stake, net coins) |
+| `GET  /api/v1/me`                  | Own profile (name; Telegram `handle`, `photoUrl` when present), progress and collection |
+| `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent name/handle/photo, WON/LOST/DRAW, reason, stake, net coins) |
 | `GET  /api/v1/wallet`              | Balance and today's bonus (available, amount, streak day, next time)  |
 | `POST /api/v1/wallet/daily-bonus`  | Claim today's bonus (`409 BONUS_ALREADY_CLAIMED` the second time)      |
 | `GET  /api/v1/wallet/transactions` | The caller's latest 50 coin movements                                  |
@@ -116,7 +116,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/matchmaking`         | Quick match at a stake table: pairs at once or queues for 60 s        |
 | `GET  /api/v1/matchmaking`         | WAITING / MATCHED (duel id, once) / EXPIRED, or `204` when not queued  |
 | `DELETE /api/v1/matchmaking`       | Leave the queue                                                        |
-| `GET  /api/v1/friends`             | Everybody you played, with the record between you                      |
+| `GET  /api/v1/friends`             | Everybody you played (name, handle, photo), with the record between you |
 | `POST /api/v1/friends/{id}/challenge` | Challenge a friend at a stake; the bot DMs them a Join button        |
 | `GET  /api/v1/challenges`          | Challenges waiting for you                                             |
 | `POST /api/v1/duels/invites/{id}/decline` | Decline a challenge addressed to you                           |
@@ -127,7 +127,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/shop/stars/invoice`  | Telegram Stars invoice link for a coin pack                            |
 | `POST /api/v1/duels/{id}/emotes`   | Throw an owned emote at the table (one per 3 s)                        |
 | `GET  /api/v1/duels/active`        | The caller's in-progress duels, card-free, for resuming after a restart |
-| `GET  /api/v1/duels/{id}`          | The caller's redacted view                                            |
+| `GET  /api/v1/duels/{id}`          | The caller's redacted view, with the opponent's cosmetics and `opponentProfile` |
 | `POST /api/v1/duels/{id}/moves`    | Submit a move; the engine re-validates it against the stored state    |
 | `GET  /api/v1/duels/{id}/events`   | Server-sent events for the duel (keepalive comment every 20s)         |
 

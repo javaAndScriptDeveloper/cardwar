@@ -53,6 +53,8 @@ public class FriendsService {
                             who.id(),
                             who.username(),
                             who.displayName(),
+                            who.handle(),
+                            who.photoUrl(),
                             row.getPlayed(),
                             row.getWon(),
                             row.getLost(),
@@ -86,7 +88,8 @@ public class FriendsService {
                     var who = accounts.summary(invite.creator());
                     return new ChallengeView(
                             invite.inviteId(),
-                            new ChallengeView.From(who.id(), who.username(), who.displayName()),
+                            new ChallengeView.From(
+                                    who.id(), who.username(), who.displayName(), who.handle(), who.photoUrl()),
                             invite.stake(),
                             invite.expiresAt());
                 })

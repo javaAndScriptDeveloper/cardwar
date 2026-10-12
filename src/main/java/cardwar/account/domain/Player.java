@@ -37,6 +37,14 @@ public class Player {
     @Column(name = "display_name", nullable = false)
     private String displayName;
 
+    /** The Telegram {@code @username}, without the at sign; null when the user has none. */
+    @Column(name = "telegram_handle", length = 32)
+    private String telegramHandle;
+
+    /** An https URL Telegram serves the profile photo from; null when the user hides it. */
+    @Column(name = "photo_url", length = 512)
+    private String photoUrl;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 

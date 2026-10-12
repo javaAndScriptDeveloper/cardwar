@@ -74,21 +74,29 @@ public class AccountService {
 
     /**
      * Finds or creates the account for a Telegram user whose identity the caller has already verified. Idempotent:
-     * a returning user gets the same account, and a changed Telegram name does not rename it.
+     * a returning user gets the same account. The display name, {@code @handle} and photo are copied on every
+     * sign-in because people change them in Telegram; the internal {@code username} never changes, since invites
+     * and older clients refer to it.
      *
      * <p>Two first sign-ins for the same Telegram user racing each other meet at the unique constraint; the loser
      * gets a 409 and its client simply signs in again, which then finds the account.
      */
     @Transactional
-    public PlayerIdentity registerTelegram(long telegramUserId, String displayName) {
+    public PlayerIdentity registerTelegram(long telegramUserId, String displayName, String handle, String photoUrl) {
         Optional<Player> existing = players.findByTelegramUserId(telegramUserId);
         if (existing.isPresent()) {
-            return identityOf(existing.get());
+            Player player = existing.get();
+            player.setDisplayName(displayNameOr(displayName, player.getUsername()));
+            player.setTelegramHandle(handle);
+            player.setPhotoUrl(photoUrl);
+            return identityOf(player);
         }
         String username = telegramUsername(telegramUserId);
         var now = Instant.now();
         var player =
                 Player.telegram(UUID.randomUUID(), username, telegramUserId, displayNameOr(displayName, username), now);
+        player.setTelegramHandle(handle);
+        player.setPhotoUrl(photoUrl);
         try {
             players.saveAndFlush(player);
         } catch (DataIntegrityViolationException raced) {
@@ -151,7 +159,12 @@ public class AccountService {
     @Transactional(readOnly = true)
     public PlayerSummary summary(UUID playerId) {
         return players.findById(playerId)
-                .map(player -> new PlayerSummary(player.getId(), player.getUsername(), player.getDisplayName()))
+                .map(player -> new PlayerSummary(
+                        player.getId(),
+                        player.getUsername(),
+                        player.getDisplayName(),
+                        player.getTelegramHandle(),
+                        player.getPhotoUrl()))
                 .orElseThrow(() -> new NotFoundException("Player not found"));
     }
 

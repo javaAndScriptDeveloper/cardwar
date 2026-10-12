@@ -4,6 +4,7 @@ import cardwar.account.service.AccountService;
 import cardwar.exception.NotFoundException;
 import cardwar.session.domain.DuelResult;
 import cardwar.session.dto.DuelHistoryEntry;
+import cardwar.session.dto.PlayerProfileView;
 import cardwar.session.repository.DuelResultRepository;
 import cardwar.wallet.service.WalletService;
 import java.util.List;
@@ -14,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * A player's own record of finished duels, newest first. Read-only over {@code duel_result}; the opponent's
- * username is looked up per row because the result row deliberately stores ids only, and fifty lookups on a
+ * profile (name, handle, photo) is looked up per row because the result row deliberately stores ids only, and fifty lookups on a
  * capped page is cheaper than a join the rest of the module never needs.
  */
 @Service
@@ -48,10 +49,14 @@ public class DuelHistoryService {
 
     private DuelHistoryEntry entryFor(UUID playerId, DuelResult row) {
         UUID opponentId = playerId.equals(row.getPlayerA()) ? row.getPlayerB() : row.getPlayerA();
+        PlayerProfileView opponent = profileOf(opponentId);
         return new DuelHistoryEntry(
                 row.getDuelId(),
                 opponentId,
-                usernameOf(opponentId),
+                opponent.username(),
+                opponent.displayName(),
+                opponent.handle(),
+                opponent.photoUrl(),
                 resultFor(playerId, row),
                 row.getEndReason(),
                 row.getStartedAt(),
@@ -70,11 +75,11 @@ public class DuelHistoryService {
         return playerId.equals(row.getWinnerId()) ? "WON" : "LOST";
     }
 
-    private String usernameOf(UUID opponentId) {
+    private PlayerProfileView profileOf(UUID opponentId) {
         try {
-            return accounts.summary(opponentId).username();
+            return PlayerProfileView.of(accounts.summary(opponentId));
         } catch (NotFoundException e) {
-            return UNKNOWN_OPPONENT;
+            return new PlayerProfileView(UNKNOWN_OPPONENT, UNKNOWN_OPPONENT, null, null);
         }
     }
 }

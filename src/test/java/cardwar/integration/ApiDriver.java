@@ -48,6 +48,23 @@ final class ApiDriver {
                 parsed.get("token"));
     }
 
+    /** Signs in through {@code /api/v1/auth/telegram} with initData carrying exactly {@code userJson}. */
+    ResultActions signInTelegramRaw(String userJson) throws Exception {
+        String initData = cardwar.security.telegram.TelegramInitDataSigner.forUserJson(
+                cardwar.security.telegram.TelegramInitDataSigner.BOT_TOKEN,
+                userJson,
+                java.time.Instant.now().getEpochSecond());
+        return mvc.perform(post("/api/v1/auth/telegram")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(json(Map.of("initData", initData))));
+    }
+
+    Player signInTelegram(String userJson) throws Exception {
+        Map<String, Object> parsed = readBody(signInTelegramRaw(userJson).andExpect(status().isOk()));
+        return new Player(UUID.fromString((String) parsed.get("playerId")), (String) parsed.get("username"), (String)
+                parsed.get("token"));
+    }
+
     /** A username that is unique per test run, so tests never collide on the unique constraint. */
     static String uniqueUsername(String prefix) {
         return prefix + "-" + UUID.randomUUID().toString().substring(0, 8);

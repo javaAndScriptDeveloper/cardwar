@@ -44,15 +44,21 @@ class TelegramAccountIntegrationTest extends AbstractIntegrationTest {
     void firstSignInCreatesAPasswordlessAccountAndRepeatsReturnTheSameOne() {
         long telegramId = telegramId();
 
-        PlayerIdentity first = accounts.registerTelegram(telegramId, "Alice Example");
-        PlayerIdentity second = accounts.registerTelegram(telegramId, "Alice Renamed");
+        PlayerIdentity first = accounts.registerTelegram(telegramId, "Alice Example", "alice", null);
+        PlayerIdentity second =
+                accounts.registerTelegram(telegramId, "Alice Renamed", "alice2", "https://t.me/i/userpic/320/a.svg");
 
         assertThat(second.playerId()).isEqualTo(first.playerId());
         assertThat(first.username()).isEqualTo("tg_" + telegramId);
+        assertThat(second.username()).isEqualTo(first.username());
         var stored = players.findById(first.playerId()).orElseThrow();
         assertThat(stored.getPasswordHash()).isNull();
         assertThat(stored.getTelegramUserId()).isEqualTo(telegramId);
-        assertThat(stored.getDisplayName()).isEqualTo("Alice Example");
+        // People rename themselves and change photos in Telegram; the account follows, the internal name does not.
+        assertThat(stored.getUsername()).isEqualTo("tg_" + telegramId);
+        assertThat(stored.getDisplayName()).isEqualTo("Alice Renamed");
+        assertThat(stored.getTelegramHandle()).isEqualTo("alice2");
+        assertThat(stored.getPhotoUrl()).isEqualTo("https://t.me/i/userpic/320/a.svg");
         assertThat(accounts.progressOf(first.playerId()).duelsPlayed()).isZero();
     }
 
@@ -61,7 +67,7 @@ class TelegramAccountIntegrationTest extends AbstractIntegrationTest {
         long telegramId = telegramId();
         api.register("tg_" + telegramId);
 
-        PlayerIdentity identity = accounts.registerTelegram(telegramId, "Bob");
+        PlayerIdentity identity = accounts.registerTelegram(telegramId, "Bob", null, null);
 
         assertThat(identity.username()).startsWith("tg_" + telegramId + "_");
         assertThat(players.findById(identity.playerId())).isPresent();
@@ -71,14 +77,14 @@ class TelegramAccountIntegrationTest extends AbstractIntegrationTest {
     void blankDisplayNameFallsBackToTheUsername() {
         long telegramId = telegramId();
 
-        PlayerIdentity identity = accounts.registerTelegram(telegramId, "  ");
+        PlayerIdentity identity = accounts.registerTelegram(telegramId, "  ", null, null);
 
         assertThat(accounts.summary(identity.playerId()).displayName()).isEqualTo(identity.username());
     }
 
     @Test
     void passwordLoginOnATelegramOnlyAccountIsTheGeneric401() throws Exception {
-        PlayerIdentity identity = accounts.registerTelegram(telegramId(), "Carol");
+        PlayerIdentity identity = accounts.registerTelegram(telegramId(), "Carol", null, null);
 
         String telegramOnly = api.login(identity.username(), ApiDriver.PASSWORD)
                 .andExpect(status().isUnauthorized())

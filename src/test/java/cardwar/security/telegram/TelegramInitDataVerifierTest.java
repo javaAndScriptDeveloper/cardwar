@@ -23,7 +23,8 @@ class TelegramInitDataVerifierTest {
 
     @Test
     void acceptsAPayloadSignedWithTheBotToken() {
-        assertThat(verifier.verify(valid())).contains(new TelegramInitDataVerifier.TelegramUser(42L, "Alice Tester"));
+        assertThat(verifier.verify(valid()))
+                .contains(new TelegramInitDataVerifier.TelegramUser(42L, "Alice Tester", "u42", null));
     }
 
     @Test
@@ -89,6 +90,44 @@ class TelegramInitDataVerifierTest {
                         "auth_date",
                         Long.toString(NOW.getEpochSecond())));
 
-        assertThat(verifier.verify(payload)).contains(new TelegramInitDataVerifier.TelegramUser(7L, "Solo"));
+        assertThat(verifier.verify(payload))
+                .contains(new TelegramInitDataVerifier.TelegramUser(7L, "Solo", null, null));
+    }
+
+    private TelegramInitDataVerifier.TelegramUser userFrom(String userJson) {
+        return verifier.verify(TelegramInitDataSigner.forUserJson(TOKEN, userJson, NOW.getEpochSecond()))
+                .orElseThrow();
+    }
+
+    @Test
+    void readsTheHandleAndAnHttpsPhoto() {
+        var user = userFrom("{\"id\":8,\"first_name\":\"Ann\",\"username\":\"ann_k\","
+                + "\"photo_url\":\"https://t.me/i/userpic/320/ann.svg\"}");
+
+        assertThat(user.handle()).isEqualTo("ann_k");
+        assertThat(user.photoUrl()).isEqualTo("https://t.me/i/userpic/320/ann.svg");
+    }
+
+    @Test
+    void dropsAPhotoThatIsNotHttpsOrTooLong() {
+        assertThat(userFrom("{\"id\":8,\"first_name\":\"A\",\"photo_url\":\"http://t.me/i/userpic/a.svg\"}")
+                        .photoUrl())
+                .isNull();
+        assertThat(userFrom("{\"id\":8,\"first_name\":\"A\",\"photo_url\":\"javascript:alert(1)\"}")
+                        .photoUrl())
+                .isNull();
+        assertThat(userFrom("{\"id\":8,\"first_name\":\"A\",\"photo_url\":\"https://t.me/" + "x".repeat(600) + "\"}")
+                        .photoUrl())
+                .isNull();
+    }
+
+    @Test
+    void dropsAHandleTelegramWouldNeverIssue() {
+        assertThat(userFrom("{\"id\":8,\"first_name\":\"A\",\"username\":\"not a handle\"}")
+                        .handle())
+                .isNull();
+        assertThat(userFrom("{\"id\":8,\"first_name\":\"A\",\"username\":\"" + "a".repeat(33) + "\"}")
+                        .handle())
+                .isNull();
     }
 }

@@ -33,7 +33,8 @@ public class TelegramSignInService implements PrincipalResolver {
     @Override
     public Optional<PlayerIdentity> resolve(String initData) {
         return verifier.verify(initData).map(user -> {
-            PlayerIdentity identity = accounts.registerTelegram(user.id(), user.displayName());
+            PlayerIdentity identity =
+                    accounts.registerTelegram(user.id(), user.displayName(), user.handle(), user.photoUrl());
             metrics.signIn(SignIn.TELEGRAM);
             return identity;
         });

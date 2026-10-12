@@ -58,6 +58,22 @@ The system SHALL provision an account from a verified Telegram user id alone, wi
 - **WHEN** a client posts any password for the username of a Telegram-only account
 - **THEN** the API responds with 401 with the same response shape as an unknown username
 
+### Requirement: Telegram profile follows Telegram
+Every Telegram sign-in SHALL copy the verified user's display name (first and last name), `@handle` (Telegram
+`username`, only if it is 1-32 letters, digits or underscores) and photo URL (only an absolute `https` URL of at most
+512 characters) onto the account, replacing what was stored before, so a rename or a new photo shows at the next
+sign-in. Anything that fails those checks SHALL be stored as absent. The generated `username` SHALL never change.
+The profile (`GET /api/v1/me`, `player`) SHALL carry `handle` and `photoUrl` when present and omit them otherwise.
+Names, handles and photo URLs SHALL NOT be logged.
+
+#### Scenario: A returning user renamed themselves
+- **WHEN** a Telegram user signs in again with a new name, a new photo and no handle
+- **THEN** the profile shows the new name and photo, has no handle, and the username is still `tg_<telegramId>`
+
+#### Scenario: A photo that is not https
+- **WHEN** the verified initData carries a `photo_url` that is not an absolute https URL
+- **THEN** the account stores no photo
+
 ### Requirement: Player profile and progress
 The system SHALL track per-player progress covering duels played, duels won and in-game currency balance, and SHALL expose the authenticated player's own profile, progress and skin collection. A player MUST NOT be able to read another player's profile through this endpoint.
 

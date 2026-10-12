@@ -1,5 +1,7 @@
 package cardwar.security.telegram;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -12,6 +14,7 @@ import java.util.HexFormat;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -54,8 +57,17 @@ public class TelegramInitDataVerifier {
         }
     }
 
-    /** The verified Telegram user. Only the id is an identity; the name is cosmetic. */
-    public record TelegramUser(long id, String displayName) {}
+    /**
+     * The verified Telegram user. Only the id is an identity; the name, the {@code @handle} and the photo are cosmetic
+     * and may be null (a user without a public username, or who hides their photo).
+     */
+    public record TelegramUser(long id, String displayName, String handle, String photoUrl) {}
+
+    /** Telegram usernames are 5 to 32 of these; anything else did not come from Telegram and is not shown. */
+    private static final Pattern HANDLE = Pattern.compile("[A-Za-z0-9_]{1,32}");
+
+    /** Mirrors the {@code photo_url} column width. */
+    private static final int MAX_PHOTO_URL = 512;
 
     /** Empty for anything not provably signed by Telegram for this bot within the allowed age. */
     public Optional<TelegramUser> verify(String initData) {
@@ -113,9 +125,30 @@ public class TelegramInitDataVerifier {
                 return Optional.empty();
             }
             String name = (text(node, "first_name") + " " + text(node, "last_name")).strip();
-            return Optional.of(new TelegramUser(id.asLong(), name));
+            return Optional.of(new TelegramUser(
+                    id.asLong(), name, handle(text(node, "username")), photoUrl(text(node, "photo_url"))));
         } catch (JacksonException malformed) {
             return Optional.empty();
+        }
+    }
+
+    private static String handle(String raw) {
+        return HANDLE.matcher(raw).matches() ? raw : null;
+    }
+
+    /**
+     * Only an absolute https URL is kept: the client puts it in an {@code img src}, so a {@code javascript:} or plain
+     * http URL must never get that far, whoever signed it.
+     */
+    private static String photoUrl(String raw) {
+        if (raw.isEmpty() || raw.length() > MAX_PHOTO_URL) {
+            return null;
+        }
+        try {
+            URI uri = new URI(raw);
+            return "https".equals(uri.getScheme()) && uri.getHost() != null ? raw : null;
+        } catch (URISyntaxException malformed) {
+            return null;
         }
     }
 
