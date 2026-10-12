@@ -526,7 +526,7 @@ export function DuelScreen({
                 })
                 .catch(() => {});
         }
-        const poll = api.challenges;
+        const poll = api.challenges?.bind(api);
         if (!poll || !api.acceptInvite || !onDuel) {
             return () => {
                 live = false;

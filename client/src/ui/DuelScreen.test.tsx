@@ -591,7 +591,11 @@ describe('DuelScreen rematch', () => {
             challenge: vi
                 .fn()
                 .mockResolvedValue({ inviteId: 'inv-7', status: 'PENDING', expiresAt: 'x', stake: 100 }),
-            challenges: vi.fn().mockResolvedValue(challenges),
+            // A real client method needs its `this`; a detached call must fail here the way it does in the app.
+            rows: challenges,
+            challenges(this: { rows: ChallengeView[] }) {
+                return Promise.resolve(this.rows);
+            },
             acceptInvite: vi.fn().mockResolvedValue(view({ duelId: 'duel-2' })),
         };
         const onRematchSent = vi.fn();

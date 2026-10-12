@@ -1343,8 +1343,6 @@ button.link {
 
 .discard-pile .count {
     margin-left: 6px;
-    font-size: var(--font-s);
-    color: rgb(255 255 255 / 85%);
 }
 
 .pot {
