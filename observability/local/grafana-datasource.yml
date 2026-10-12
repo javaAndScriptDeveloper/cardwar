@@ -1,0 +1,16 @@
+# The same uids as the hosted Prometheus and Loki in Grafana Cloud, so one dashboard JSON
+# renders in both places.
+apiVersion: 1
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: grafanacloud-prom
+    access: proxy
+    url: http://prometheus:9090
+    isDefault: true
+
+  - name: Loki
+    type: loki
+    uid: grafanacloud-logs
+    access: proxy
+    url: http://loki:3100

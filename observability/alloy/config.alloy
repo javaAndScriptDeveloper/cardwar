@@ -1,0 +1,111 @@
+// Cardwar → Prometheus remote_write and Loki push.
+//
+// Push, not pull: the production host publishes nothing but nginx, and Grafana Cloud has no
+// route into a compose network. Alloy scrapes the app over that network and writes outbound.
+// Locally the same file writes into a throwaway Prometheus and Loki
+// (docker-compose.observability-local.yml), so the config that reaches production is the one
+// exercised on the laptop.
+//
+// Every value comes from the environment; nothing secret is in this file.
+
+// ── Metrics → Prometheus ────────────────────────────────────────────────────
+
+discovery.dns "app" {
+	// Docker's embedded DNS answers a compose service name with every replica's address,
+	// so one name finds the app whether it runs as one container or several.
+	names            = [coalesce(sys.env("APP_METRICS_HOST"), "app")]
+	type             = "A"
+	port             = 8080
+	refresh_interval = "15s"
+}
+
+prometheus.scrape "app" {
+	targets         = discovery.dns.app.targets
+	job_name        = "cardwar"
+	metrics_path    = "/actuator/prometheus"
+	scrape_interval = "30s"
+	scrape_timeout  = "10s"
+	forward_to      = [prometheus.remote_write.out.receiver]
+}
+
+prometheus.remote_write "out" {
+	// Labels every series with where it came from, so a laptop run and production never
+	// average into each other on the same dashboard.
+	external_labels = {
+		env = coalesce(sys.env("CARDWAR_ENV"), "local"),
+	}
+
+	endpoint {
+		url = sys.env("GRAFANA_CLOUD_PROM_URL")
+
+		basic_auth {
+			// Grafana Cloud: username is the numeric Prometheus instance id, password an
+			// access-policy token with metrics:write. Locally both are dummy values.
+			username = sys.env("GRAFANA_CLOUD_PROM_USER")
+			password = sys.env("GRAFANA_CLOUD_PROM_TOKEN")
+		}
+	}
+}
+
+// ── Logs → Loki ─────────────────────────────────────────────────────────────
+//
+// Tails every container of this compose project through the Docker socket (read-only mount).
+// Four labels only: app, env, service and level. Ids (requestId, playerId, duelId) stay in
+// the JSON line and are read with `| json` at query time, which keeps the stream count tiny.
+
+discovery.docker "containers" {
+	host = "unix:///var/run/docker.sock"
+
+	filter {
+		name   = "label"
+		values = ["com.docker.compose.project=" + coalesce(sys.env("CARDWAR_COMPOSE_PROJECT"), "cardwar")]
+	}
+}
+
+discovery.relabel "containers" {
+	targets = []
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+}
+
+loki.source.docker "containers" {
+	host          = "unix:///var/run/docker.sock"
+	targets       = discovery.docker.containers.targets
+	relabel_rules = discovery.relabel.containers.rules
+	labels        = {
+		app = "cardwar",
+		env = coalesce(sys.env("CARDWAR_ENV"), "local"),
+	}
+	forward_to = [loki.process.levels.receiver]
+}
+
+loki.process "levels" {
+	// The app logs Spring Boot's logstash JSON, whose level key is `level` (INFO, WARN,
+	// ERROR). Only the level becomes a label: it has a handful of values. Lines that are not
+	// JSON (Postgres, Redis) pass through without one.
+	stage.json {
+		expressions = {level = ""}
+	}
+
+	stage.labels {
+		values = {level = ""}
+	}
+
+	forward_to = [loki.write.out.receiver]
+}
+
+loki.write "out" {
+	endpoint {
+		url = sys.env("GRAFANA_CLOUD_LOKI_URL")
+
+		basic_auth {
+			// Grafana Cloud: username is the numeric Loki user id, password an access-policy
+			// token with logs:write. The local Loki ignores both.
+			username = sys.env("GRAFANA_CLOUD_LOKI_USER")
+			password = sys.env("GRAFANA_CLOUD_LOKI_TOKEN")
+		}
+	}
+}

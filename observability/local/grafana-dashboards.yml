@@ -1,0 +1,12 @@
+# Loads the committed dashboards (observability/grafana/*.json) into the "Cardwar" folder, the
+# same folder `make dashboards` pushes to in Grafana Cloud.
+apiVersion: 1
+providers:
+  - name: cardwar
+    type: file
+    folder: Cardwar
+    folderUid: cardwar
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false

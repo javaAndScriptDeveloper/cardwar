@@ -121,6 +121,81 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # --- observability (docs/observability.md) ---------------------------------------------------------------
+  # Alloy scrapes the app over the compose network and tails every container's logs through the Docker socket,
+  # then pushes both outbound. Production enables it with COMPOSE_PROFILES=observability and the GRAFANA_CLOUD_*
+  # variables in .env; nothing here publishes a port.
+  alloy:
+    profiles: ["observability"]
+    image: grafana/alloy:v1.10.0
+    container_name: cardwar-alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - --storage.path=/var/lib/alloy/data
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # Read-only: Alloy only lists containers and reads their logs.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # The remote-write WAL survives a restart, so a short Grafana Cloud outage loses no samples.
+      - alloy-data:/var/lib/alloy/data
+    environment:
+      GRAFANA_CLOUD_PROM_URL: ${GRAFANA_CLOUD_PROM_URL:-}
+      GRAFANA_CLOUD_PROM_USER: ${GRAFANA_CLOUD_PROM_USER:-}
+      GRAFANA_CLOUD_PROM_TOKEN: ${GRAFANA_CLOUD_PROM_TOKEN:-}
+      GRAFANA_CLOUD_LOKI_URL: ${GRAFANA_CLOUD_LOKI_URL:-}
+      GRAFANA_CLOUD_LOKI_USER: ${GRAFANA_CLOUD_LOKI_USER:-}
+      GRAFANA_CLOUD_LOKI_TOKEN: ${GRAFANA_CLOUD_LOKI_TOKEN:-}
+      CARDWAR_ENV: ${CARDWAR_ENV:-local}
+      # Compose does not export its resolved project name for interpolation, so whoever runs compose passes it
+      # (`make observability-up` does); otherwise Docker discovery filters on the wrong label and tails nothing.
+      CARDWAR_COMPOSE_PROJECT: ${CARDWAR_COMPOSE_PROJECT:-cardwar}
+      APP_METRICS_HOST: app
+    mem_limit: 128m
+    restart: unless-stopped
+
+  # Local harness only (`make observability-up`): a throwaway Prometheus, Loki and Grafana standing in for Grafana
+  # Cloud. docker-compose.observability-local.yml points Alloy at them and publishes their ports on the laptop.
+  prometheus:
+    profiles: ["observability-local"]
+    image: prom/prometheus:v3.1.0
+    container_name: cardwar-prometheus
+    command:
+      # No scrape config of its own: Alloy pushes into it, exactly as it pushes to Grafana Cloud.
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
+      - --storage.tsdb.retention.time=24h
+    volumes:
+      - ./observability/local/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  loki:
+    profiles: ["observability-local"]
+    image: grafana/loki:3.5.0
+    container_name: cardwar-loki
+    command: ["-config.file=/etc/loki/loki.yml"]
+    volumes:
+      - ./observability/local/loki.yml:/etc/loki/loki.yml:ro
+
+  grafana:
+    profiles: ["observability-local"]
+    image: grafana/grafana:11.5.1
+    container_name: cardwar-grafana
+    depends_on:
+      - prometheus
+      - loki
+    environment:
+      # A local throwaway with nothing worth protecting; a login screen only slows a check down.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+    volumes:
+      - ./observability/local/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./observability/local/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      # The very same files `make dashboards` / `make alerting` push to Grafana Cloud.
+      - ./observability/grafana:/var/lib/grafana/dashboards:ro
+      - ./observability/grafana/alerting:/etc/grafana/provisioning/alerting:ro
+
 volumes:
   db-data:
   redis-data:
+  alloy-data:

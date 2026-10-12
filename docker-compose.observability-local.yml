@@ -1,0 +1,35 @@
+# Local observability harness only (`make observability-up`); never load this on a server.
+#
+# Points Alloy at the throwaway Prometheus and Loki instead of Grafana Cloud, and publishes the harness ports on
+# loopback. Everything else about Alloy stays as in docker-compose.yml, so the push path exercised here is the
+# production one.
+services:
+  alloy:
+    depends_on:
+      - prometheus
+      - loki
+    environment:
+      # Prometheus' remote-write receiver and the local Loki ignore basic auth; non-empty dummies keep the config
+      # path identical to the Grafana Cloud one.
+      GRAFANA_CLOUD_PROM_URL: http://prometheus:9090/api/v1/write
+      GRAFANA_CLOUD_PROM_USER: local
+      GRAFANA_CLOUD_PROM_TOKEN: local
+      GRAFANA_CLOUD_LOKI_URL: http://loki:3100/loki/api/v1/push
+      GRAFANA_CLOUD_LOKI_USER: local
+      GRAFANA_CLOUD_LOKI_TOKEN: local
+      CARDWAR_ENV: local
+    ports:
+      # Alloy's UI: the component graph shows rejected pushes and empty discovery at a glance.
+      - "127.0.0.1:12345:12345"
+
+  prometheus:
+    ports:
+      - "127.0.0.1:9090:9090"
+
+  loki:
+    ports:
+      - "127.0.0.1:3100:3100"
+
+  grafana:
+    ports:
+      - "127.0.0.1:3000:3000"

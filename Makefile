@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := help
-.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image e2e smoke clean
+.PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image e2e smoke clean \
+	observability-up observability-down alloy-logs
 
 # Prefer .env if present, otherwise fall back to the committed example.
 ENV_FILE := $(if $(wildcard .env),.env,.env.example)
@@ -12,7 +13,7 @@ export
 COMPOSE_FULL := docker compose -f docker-compose.yml --env-file $(ENV_FILE) --profile full
 
 help: ## Show this help
-	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 # --- local development -------------------------------------------------------------------------------------
 
@@ -89,3 +90,22 @@ smoke: ## Drive a two-player duel end to end against the running stack (BASE_URL
 
 clean: ## Remove build artifacts
 	./gradlew clean
+
+# --- observability (docs/observability.md) -------------------------------------------------------------------
+
+# The local harness: the full stack plus Alloy plus a throwaway Prometheus, Loki and Grafana. The override file points
+# Alloy at the local Prometheus/Loki instead of Grafana Cloud and publishes the harness ports on loopback.
+COMPOSE_OBS := docker compose -f docker-compose.yml -f docker-compose.observability-local.yml --env-file $(ENV_FILE) \
+	--profile full --profile observability --profile observability-local
+
+observability-up: ## Local Prometheus+Loki+Grafana+Alloy next to a running `make up`; Grafana at http://localhost:3000
+	@# Compose's resolved project name (not always "cardwar", e.g. in a worktree) has to be passed explicitly, or
+	@# Alloy's Docker discovery filters on the wrong label and silently tails nothing.
+	CARDWAR_COMPOSE_PROJECT="$$($(COMPOSE_OBS) config --format json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).name))')" \
+		$(COMPOSE_OBS) up -d prometheus loki grafana alloy
+
+observability-down: ## Stop the local observability harness (the app stack keeps running)
+	$(COMPOSE_OBS) rm -sf prometheus loki grafana alloy
+
+alloy-logs: ## Follow Alloy's log (rejected pushes and empty discovery show here)
+	$(COMPOSE_OBS) logs -f --tail=200 alloy
