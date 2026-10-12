@@ -13,6 +13,6 @@ ARG TELEGRAM_APP_NAME=""
 ENV VITE_TELEGRAM_BOT_USERNAME=$TELEGRAM_BOT_USERNAME VITE_TELEGRAM_APP_NAME=$TELEGRAM_APP_NAME
 RUN npm run build
 
-# ---- nginx with the built client baked in; nginx.conf and certificates stay mounted by compose ----
+# ---- nginx with the built client baked in; nginx/conf/ and the certificates stay mounted by compose ----
 FROM nginx:1.27-alpine
 COPY --from=client /client/dist /usr/share/nginx/html/app

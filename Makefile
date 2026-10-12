@@ -49,9 +49,10 @@ db-down: ## Stop the local Postgres and Redis
 
 up: ## Build & run the full stack (db, redis, app, nginx) with $(ENV_FILE)
 	$(COMPOSE_FULL) up --build -d
-	@# nginx.conf is bind-mounted: when the nginx image is unchanged compose keeps the old container, so a config
-	@# change would never load. Validate and reload it explicitly.
-	$(COMPOSE_FULL) exec -T nginx nginx -t -q && $(COMPOSE_FULL) exec -T nginx nginx -s reload
+	@# nginx's config directory is bind-mounted: when the nginx image is unchanged compose keeps the old container,
+	@# so a config change would never load. Validate and reload it explicitly.
+	$(COMPOSE_FULL) exec -T nginx nginx -t -q -c /etc/nginx/cardwar/nginx.conf \
+		&& $(COMPOSE_FULL) exec -T nginx nginx -s reload -c /etc/nginx/cardwar/nginx.conf
 
 down: ## Stop the full stack (volumes are kept; add `-v` by hand to wipe data)
 	$(COMPOSE_FULL) down
