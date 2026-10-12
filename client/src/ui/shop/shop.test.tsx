@@ -70,6 +70,7 @@ function fakeApi() {
         equipItem: vi.fn(),
         starsInvoice: vi.fn(),
         wallet: vi.fn().mockResolvedValue(walletView(200)),
+        loadout: vi.fn().mockResolvedValue(loadoutView()),
     };
 }
 
@@ -127,6 +128,18 @@ describe('Shop', () => {
         await screen.findByTestId('equip-back-trident');
         expect(api.buyItem).toHaveBeenCalledWith('back-trident');
         await waitFor(() => expect(wallet.value?.balance).toBe(200));
+    });
+
+    it('re-reads the loadout after a purchase, so a new emote reaches the table tray', async () => {
+        const { api } = setup();
+        api.buyItem.mockResolvedValue(item('emote-fire', { type: 'EMOTE', owned: true }));
+        api.loadout.mockResolvedValue(loadoutView({ emotes: ['like', 'fire'] }));
+        await screen.findByTestId('item-deck-classic');
+        tab('emotes');
+
+        fireEvent.click(screen.getByTestId('buy-emote-fire'));
+
+        await waitFor(() => expect(loadout.value?.emotes).toEqual(['like', 'fire']));
     });
 
     it('equips an owned item, moving the equipped mark within its type and updating the loadout', async () => {

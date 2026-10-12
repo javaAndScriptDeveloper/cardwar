@@ -4,14 +4,17 @@ import type { CoinPackView, ItemType, ShopItemView } from '../../api/types';
 import { fetchPackIndex } from '../../content/loader';
 import type { PackIndexEntry } from '../../content/types';
 import { t } from '../../i18n';
-import { applyLoadout } from '../../state/loadout';
+import { applyLoadout, refreshLoadout } from '../../state/loadout';
 import { refreshWallet, wallet } from '../../state/wallet';
 import type { Telegram } from '../../telegram/webapp';
 import { BackSwatch, emoteGlyph, FrameSwatch, TableSwatch } from '../cosmetics';
 import { describeError } from '../errors';
 import { Badge, Button, CoinAmount, Tabs, Toast } from '../kit';
 
-export type ShopApi = Pick<ApiClient, 'shop' | 'buyItem' | 'equipItem' | 'starsInvoice' | 'wallet'>;
+export type ShopApi = Pick<
+    ApiClient,
+    'shop' | 'buyItem' | 'equipItem' | 'starsInvoice' | 'wallet' | 'loadout'
+>;
 
 const ITEM_TABS = {
     decks: 'DECK',
@@ -100,7 +103,8 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
         run(item.code, async () => {
             const bought = await api.buyItem(item.code);
             replaceItems((items) => items.map((other) => (other.code === bought.code ? bought : other)));
-            await refreshWallet(api);
+            // The loadout lists owned emotes, so a purchase can change what the table tray offers.
+            await Promise.all([refreshWallet(api), refreshLoadout(api)]);
         });
 
     const equip = (item: ShopItemView) =>
