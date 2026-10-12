@@ -646,4 +646,16 @@ describe('DuelScreen rematch', () => {
         await screen.findByTestId('result');
         expect(screen.queryByTestId('rematch')).toBeNull();
     });
+
+    it('explains the move clock once, on the first own turn', async () => {
+        localStorage.removeItem('cardwar.hint.clock');
+        const first = setup();
+        const hint = await screen.findByRole('alert');
+        expect(hint.getAttribute('data-reason')).toBe('hint');
+        first.unmount();
+
+        setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        expect(screen.queryByRole('alert')).toBeNull();
+    });
 });

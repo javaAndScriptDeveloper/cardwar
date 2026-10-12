@@ -1289,3 +1289,93 @@ button.link {
         display: none;
     }
 }
+
+/* ---- Table polish (MVP 8) ----------------------------------------------------------------------------------- */
+
+.opponent .fan {
+    justify-content: center;
+    flex: 1;
+}
+
+/* Whoever's clock runs gets a soft breathing ring around the avatar. */
+[data-to-move='true'] .avatar,
+[data-to-move='true'] .avatar-frame {
+    animation: to-move-pulse 1.6s ease-in-out infinite;
+    border-radius: 50%;
+}
+
+@keyframes to-move-pulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 70%, transparent);
+    }
+    50% {
+        box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent);
+    }
+}
+
+.discard-pile {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    display: flex;
+    align-items: flex-end;
+}
+
+.discard-pile .card {
+    width: 30px;
+    margin-left: -22px;
+    opacity: 0.85;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 40%);
+}
+
+.discard-pile .card:nth-child(2) {
+    transform: rotate(-8deg);
+}
+
+.discard-pile .card:nth-child(3) {
+    transform: rotate(6deg);
+}
+
+.discard-pile .card:nth-child(4) {
+    transform: rotate(-3deg);
+}
+
+.discard-pile .count {
+    margin-left: 6px;
+    font-size: var(--font-s);
+    color: rgb(255 255 255 / 85%);
+}
+
+.pot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chips {
+    display: inline-flex;
+    flex-direction: column-reverse;
+}
+
+.chip {
+    display: block;
+    width: 18px;
+    height: 6px;
+    margin-top: -2px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(var(--gold) 0 30deg, #b8860b 30deg 60deg);
+    box-shadow: 0 1px 0 rgb(0 0 0 / 40%);
+}
+
+.felt {
+    position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-to-move='true'] .avatar,
+    [data-to-move='true'] .avatar-frame {
+        animation: none;
+        box-shadow: 0 0 0 3px var(--accent);
+    }
+}

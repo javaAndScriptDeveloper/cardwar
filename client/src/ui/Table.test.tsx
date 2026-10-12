@@ -78,7 +78,8 @@ describe('Table', () => {
         ).toBeTruthy();
         expect(screen.getByRole('button', { name: cardLabel(c('SEVEN', 'CLUBS')) })).toBeTruthy();
         expect(screen.getByRole('status').getAttribute('data-state')).toBe('defend');
-        expect(screen.getAllByAltText(t('card.back')).length).toBe(4 + 1);
+        // Four in the opponent's fan, one talon, and up to four on the discard pile (six discarded here).
+        expect(screen.getAllByAltText(t('card.back')).length).toBe(4 + 1 + 4);
     });
 
     it('shows the pot of a staked duel next to the trump, and none for a friendly one', () => {
@@ -299,5 +300,26 @@ describe('Table cosmetics', () => {
         expect(screen.getByTestId('felt').getAttribute('data-table')).toBe('green');
         expect(screen.getByTestId('opponent-fan').getAttribute('data-back')).toBe('classic');
         expect(screen.queryByTestId('you-frame')).toBeNull();
+    });
+
+    it('draws the discard pile as a small stack with the count, and the pot as chips', () => {
+        renderTable({ view: view({ discardCount: 7, stake: 500 }) });
+
+        const pile = screen.getByTestId('discard-pile');
+        expect(pile.getAttribute('data-count')).toBe('7');
+        expect(pile.querySelectorAll('.card').length).toBeLessThanOrEqual(4);
+        const pot = screen.getByTestId('pot');
+        expect(pot.getAttribute('data-pot')).toBe('1000');
+        expect(pot.querySelectorAll('.chip').length).toBeGreaterThan(0);
+    });
+
+    it('marks the side whose clock runs, from the server when it says and from the turn otherwise', () => {
+        const { unmount } = renderTable({ view: view({ toMove: 'them', deadline: '2099-01-01T00:00:00Z' }) });
+        expect(screen.getByTestId('opponent-side').getAttribute('data-to-move')).toBe('true');
+        expect(screen.getByTestId('you-side').getAttribute('data-to-move')).toBe('false');
+        unmount();
+
+        renderTable({ view: defending });
+        expect(screen.getByTestId('you-side').getAttribute('data-to-move')).toBe('true');
     });
 });

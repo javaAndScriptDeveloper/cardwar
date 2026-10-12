@@ -13,7 +13,7 @@ import { animate, motionEnabled } from '../motion';
 import { loadout } from '../state/loadout';
 import { settings } from '../state/settings';
 import { reasonMessage } from '../game/reasons';
-import { role, targetsFor, undefendedAttacks } from '../game/selectors';
+import { role, statusState, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
@@ -70,6 +70,25 @@ const EMOTE_MS = 2500;
 const RETRY_MS = 1500;
 /** How many times the history is read for a finished duel before the duel is declared gone. */
 const HISTORY_ATTEMPTS = 4;
+const CLOCK_HINT = 'cardwar.hint.clock';
+
+/** One-time hints live in localStorage; a blocked storage just means the hint shows again, never an error. */
+function hintShown(key: string): boolean {
+    try {
+        return localStorage.getItem(key) !== null;
+    } catch {
+        return false;
+    }
+}
+
+function markHint(key: string): void {
+    try {
+        localStorage.setItem(key, '1');
+    } catch {
+        // Storage blocked: the hint may show once more next time.
+    }
+}
+
 /** How often a finished screen looks for the opponent's rematch challenge. */
 const REMATCH_POLL_MS = 5000;
 
@@ -387,6 +406,18 @@ export function DuelScreen({
         toastTimer.current = setTimeout(() => setToast(undefined), 3000);
     };
     useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+    // The clock is invisible until it runs low, so the first own turn ever gets one sentence about it.
+    const playingState = state.kind === 'playing' ? statusState(state.view) : undefined;
+    const ownTurn =
+        playingState === 'your-attack' || playingState === 'throw-in' || playingState === 'defend';
+    useEffect(() => {
+        if (!ownTurn || hintShown(CLOCK_HINT)) {
+            return;
+        }
+        markHint(CLOCK_HINT);
+        say(t('duel.hint.clock'), 'hint');
+    }, [ownTurn]);
 
     /** Both players see it through the stream, the thrower included, so nothing is shown from here. */
     const throwEmote = async (emote: string) => {

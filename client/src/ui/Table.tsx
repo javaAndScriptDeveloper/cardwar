@@ -47,6 +47,26 @@ export interface TableProps {
 
 const SUIT_SYMBOL: Record<Suit, string> = { CLUBS: '♣', DIAMONDS: '♦', HEARTS: '♥', SPADES: '♠' };
 
+/** How many backs the discard pile shows at most; the count badge carries the rest. */
+const DISCARD_STACK = 4;
+
+/** One chip per order of magnitude of the pot, up to four: 200 → 2, 2000 → 3, 10 000 → 4. */
+function chipsFor(pot: number): number {
+    return Math.min(4, Math.max(1, Math.floor(Math.log10(Math.max(pot, 1)))));
+}
+
+/** Whose clock runs: the server says when it has one; without it, the turn state decides. */
+function sideToMove(view: DuelView): 'you' | 'opponent' | undefined {
+    if (view.phase === 'FINISHED') {
+        return undefined;
+    }
+    if (view.toMove) {
+        return view.toMove === view.you ? 'you' : 'opponent';
+    }
+    const state = statusState(view);
+    return state === 'your-attack' || state === 'throw-in' || state === 'defend' ? 'you' : 'opponent';
+}
+
 /** Strikes that forfeit the duel; one dot each. */
 const STRIKES_TO_FORFEIT = 3;
 
@@ -80,10 +100,11 @@ export function Table({
     const yourBack = styleRef(cosmetics.back, 'classic');
     const usable = playable(view);
     const isUsable = (card: Card) => usable.some((candidate) => sameCard(candidate, card));
+    const toMove = sideToMove(view);
 
     return (
         <section class="table">
-            <header class="opponent">
+            <header class="opponent" data-testid="opponent-side" data-to-move={String(toMove === 'opponent')}>
                 <Framed frame={cosmetics.opponentFrame} data-testid="opponent-frame">
                     <Avatar
                         name={opponent.name}
@@ -137,6 +158,11 @@ export function Table({
                     <span class="hint">{t('duel.trump')}</span>
                     {view.stake > 0 && (
                         <span class="pot" data-testid="pot" data-pot={2 * view.stake} title={t('duel.pot')}>
+                            <span class="chips" aria-hidden="true">
+                                {Array.from({ length: chipsFor(2 * view.stake) }, (_, index) => (
+                                    <i key={index} class="chip" />
+                                ))}
+                            </span>
                             <CoinAmount amount={2 * view.stake} />
                         </span>
                     )}
@@ -169,7 +195,17 @@ export function Table({
                     })}
                 </div>
                 {view.discardCount > 0 && (
-                    <span class="hint discard">{t('duel.discarded', { n: view.discardCount })}</span>
+                    <div
+                        class="discard-pile"
+                        data-testid="discard-pile"
+                        data-count={view.discardCount}
+                        title={t('duel.discarded', { n: view.discardCount })}
+                    >
+                        {Array.from({ length: Math.min(view.discardCount, DISCARD_STACK) }, (_, index) => (
+                            <CardBack key={index} class="card small" back={yourBack} />
+                        ))}
+                        <span class="count">{view.discardCount}</span>
+                    </div>
                 )}
             </div>
 
@@ -204,7 +240,7 @@ export function Table({
                 </button>
             </div>
 
-            <footer class="you">
+            <footer class="you" data-testid="you-side" data-to-move={String(toMove === 'you')}>
                 <Framed frame={cosmetics.frame} data-testid="you-frame">
                     <Avatar name={you.name} photoUrl={you.photoUrl} size={28} data-testid="you-avatar" />
                 </Framed>
