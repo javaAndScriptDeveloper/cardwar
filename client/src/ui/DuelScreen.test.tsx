@@ -103,6 +103,41 @@ describe('DuelScreen', () => {
         expect(screen.getByTestId('coin-delta').getAttribute('data-delta')).toBe(delta);
     });
 
+    it.each([
+        [{ winner: 'me', loser: 'them' }, 'WON'],
+        [{ winner: 'them', loser: 'me' }, 'LOST'],
+    ])('explains a forfeit (%j → %s)', async (outcome, result) => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockResolvedValueOnce(
+            view({ version: 40, phase: 'FINISHED', outcome: { ...outcome, draw: false, reason: 'FORFEIT' } }),
+        );
+        nudge();
+
+        await waitFor(() => expect(screen.getByText(t(`duel.explainForfeit.${result}`))).toBeTruthy());
+    });
+
+    it('explains a forfeit read from the history', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockRejectedValueOnce(new ApiError(404));
+        api.history.mockResolvedValueOnce([
+            {
+                duelId: 'duel-1',
+                result: 'LOST',
+                endReason: 'FORFEIT',
+                opponentUsername: 'bob',
+                stake: 0,
+                coinDelta: 0,
+            },
+        ]);
+        nudge();
+
+        await waitFor(() => expect(screen.getByText(t('duel.explainForfeit.LOST'))).toBeTruthy());
+    });
+
     it('shows no coins for a friendly duel', async () => {
         const { api, nudge } = setup();
         await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());

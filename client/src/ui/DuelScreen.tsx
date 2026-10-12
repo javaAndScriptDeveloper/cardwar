@@ -53,6 +53,10 @@ function coinsOf(view: DuelView, result: Result): number | undefined {
 }
 
 function explain(result: Result, opponentName: string): string {
+    // Three missed moves end the duel without anyone running out of cards; the usual sentence would be wrong.
+    if (result.reason === 'FORFEIT' && result.result !== 'DRAW') {
+        return result.result === 'WON' ? t('duel.explainForfeit.WON') : t('duel.explainForfeit.LOST');
+    }
     return t(`duel.explain.${result.result}`, { name: opponentName });
 }
 
