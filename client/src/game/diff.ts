@@ -1,5 +1,5 @@
 import type { DuelResult, DuelView } from '../api/types';
-import { type Card, sameCard } from './cards';
+import { type Card, cardId, sameCard } from './cards';
 import { role } from './selectors';
 
 type Side = 'you' | 'opponent';
@@ -17,7 +17,11 @@ export type TableEvent =
     | { type: 'attack_ended'; count: number }
     | { type: 'card_dealt'; count: number; to: Side }
     | { type: 'turn_started'; yours: boolean }
-    | { type: 'duel_finished'; result: DuelResult };
+    | { type: 'duel_finished'; result: DuelResult }
+    /** The cards you hold changed (not their order); content packs lay the hand out on it. */
+    | { type: 'hand_changed'; hand: Card[] }
+    /** Placeholder until emotes exist (MVP 5): nothing emits it yet, but packs may already react to it. */
+    | { type: 'emote_received'; emote: string; by: Side };
 
 export interface Result {
     result: DuelResult;
@@ -93,6 +97,20 @@ export function diffViews(prev: DuelView | undefined, next: DuelView): TableEven
         }
     } else if (yourTurn(prev) !== yourTurn(next) || prev.phase === 'FINISHED') {
         events.push({ type: 'turn_started', yours: yourTurn(next) });
+    }
+    return events;
+}
+
+const holding = (view: DuelView) => view.hand.map(cardId).sort().join(',');
+
+/**
+ * `diffViews` plus the events only the content rule engine needs: `hand_changed` whenever the cards held differ
+ * (always for the first view). Kept apart so the table's own reactions stay exactly as they were.
+ */
+export function contentEvents(prev: DuelView | undefined, next: DuelView): TableEvent[] {
+    const events = diffViews(prev, next);
+    if (!prev || holding(prev) !== holding(next)) {
+        events.push({ type: 'hand_changed', hand: next.hand });
     }
     return events;
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { diffViews, resultOf } from './diff';
+import { contentEvents, diffViews, resultOf } from './diff';
 import { c, view } from './fixtures/views';
 
 const six = c('SIX', 'CLUBS');
@@ -117,5 +117,30 @@ describe('diffViews', () => {
         expect(diffViews(view(), lost)).toContainEqual({ type: 'duel_finished', result: 'LOST' });
         expect(diffViews(view(), draw)).toContainEqual({ type: 'duel_finished', result: 'DRAW' });
         expect(resultOf(won)).toEqual({ result: 'WON', reason: 'X' });
+    });
+});
+
+describe('contentEvents', () => {
+    it('adds hand_changed for the first view, after the table events', () => {
+        const first = view();
+        expect(contentEvents(undefined, first)).toEqual([
+            ...diffViews(undefined, first),
+            { type: 'hand_changed', hand: first.hand },
+        ]);
+    });
+
+    it('adds hand_changed when the cards held change', () => {
+        const prev = view();
+        const next = view({ hand: prev.hand.slice(1), table: [{ attack: prev.hand[0] ?? six }], version: 1 });
+        expect(contentEvents(prev, next)).toEqual([
+            ...diffViews(prev, next),
+            { type: 'hand_changed', hand: next.hand },
+        ]);
+    });
+
+    it('stays quiet when only the order or nothing changed', () => {
+        const prev = view();
+        expect(contentEvents(prev, view({ hand: [...prev.hand].reverse() }))).toEqual([]);
+        expect(contentEvents(prev, view())).toEqual([]);
     });
 });
