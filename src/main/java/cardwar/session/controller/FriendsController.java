@@ -6,6 +6,7 @@ import cardwar.session.dto.ChallengeRequest;
 import cardwar.session.dto.ChallengeView;
 import cardwar.session.dto.FriendView;
 import cardwar.session.dto.InviteView;
+import cardwar.session.dto.OutgoingChallengeView;
 import cardwar.session.service.FriendsService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,5 +49,11 @@ public class FriendsController {
     @Operation(summary = "Challenges addressed to the caller that are still open")
     public List<ChallengeView> challenges(@AuthenticationPrincipal PlayerIdentity caller) {
         return friends.incoming(new PlayerId(caller.playerId()));
+    }
+
+    @GetMapping("/api/v1/challenges/outgoing")
+    @Operation(summary = "Challenges the caller sent in the last day, newest first, at most 20, with their status")
+    public List<OutgoingChallengeView> outgoing(@AuthenticationPrincipal PlayerIdentity caller) {
+        return friends.outgoing(new PlayerId(caller.playerId()));
     }
 }

@@ -42,6 +42,7 @@ function fakeApi() {
         friends: vi.fn().mockResolvedValue([]),
         challenge: vi.fn(),
         challenges: vi.fn().mockResolvedValue([]),
+        outgoingChallenges: vi.fn().mockResolvedValue([]),
         declineInvite: vi.fn().mockResolvedValue(undefined),
         loadout: vi.fn().mockResolvedValue({
             deck: 'classic',
@@ -582,6 +583,33 @@ describe('Shell', () => {
             expect(screen.getByTestId('waiting-screen').getAttribute('data-challenge')).toBe('true');
             expect(screen.getByTestId('waiting-screen').textContent).toContain('Богдан');
             expect(screen.queryByTestId('share-invite')).toBeNull();
+        });
+
+        it('lists the challenge you just sent when you are back on the friends screen', async () => {
+            const api = fakeApi();
+            api.friends.mockResolvedValue([friendView('p2', 'Богдан')]);
+            api.challenge.mockResolvedValue({ ...pending('inv-c', 100), invitee: 'p2' });
+            api.inviteStatus.mockResolvedValue({ ...pending('inv-c', 100), invitee: 'p2' });
+            const sent = {
+                inviteId: 'inv-c',
+                to: { playerId: 'p2', username: 'bohdan', displayName: 'Богдан' },
+                stake: 100,
+                status: 'WAITING' as const,
+                createdAt: '2026-10-12T10:00:00Z',
+                expiresAt: '2099-01-01T00:00:00Z',
+            };
+            api.outgoingChallenges.mockResolvedValueOnce([]).mockResolvedValue([sent]);
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('challenge-p2'));
+            fireEvent.click(await screen.findByTestId('stake-100'));
+            await screen.findByTestId('waiting-screen');
+            fireEvent.click(screen.getByTestId('nav-friends'));
+
+            const row = await screen.findByTestId('outgoing-row');
+            expect(row.getAttribute('data-status')).toBe('WAITING');
+            expect(row.getAttribute('data-invite')).toBe('inv-c');
         });
 
         it('tells the challenger the friend declined, and goes back to the lobby', async () => {

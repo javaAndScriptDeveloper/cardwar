@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
  *
  * <p>A per-player pointer key names the player's latest invite and expires with it; it is how a reopened Mini App
  * finds the invite it was waiting on, and how a second "create" hands back the same one.
+ *
+ * <p>A challenge also gets a record of its own that lives a day, and a per-sender sorted set of them: the invite
+ * expires within minutes, but its sender should still see that it was accepted, declined or left to expire.
  */
 @Component
 public class RedisInviteStore implements InviteStore {
@@ -61,10 +64,12 @@ public class RedisInviteStore implements InviteStore {
             """,
             Long.class);
 
+    /** Keeps the challenge record in step, so the sender sees the answer after the invite itself is gone. */
     private static final RedisScript<Long> DECLINE = new DefaultRedisScript<>(
             """
             if redis.call('HGET', KEYS[1], 'status') ~= 'PENDING' then return 0 end
             redis.call('HSET', KEYS[1], 'status', 'DECLINED')
+            if redis.call('EXISTS', KEYS[2]) == 1 then redis.call('HSET', KEYS[2], 'status', 'DECLINED') end
             return 1
             """,
             Long.class);
@@ -75,9 +80,15 @@ public class RedisInviteStore implements InviteStore {
             if status == false then return 0 end
             if status ~= 'PENDING' then return -1 end
             redis.call('HSET', KEYS[1], 'status', 'ACCEPTED', 'acceptor', ARGV[1], 'duelId', ARGV[2])
+            if redis.call('EXISTS', KEYS[2]) == 1 then redis.call('HSET', KEYS[2], 'status', 'ACCEPTED') end
             return 1
             """,
             Long.class);
+
+    /** How long a sender's challenges stay listed, and how many at most. */
+    static final Duration CHALLENGE_HISTORY = Duration.ofDays(1);
+
+    static final int CHALLENGE_HISTORY_SIZE = 20;
 
     private final StringRedisTemplate redis;
     private final Duration ttl;
@@ -90,7 +101,8 @@ public class RedisInviteStore implements InviteStore {
     @Override
     public StoredInvite create(UUID creator, long stake, UUID invitee) {
         var inviteId = UUID.randomUUID();
-        Instant expiresAt = Instant.now().plus(ttl);
+        Instant createdAt = Instant.now();
+        Instant expiresAt = createdAt.plus(ttl);
         String stored = redis.execute(
                 CREATE,
                 List.of(pointerKey(creator), key(inviteId)),
@@ -105,6 +117,10 @@ public class RedisInviteStore implements InviteStore {
             if (invitee != null) {
                 redis.opsForSet().add(incomingKey(invitee), inviteId.toString());
                 redis.expire(incomingKey(invitee), ttl);
+                remember(
+                        new StoredChallenge(
+                                inviteId, invitee, stake, createdAt, expiresAt, StoredChallenge.Outcome.WAITING),
+                        creator);
             }
             return new StoredInvite(
                     inviteId, creator, StoredInvite.Status.PENDING, null, null, expiresAt, stake, invitee);
@@ -146,7 +162,8 @@ public class RedisInviteStore implements InviteStore {
 
     @Override
     public ClaimResult claim(UUID inviteId, UUID acceptor, UUID duelId) {
-        Long result = redis.execute(CLAIM, List.of(key(inviteId)), acceptor.toString(), duelId.toString());
+        Long result = redis.execute(
+                CLAIM, List.of(key(inviteId), challengeKey(inviteId)), acceptor.toString(), duelId.toString());
         if (result == null || result == 0L) {
             return ClaimResult.MISSING;
         }
@@ -174,8 +191,80 @@ public class RedisInviteStore implements InviteStore {
 
     @Override
     public boolean decline(UUID inviteId) {
-        Long result = redis.execute(DECLINE, List.of(key(inviteId)));
+        Long result = redis.execute(DECLINE, List.of(key(inviteId), challengeKey(inviteId)));
         return result != null && result == 1L;
+    }
+
+    @Override
+    public List<StoredChallenge> findOutgoing(UUID creator) {
+        String outgoing = outgoingKey(creator);
+        double oldest = micros(Instant.now().minus(CHALLENGE_HISTORY));
+        redis.opsForZSet().removeRangeByScore(outgoing, Double.NEGATIVE_INFINITY, oldest);
+        var ids = redis.opsForZSet().reverseRange(outgoing, 0, CHALLENGE_HISTORY_SIZE - 1L);
+        if (ids == null) {
+            return List.of();
+        }
+        var challenges = new java.util.ArrayList<StoredChallenge>();
+        for (String id : ids) {
+            UUID inviteId = UUID.fromString(id);
+            Map<Object, Object> fields = redis.opsForHash().entries(challengeKey(inviteId));
+            if (fields.isEmpty()) {
+                redis.opsForZSet().remove(outgoing, id);
+                continue;
+            }
+            Instant expiresAt = Instant.parse((String) fields.get("expiresAt"));
+            challenges.add(new StoredChallenge(
+                    inviteId,
+                    UUID.fromString((String) fields.get("invitee")),
+                    Long.parseLong((String) fields.get("stake")),
+                    Instant.parse((String) fields.get("createdAt")),
+                    expiresAt,
+                    outcome((String) fields.get("status"), inviteId)));
+        }
+        return challenges;
+    }
+
+    /** An answer is final; an unanswered challenge is waiting only while its invite can still be accepted. */
+    private StoredChallenge.Outcome outcome(String recorded, UUID inviteId) {
+        if ("ACCEPTED".equals(recorded) || "DECLINED".equals(recorded)) {
+            return StoredChallenge.Outcome.valueOf(recorded);
+        }
+        boolean open = find(inviteId)
+                .filter(invite -> invite.status() == StoredInvite.Status.PENDING)
+                .filter(invite -> invite.expiresAt().isAfter(Instant.now()))
+                .isPresent();
+        return open ? StoredChallenge.Outcome.WAITING : StoredChallenge.Outcome.EXPIRED;
+    }
+
+    private void remember(StoredChallenge challenge, UUID creator) {
+        String record = challengeKey(challenge.inviteId());
+        redis.opsForHash()
+                .putAll(
+                        record,
+                        Map.of(
+                                "invitee", challenge.invitee().toString(),
+                                "stake", Long.toString(challenge.stake()),
+                                "createdAt", challenge.createdAt().toString(),
+                                "expiresAt", challenge.expiresAt().toString(),
+                                "status", "PENDING"));
+        redis.expire(record, CHALLENGE_HISTORY);
+        String outgoing = outgoingKey(creator);
+        redis.opsForZSet().add(outgoing, challenge.inviteId().toString(), micros(challenge.createdAt()));
+        redis.opsForZSet().removeRange(outgoing, 0, -CHALLENGE_HISTORY_SIZE - 1L);
+        redis.expire(outgoing, CHALLENGE_HISTORY);
+    }
+
+    /** Microseconds keep two challenges sent within the same millisecond in order; a double holds them exactly. */
+    private static double micros(Instant instant) {
+        return instant.getEpochSecond() * 1_000_000.0 + instant.getNano() / 1_000;
+    }
+
+    private static String challengeKey(UUID inviteId) {
+        return "cardwar:challenge:" + inviteId;
+    }
+
+    private static String outgoingKey(UUID creator) {
+        return "cardwar:player:" + creator + ":outgoing";
     }
 
     private static String incomingKey(UUID invitee) {

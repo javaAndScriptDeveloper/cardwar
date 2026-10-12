@@ -12,6 +12,7 @@ import type {
     MatchView,
     MeView,
     MoveRequest,
+    OutgoingChallengeView,
     ProblemDetail,
     ShopItemView,
     ShopView,
@@ -122,6 +123,11 @@ export class ApiClient {
     /** Open challenges addressed to the caller. */
     challenges(): Promise<ChallengeView[]> {
         return this.request('GET', '/challenges');
+    }
+
+    /** Challenges the caller sent in the last day, newest first, at most 20, each with its status. */
+    outgoingChallenges(): Promise<OutgoingChallengeView[]> {
+        return this.request('GET', '/challenges/outgoing');
     }
 
     /** Turns down a challenge addressed to the caller (403 for anybody else); the challenger then reads DECLINED. */

@@ -7,6 +7,7 @@ import cardwar.exception.BadRequestException;
 import cardwar.session.dto.ChallengeView;
 import cardwar.session.dto.FriendView;
 import cardwar.session.dto.InviteView;
+import cardwar.session.dto.OutgoingChallengeView;
 import cardwar.session.policy.ChallengeCooldown;
 import cardwar.session.repository.DuelResultRepository;
 import java.time.Clock;
@@ -92,6 +93,22 @@ public class FriendsService {
                                     who.id(), who.username(), who.displayName(), who.handle(), who.photoUrl()),
                             invite.stake(),
                             invite.expiresAt());
+                })
+                .toList();
+    }
+
+    /** The caller's recent challenges, newest first, with the friend's current name. */
+    public List<OutgoingChallengeView> outgoing(PlayerId caller) {
+        return invites.outgoing(caller).stream()
+                .map(challenge -> {
+                    var who = accounts.summary(challenge.invitee());
+                    return new OutgoingChallengeView(
+                            challenge.inviteId(),
+                            new OutgoingChallengeView.To(who.id(), who.username(), who.displayName()),
+                            challenge.stake(),
+                            challenge.outcome().name(),
+                            challenge.createdAt(),
+                            challenge.expiresAt());
                 })
                 .toList();
     }

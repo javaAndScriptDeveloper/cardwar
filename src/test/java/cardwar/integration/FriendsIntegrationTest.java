@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -23,6 +24,9 @@ class FriendsIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     ObjectMapper mapper;
+
+    @Autowired
+    StringRedisTemplate redis;
 
     ApiDriver api;
     ApiDriver.Player alice;
@@ -111,5 +115,46 @@ class FriendsIntegrationTest extends AbstractIntegrationTest {
         challenge(alice, carol, 0)
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.reason").value("NOT_A_FRIEND"));
+    }
+
+    @Test
+    void theChallengerSeesTheirChallengesWithHowEachEnded() throws Exception {
+        playOnce(alice, bob);
+        playOnce(alice, carol);
+        // An open invite by link is nobody's challenge and is not listed.
+        api.createInvite(alice).andExpect(status().isCreated());
+
+        String declined = (String) api.readBody(challenge(alice, bob, 0)).get("inviteId");
+        mvc.perform(get("/api/v1/challenges/outgoing").headers(api.bearer(alice)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].inviteId").value(declined))
+                .andExpect(jsonPath("$[0].to.playerId").value(bob.id().toString()))
+                .andExpect(jsonPath("$[0].to.displayName").exists())
+                .andExpect(jsonPath("$[0].status").value("WAITING"));
+        mvc.perform(post("/api/v1/duels/invites/{id}/decline", declined).headers(api.bearer(bob)))
+                .andExpect(status().isNoContent());
+
+        String expired = (String) api.readBody(challenge(alice, carol, 0)).get("inviteId");
+        // Redis drops an invite at its TTL; deleting the key is that moment, without waiting for it.
+        redis.delete("cardwar:invite:" + expired);
+
+        String accepted = (String) api.readBody(challenge(alice, bob, 100)).get("inviteId");
+        api.acceptInvite(bob, accepted).andExpect(status().isOk());
+
+        mvc.perform(get("/api/v1/challenges/outgoing").headers(api.bearer(alice)))
+                .andExpect(jsonPath("$.length()").value(3))
+                .andExpect(jsonPath("$[0].inviteId").value(accepted))
+                .andExpect(jsonPath("$[0].status").value("ACCEPTED"))
+                .andExpect(jsonPath("$[0].stake").value(100))
+                .andExpect(jsonPath("$[1].inviteId").value(expired))
+                .andExpect(jsonPath("$[1].to.playerId").value(carol.id().toString()))
+                .andExpect(jsonPath("$[1].status").value("EXPIRED"))
+                .andExpect(jsonPath("$[2].inviteId").value(declined))
+                .andExpect(jsonPath("$[2].status").value("DECLINED"));
+        mvc.perform(get("/api/v1/challenges/outgoing").headers(api.bearer(bob)))
+                .andExpect(jsonPath("$").isEmpty());
+        mvc.perform(get("/api/v1/challenges").headers(api.bearer(bob)))
+                .andExpect(jsonPath("$").isEmpty());
     }
 }

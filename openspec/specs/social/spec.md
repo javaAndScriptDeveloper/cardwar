@@ -18,3 +18,10 @@ never played is 400 `NOT_A_FRIEND`. Only the challenged player SHALL be able to 
 SHALL be listed for the challenged player (`GET /api/v1/challenges`, the sender as `from` with display name and,
 when present, `handle` and `photoUrl`), and when they have a Telegram account the bot
 SHALL message them a button into the challenge; a failed message SHALL not fail the challenge.
+
+### Requirement: Outgoing challenges
+The challenger SHALL see the challenges they sent (`GET /api/v1/challenges/outgoing`): the last day's, newest first, at
+most 20, each naming the friend and the stake with a status of `WAITING`, `ACCEPTED`, `DECLINED` or `EXPIRED`. An
+invite that timed out, or that the challenger replaced with a newer one, reads `EXPIRED`; an answer stays visible
+after the invite itself has expired. Open invites by link are not challenges and SHALL not be listed. The existing
+`GET /api/v1/challenges` (incoming) is unchanged. The friends screen SHALL show them under its incoming challenges.

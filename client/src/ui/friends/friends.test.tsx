@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
-import type { ChallengeView, FriendView } from '../../api/types';
+import type { ChallengeView, FriendView, OutgoingChallengeView } from '../../api/types';
 import { t } from '../../i18n';
 import { Friends } from './Friends';
 
@@ -26,7 +26,22 @@ const challenge = (
     expiresAt: '2099-01-01T00:00:00Z',
 });
 
-function setup(options: { friends?: FriendView[] | Error; challenges?: ChallengeView[] } = {}) {
+const sent = (inviteId: string, status: OutgoingChallengeView['status']): OutgoingChallengeView => ({
+    inviteId,
+    to: { playerId: 'p3', username: 'taras', displayName: 'Тарас' },
+    stake: 0,
+    status,
+    createdAt: '2026-10-12T10:00:00Z',
+    expiresAt: '2026-10-12T10:15:00Z',
+});
+
+function setup(
+    options: {
+        friends?: FriendView[] | Error;
+        challenges?: ChallengeView[];
+        outgoing?: OutgoingChallengeView[];
+    } = {},
+) {
     const friends = options.friends ?? [friend('p1'), friend('p2', { won: 0, lost: 2, played: 2 })];
     const props = {
         api: {
@@ -36,6 +51,7 @@ function setup(options: { friends?: FriendView[] | Error; challenges?: Challenge
                     : vi.fn().mockResolvedValue(friends),
         },
         challenges: options.challenges ?? [],
+        outgoing: options.outgoing ?? [],
         onChallenge: vi.fn(),
         onAccept: vi.fn().mockResolvedValue(undefined),
         onDecline: vi.fn().mockResolvedValue(undefined),
@@ -47,6 +63,29 @@ function setup(options: { friends?: FriendView[] | Error; challenges?: Challenge
 }
 
 describe('Friends', () => {
+    it('shows the challenges you sent with the friend and where each stands', async () => {
+        setup({ outgoing: [sent('i1', 'WAITING'), sent('i2', 'DECLINED'), sent('i3', 'EXPIRED')] });
+
+        const rows = await screen.findAllByTestId('outgoing-row');
+        expect(rows.map((row) => row.getAttribute('data-status'))).toEqual([
+            'WAITING',
+            'DECLINED',
+            'EXPIRED',
+        ]);
+        expect(rows.map((row) => row.getAttribute('data-invite'))).toEqual(['i1', 'i2', 'i3']);
+        expect(within(rows[0] as HTMLElement).getByText('Тарас')).toBeTruthy();
+        expect(within(rows[1] as HTMLElement).getByTestId('outgoing-status').textContent).toBe(
+            t('friends.status.declined'),
+        );
+    });
+
+    it('has no outgoing section when you challenged nobody', async () => {
+        setup();
+
+        await screen.findAllByTestId('friend-row');
+        expect(screen.queryByTestId('outgoing')).toBeNull();
+    });
+
     it('lists friends with the record between you and a challenge button each', async () => {
         const props = setup();
 
@@ -111,6 +150,7 @@ describe('Friends', () => {
             <Friends
                 api={{ friends: friendsApi }}
                 challenges={[]}
+                outgoing={[]}
                 onChallenge={vi.fn()}
                 onAccept={vi.fn().mockResolvedValue(undefined)}
                 onDecline={vi.fn().mockResolvedValue(undefined)}

@@ -149,6 +149,10 @@ public class DuelInviteService {
         log.info("Invite {} declined", invite.inviteId());
     }
 
+    public java.util.List<cardwar.session.store.StoredChallenge> outgoing(PlayerId caller) {
+        return invites.findOutgoing(caller.value());
+    }
+
     public java.util.List<StoredInvite> incoming(PlayerId caller) {
         return invites.findIncoming(caller.value());
     }

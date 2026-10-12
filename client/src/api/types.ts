@@ -104,6 +104,16 @@ export interface ChallengeView {
     expiresAt: string;
 }
 
+/** A challenge the caller sent; EXPIRED also covers one replaced by a newer invite. */
+export interface OutgoingChallengeView {
+    inviteId: string;
+    to: { playerId: string; username: string; displayName: string };
+    stake: number;
+    status: 'WAITING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED';
+    createdAt: string;
+    expiresAt: string;
+}
+
 export interface DuelSummary {
     duelId: string;
     opponentId: string;

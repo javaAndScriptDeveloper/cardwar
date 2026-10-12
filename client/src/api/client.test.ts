@@ -167,12 +167,14 @@ describe('ApiClient', () => {
             .mockResolvedValueOnce(respond(200, []))
             .mockResolvedValueOnce(respond(200, { inviteId: 'i1', invitee: 'p2' }))
             .mockResolvedValueOnce(respond(200, []))
+            .mockResolvedValueOnce(respond(200, []))
             .mockResolvedValueOnce(new Response(null, { status: 204 }));
         const api = new ApiClient(fetchMock, () => 't');
 
         await api.friends();
         await expect(api.challenge('p2', 100)).resolves.toMatchObject({ invitee: 'p2' });
         await api.challenges();
+        await api.outgoingChallenges();
         await expect(api.declineInvite('i9')).resolves.toBeUndefined();
 
         const calls = fetchMock.mock.calls.map(
@@ -182,6 +184,7 @@ describe('ApiClient', () => {
             'GET /api/v1/friends',
             'POST /api/v1/friends/p2/challenge',
             'GET /api/v1/challenges',
+            'GET /api/v1/challenges/outgoing',
             'POST /api/v1/duels/invites/i9/decline',
         ]);
         expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBe('{"stake":100}');

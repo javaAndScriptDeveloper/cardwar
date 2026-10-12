@@ -25,6 +25,12 @@ public interface InviteStore {
     /** Challenges addressed to this player that are still pending. */
     java.util.List<StoredInvite> findIncoming(UUID invitee);
 
+    /**
+     * Challenges this player sent recently (a day at most, twenty at most), newest first, each with how it ended.
+     * Open invites by link are not challenges and are not listed.
+     */
+    java.util.List<StoredChallenge> findOutgoing(UUID creator);
+
     /** Turns a pending invite into a declined one; false when it was not pending. */
     boolean decline(UUID inviteId);
 

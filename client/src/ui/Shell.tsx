@@ -20,7 +20,7 @@ import { Profile } from './profile/Profile';
 import { Settings } from './settings/Settings';
 import { Shop } from './shop/Shop';
 import { useLaunch } from './useLaunch';
-import type { ChallengeView, FriendView } from '../api/types';
+import type { ChallengeView, FriendView, OutgoingChallengeView } from '../api/types';
 
 export type ShellApi = Pick<
     ApiClient,
@@ -44,6 +44,7 @@ export type ShellApi = Pick<
     | 'friends'
     | 'challenge'
     | 'challenges'
+    | 'outgoingChallenges'
     | 'declineInvite'
 >;
 
@@ -105,6 +106,7 @@ export function Shell({
     const [pickingStake, setPickingStake] = useState<'invite' | 'match' | 'challenge'>();
     const [challengeTarget, setChallengeTarget] = useState<FriendView>();
     const [challenges, setChallenges] = useState<ChallengeView[]>([]);
+    const [outgoing, setOutgoing] = useState<OutgoingChallengeView[]>([]);
     const [creating, setCreating] = useState(false);
     const [lobbyError, setLobbyError] = useState<string>();
     const [launchHandled, setLaunchHandled] = useState(false);
@@ -219,6 +221,24 @@ export function Shell({
         return () => clearInterval(timer);
     }, [watchChallenges, reloadChallenges, challengePollMs]);
 
+    // Challenges this player sent, with how each stands; polled only on the friends screen, where they are shown.
+    const onFriends = route.name === 'friends';
+    const reloadOutgoing = useCallback(async () => {
+        try {
+            setOutgoing(await api.outgoingChallenges());
+        } catch {
+            // Keep the last list; the next poll tries again.
+        }
+    }, [api]);
+    useEffect(() => {
+        if (!onFriends) {
+            return;
+        }
+        void reloadOutgoing();
+        const timer = setInterval(() => void reloadOutgoing(), challengePollMs);
+        return () => clearInterval(timer);
+    }, [onFriends, reloadOutgoing, challengePollMs]);
+
     const declineChallenge = async (inviteId: string) => {
         setChallenges((current) => current.filter((challenge) => challenge.inviteId !== inviteId));
         try {
@@ -274,6 +294,7 @@ export function Shell({
                 stake: created.stake ?? stake,
                 challengee: friend.displayName,
             });
+            void reloadOutgoing();
         } catch (error) {
             setLobbyError(
                 (error instanceof ApiError && reasonMessage(error.reason)) ||
@@ -381,6 +402,7 @@ export function Shell({
                     <Friends
                         api={api}
                         challenges={challenges}
+                        outgoing={outgoing}
                         onChallenge={(friend) => {
                             setChallengeTarget(friend);
                             setPickingStake('challenge');
