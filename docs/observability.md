@@ -31,9 +31,9 @@ Business counters come from `cardwar.metrics.GameMetrics`: `cardwar_signins_tota
 `cardwar_invites_total{event}`, `cardwar_bot_updates_total{outcome}` and the gauge `cardwar_sse_streams_open`. The
 invite conversion panel assumes the `event` values `created` and `accepted`.
 
-The HTTP p95 panels need the `http.server.requests` percentile histogram enabled on the app
-(`management.metrics.distribution.percentiles-histogram.http.server.requests=true`); without it the
-`_bucket` series do not exist and those panels stay empty.
+The HTTP p95 panels read the `http.server.requests` percentile histogram, enabled in `application.yml`
+(`management.metrics.distribution.percentiles-histogram`). Counters with tags appear on first use, so
+`cardwar_bot_updates_total` has no series until the bot has received an update.
 
 ### Alerts (`observability/grafana/alerting/alert-rules.yaml`)
 
