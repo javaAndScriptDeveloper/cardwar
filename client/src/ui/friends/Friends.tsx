@@ -6,6 +6,8 @@ import { describeError } from '../errors';
 import { Avatar, Button, CoinAmount } from '../kit';
 
 interface Props {
+    /** Pause between load attempts; tests shorten it. */
+    retryMs?: number;
     api: Pick<ApiClient, 'friends'>;
     /** Open challenges addressed to you; the shell polls them so the nav badge and this inbox agree. */
     challenges: readonly ChallengeView[];
@@ -22,19 +24,46 @@ type List =
 const WHEN = new Intl.DateTimeFormat('uk-UA', { day: 'numeric', month: 'short' });
 
 /** Everybody you have played (friends are derived from results, not added), and challenges waiting for you. */
-export function Friends({ api, challenges, onChallenge, onAccept, onDecline, onInvite }: Props) {
+/** Attempts before the list is reported as unavailable, and the pause between them. */
+const LOAD_ATTEMPTS = 4;
+
+export function Friends({
+    api,
+    challenges,
+    onChallenge,
+    onAccept,
+    onDecline,
+    onInvite,
+    retryMs = 1500,
+}: Props) {
     const [list, setList] = useState<List>({ kind: 'loading' });
     const [busy, setBusy] = useState<string>();
 
+    // Right after a fast duel the per-player rate limit may still refuse a request; a failed load is retried a few
+    // times before the screen says so, as the duel screen does for its re-fetches.
     useEffect(() => {
         let live = true;
-        api.friends()
-            .then((friends) => live && setList({ kind: 'ready', friends }))
-            .catch((error: unknown) => live && setList({ kind: 'failed', error: describeError(error) }));
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        const load = (attempt: number) => {
+            api.friends()
+                .then((friends) => live && setList({ kind: 'ready', friends }))
+                .catch((error: unknown) => {
+                    if (!live) {
+                        return;
+                    }
+                    if (attempt < LOAD_ATTEMPTS) {
+                        timer = setTimeout(() => load(attempt + 1), retryMs);
+                    } else {
+                        setList({ kind: 'failed', error: describeError(error) });
+                    }
+                });
+        };
+        load(1);
         return () => {
             live = false;
+            clearTimeout(timer);
         };
-    }, [api]);
+    }, [api, retryMs]);
 
     const answer = async (inviteId: string, action: (id: string) => Promise<void>) => {
         setBusy(inviteId);

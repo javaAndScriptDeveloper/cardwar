@@ -36,6 +36,7 @@ function setup(options: { friends?: FriendView[] | Error; challenges?: Challenge
         onAccept: vi.fn().mockResolvedValue(undefined),
         onDecline: vi.fn().mockResolvedValue(undefined),
         onInvite: vi.fn(),
+        retryMs: 1,
     };
     render(<Friends {...props} />);
     return props;
@@ -69,6 +70,27 @@ describe('Friends', () => {
         setup({ friends: new Error('offline') });
 
         expect(await screen.findByRole('alert')).toBeTruthy();
+    });
+
+    it('retries a failed load, so a throttled request right after a duel still shows the friend', async () => {
+        const friendsApi = vi
+            .fn()
+            .mockRejectedValueOnce(new Error('too many requests'))
+            .mockResolvedValue([friend('p1')]);
+        render(
+            <Friends
+                api={{ friends: friendsApi }}
+                challenges={[]}
+                onChallenge={vi.fn()}
+                onAccept={vi.fn().mockResolvedValue(undefined)}
+                onDecline={vi.fn().mockResolvedValue(undefined)}
+                onInvite={vi.fn()}
+                retryMs={5}
+            />,
+        );
+
+        expect(await screen.findAllByTestId('friend-row')).toHaveLength(1);
+        expect(friendsApi).toHaveBeenCalledTimes(2);
     });
 
     it('shows incoming challenges at the top with accept and decline', async () => {
