@@ -1,6 +1,18 @@
 import { fireEvent, render, screen } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
-import { Avatar, Badge, BottomNav, Button, ListRow, Sheet, Tabs, Toast, initials } from './index';
+import {
+    Avatar,
+    Badge,
+    BottomNav,
+    Button,
+    CoinAmount,
+    ListRow,
+    Sheet,
+    Tabs,
+    Toast,
+    formatCoins,
+    initials,
+} from './index';
 
 describe('Avatar', () => {
     it('renders initials when no photo', () => {
@@ -87,6 +99,30 @@ describe('Badge and ListRow', () => {
         fireEvent.click(screen.getByTestId('row'));
         expect(onClick).toHaveBeenCalled();
         expect(screen.getByText('Sub')).toBeTruthy();
+    });
+});
+
+describe('CoinAmount', () => {
+    it('groups thousands with a thin space and shows a coin glyph', () => {
+        render(<CoinAmount amount={1234567} data-testid="coins" />);
+        const el = screen.getByTestId('coins');
+        expect(el.textContent).toBe('1 234 567');
+        expect(el.querySelector('.coin-glyph')).toBeTruthy();
+        expect(el.getAttribute('data-amount')).toBe('1234567');
+    });
+
+    it('signs the amount on request with a real minus sign', () => {
+        render(<CoinAmount amount={-5000} signed data-testid="loss" />);
+        render(<CoinAmount amount={100} signed data-testid="win" />);
+        render(<CoinAmount amount={0} signed data-testid="zero" />);
+        expect(screen.getByTestId('loss').textContent).toBe('−5 000');
+        expect(screen.getByTestId('win').textContent).toBe('+100');
+        expect(screen.getByTestId('zero').textContent).toBe('0');
+    });
+
+    it('leaves short numbers alone', () => {
+        expect(formatCoins(999)).toBe('999');
+        expect(formatCoins(1000)).toBe('1 000');
     });
 });
 
