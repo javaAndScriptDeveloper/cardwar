@@ -9,7 +9,7 @@ export type Launch =
     | { phase: 'loading' }
     | { phase: 'duel'; duelId: string }
     | { phase: 'invite'; inviteId: string }
-    | { phase: 'waiting'; inviteId: string }
+    | { phase: 'waiting'; inviteId: string; stake: number }
     | { phase: 'lobby'; error?: string };
 
 /**
@@ -53,7 +53,11 @@ export function useLaunch(api: LaunchApi, invite: string | undefined): Launch {
             if (cancelled) {
                 return;
             }
-            setLaunch(own ? { phase: 'waiting', inviteId: own.inviteId } : { phase: 'lobby' });
+            setLaunch(
+                own
+                    ? { phase: 'waiting', inviteId: own.inviteId, stake: own.stake ?? 0 }
+                    : { phase: 'lobby' },
+            );
         })();
         return () => {
             cancelled = true;

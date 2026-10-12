@@ -6,10 +6,13 @@ import { t } from '../i18n';
 import { navigate, TOP_LEVEL, useRoute } from '../router';
 import { inviteLink, shareUrl, type LinkConfig } from '../telegram/links';
 import type { Telegram } from '../telegram/webapp';
+import { reasonMessage } from '../game/reasons';
+import { refreshWallet, wallet } from '../state/wallet';
 import { describeError } from './errors';
 import { Friends } from './friends/Friends';
 import { BottomNav } from './kit';
 import { Lobby } from './lobby/Lobby';
+import { StakePicker } from './lobby/StakePicker';
 import { Waiting } from './lobby/Waiting';
 import { Profile } from './profile/Profile';
 import { Settings } from './settings/Settings';
@@ -18,7 +21,15 @@ import { useLaunch } from './useLaunch';
 
 export type ShellApi = Pick<
     ApiClient,
-    'activeDuels' | 'pendingInvite' | 'createInvite' | 'inviteStatus' | 'acceptInvite' | 'history'
+    | 'activeDuels'
+    | 'pendingInvite'
+    | 'createInvite'
+    | 'inviteStatus'
+    | 'acceptInvite'
+    | 'history'
+    | 'wallet'
+    | 'claimDailyBonus'
+    | 'transactions'
 >;
 
 interface Props {
@@ -35,6 +46,11 @@ interface Props {
 /** Turns an invite failure into a sentence; the status codes are the backend's documented invite answers. */
 function inviteProblem(error: unknown): string {
     if (error instanceof ApiError) {
+        // A rule with its own sentence (INSUFFICIENT_COINS at acceptance) says more than the bare status.
+        const reason = reasonMessage(error.reason);
+        if (reason) {
+            return reason;
+        }
         switch (error.status) {
             case 404:
                 return t('lobby.errors.inviteExpired');
@@ -55,7 +71,9 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     const route = useRoute();
     const launch = useLaunch(api, invite);
     // The invite being waited on survives tab changes; a reload recovers it through useLaunch.
-    const [waitingFor, setWaitingFor] = useState<string>();
+    const [waitingFor, setWaitingFor] = useState<{ inviteId: string; stake: number }>();
+    const [pickingStake, setPickingStake] = useState(false);
+    const [creating, setCreating] = useState(false);
     const [lobbyError, setLobbyError] = useState<string>();
     const [launchHandled, setLaunchHandled] = useState(false);
 
@@ -90,7 +108,7 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                 void join(launch.inviteId);
                 break;
             case 'waiting':
-                setWaitingFor(launch.inviteId);
+                setWaitingFor({ inviteId: launch.inviteId, stake: launch.stake });
                 break;
             case 'lobby':
                 if (launch.error) {
@@ -114,11 +132,41 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
         return () => telegram.backButton(false);
     }, [route, telegram]);
 
-    const createInvite = async () => {
+    // The balance moves at sign-in, when a duel ends (escrow, payout, refund) and on a bonus claim. Re-reading it
+    // whenever the player is outside a duel covers the first two without the duel screen knowing about coins.
+    const inDuel = route.name === 'duel';
+    useEffect(() => {
+        if (!inDuel) {
+            void refreshWallet(api);
+        }
+    }, [inDuel, api]);
+
+    const claimBonus = async () => {
         try {
-            const created = await api.createInvite();
+            wallet.value = await api.claimDailyBonus();
+        } catch (error) {
+            // 409: taken already (a double tap, another device). The fresh wallet says so; nothing to explain.
+            if (!(error instanceof ApiError && error.status === 409)) {
+                setLobbyError(t('lobby.errors.claimBonus', { error: describeError(error) }));
+            }
+            await refreshWallet(api);
+        }
+    };
+    const bonusDue = useCallback(() => void refreshWallet(api), [api]);
+
+    const openStakePicker = () => {
+        setPickingStake(true);
+        navigate({ name: 'lobby' });
+        void refreshWallet(api);
+    };
+
+    const createInvite = async (stake: number) => {
+        setPickingStake(false);
+        setCreating(true);
+        try {
+            const created = await api.createInvite(stake);
             setLobbyError(undefined);
-            setWaitingFor(created.inviteId);
+            setWaitingFor({ inviteId: created.inviteId, stake: created.stake ?? stake });
             if (telegram.inTelegram) {
                 // One tap: the share sheet opens right away, the waiting screen is already behind it.
                 telegram.openTelegramLink(
@@ -126,7 +174,12 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                 );
             }
         } catch (error) {
-            setLobbyError(t('lobby.errors.createInvite', { error: describeError(error) }));
+            setLobbyError(
+                (error instanceof ApiError && reasonMessage(error.reason)) ||
+                    t('lobby.errors.createInvite', { error: describeError(error) }),
+            );
+        } finally {
+            setCreating(false);
         }
         navigate({ name: 'lobby' });
     };
@@ -143,10 +196,11 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
             case 'lobby':
                 return waitingFor ? (
                     <Waiting
-                        inviteId={waitingFor}
+                        inviteId={waitingFor.inviteId}
+                        stake={waitingFor.stake}
                         api={api}
                         pollMs={pollMs}
-                        link={inviteLink(waitingFor, links)}
+                        link={inviteLink(waitingFor.inviteId, links)}
                         onShare={(link) => telegram.openTelegramLink(shareUrl(link, t('waiting.shareText')))}
                         onAccepted={startDuel}
                         onExpired={() => {
@@ -156,10 +210,19 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                         onCancel={() => setWaitingFor(undefined)}
                     />
                 ) : (
-                    <Lobby player={player} error={lobbyError} onInvite={createInvite} onJoin={join} />
+                    <Lobby
+                        player={player}
+                        error={lobbyError}
+                        wallet={wallet.value}
+                        creating={creating}
+                        onInvite={openStakePicker}
+                        onJoin={join}
+                        onClaimBonus={claimBonus}
+                        onBonusDue={bonusDue}
+                    />
                 );
             case 'friends':
-                return <Friends onInvite={createInvite} />;
+                return <Friends onInvite={openStakePicker} />;
             case 'shop':
                 return <Shop />;
             case 'profile':
@@ -178,6 +241,12 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     return (
         <>
             {screen}
+            <StakePicker
+                open={pickingStake}
+                balance={wallet.value?.balance}
+                onPick={(stake) => void createInvite(stake)}
+                onClose={() => setPickingStake(false)}
+            />
             {TOP_LEVEL.has(route.name) && (
                 <BottomNav
                     active={route.name as 'lobby' | 'friends' | 'shop' | 'profile'}

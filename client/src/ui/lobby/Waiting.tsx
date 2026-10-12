@@ -2,10 +2,12 @@ import { useEffect, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../../api/client';
 import { t } from '../../i18n';
 import { describeError } from '../errors';
-import { Button } from '../kit';
+import { Button, CoinAmount } from '../kit';
 
 interface Props {
     inviteId: string;
+    /** What the duel is played for; 0 is friendly. */
+    stake: number;
     api: Pick<ApiClient, 'inviteStatus'>;
     pollMs: number;
     link: string;
@@ -16,7 +18,17 @@ interface Props {
 }
 
 /** The creator's side of an invite: share it, show the code, and poll until a friend accepts. */
-export function Waiting({ inviteId, api, pollMs, link, onShare, onAccepted, onExpired, onCancel }: Props) {
+export function Waiting({
+    inviteId,
+    stake,
+    api,
+    pollMs,
+    link,
+    onShare,
+    onAccepted,
+    onExpired,
+    onCancel,
+}: Props) {
     const [problem, setProblem] = useState<string>();
 
     useEffect(() => {
@@ -57,6 +69,15 @@ export function Waiting({ inviteId, api, pollMs, link, onShare, onAccepted, onEx
         <section class="lobby" data-testid="waiting-screen">
             <h1>{t('waiting.title')}</h1>
             <p class="notice">{t('waiting.hint')}</p>
+            <p class="notice" data-testid="invite-stake" data-stake={stake}>
+                {stake > 0 ? (
+                    <>
+                        {t('waiting.stake')} <CoinAmount amount={stake} />
+                    </>
+                ) : (
+                    t('waiting.friendly')
+                )}
+            </p>
             <Button variant="primary" size="lg" onClick={() => onShare(link)} data-testid="share-invite">
                 {t('waiting.share')}
             </Button>

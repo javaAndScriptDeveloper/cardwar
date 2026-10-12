@@ -1,9 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import type { DuelView, InviteView } from '../api/types';
+import type { DailyBonusView, DuelView, InviteView, WalletView } from '../api/types';
 import { t } from '../i18n';
 import { navigate } from '../router';
+import { wallet } from '../state/wallet';
 import { resolveTelegram, type Telegram } from '../telegram/webapp';
 import { Shell } from './Shell';
 
@@ -18,16 +19,33 @@ function fakeApi() {
         inviteStatus: vi.fn(),
         acceptInvite: vi.fn(),
         history: vi.fn().mockResolvedValue([]),
+        wallet: vi.fn().mockResolvedValue(walletView(500)),
+        claimDailyBonus: vi.fn(),
+        transactions: vi.fn().mockResolvedValue([]),
     };
 }
 
-const pending = (inviteId: string): InviteView => ({
+function walletView(balance: number, bonus: Partial<DailyBonusView> = {}): WalletView {
+    return {
+        balance,
+        dailyBonus: { available: true, amount: 75, streakDay: 2, nextAt: '2099-01-01T00:00:00Z', ...bonus },
+    };
+}
+
+const pending = (inviteId: string, stake = 0): InviteView => ({
     inviteId,
     status: 'PENDING',
     expiresAt: '2099-01-01T00:00:00Z',
-    stake: 0,
+    stake,
 });
 const duelView = (duelId: string) => ({ duelId }) as DuelView;
+
+/** The invite button opens the stake picker; the invite is created once a stake is chosen. */
+async function inviteWithStake(stake: number) {
+    fireEvent.click(await screen.findByTestId('invite'));
+    await screen.findByTestId('stake-picker');
+    fireEvent.click(screen.getByTestId(`stake-${stake}`));
+}
 
 function renderShell(
     api: ReturnType<typeof fakeApi>,
@@ -54,6 +72,124 @@ function renderShell(
 describe('Shell', () => {
     beforeEach(() => {
         window.location.hash = '';
+        wallet.value = undefined;
+    });
+
+    describe('coins', () => {
+        it('shows the balance once the wallet loads', async () => {
+            renderShell(fakeApi());
+
+            await waitFor(() =>
+                expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('500'),
+            );
+        });
+
+        it('claims the daily bonus and shows the new balance', async () => {
+            const api = fakeApi();
+            api.claimDailyBonus.mockResolvedValue(walletView(575, { available: false, streakDay: 2 }));
+
+            renderShell(api);
+            const claim = await screen.findByTestId('claim-bonus');
+            expect(screen.getByTestId('daily-bonus').textContent).toContain(t('lobby.bonus.day', { n: 2 }));
+            expect(screen.getByTestId('daily-bonus').getAttribute('data-amount')).toBe('75');
+            fireEvent.click(claim);
+
+            await waitFor(() =>
+                expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('575'),
+            );
+            expect(api.claimDailyBonus).toHaveBeenCalledTimes(1);
+            expect((screen.getByTestId('claim-bonus') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('a bonus already claimed on another device just refreshes the wallet', async () => {
+            const api = fakeApi();
+            api.claimDailyBonus.mockRejectedValue(new ApiError(409, { reason: 'BONUS_ALREADY_CLAIMED' }));
+            api.wallet
+                .mockResolvedValueOnce(walletView(500))
+                .mockResolvedValue(walletView(550, { available: false }));
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('claim-bonus'));
+
+            await waitFor(() =>
+                expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('550'),
+            );
+            expect(screen.queryByRole('alert')).toBeNull();
+        });
+
+        it('counts down to the next bonus when today’s is taken', async () => {
+            const api = fakeApi();
+            const nextAt = new Date(Date.now() + (3 * 3600 + 2 * 60 + 30) * 1000).toISOString();
+            api.wallet.mockResolvedValue(walletView(500, { available: false, nextAt }));
+
+            renderShell(api);
+
+            const countdown = await screen.findByTestId('bonus-countdown');
+            expect(countdown.textContent).toMatch(/3:02:[23]\d/);
+            expect((screen.getByTestId('claim-bonus') as HTMLButtonElement).disabled).toBe(true);
+        });
+
+        it('picks a stake, disabling the ones above the balance, and shows it while waiting', async () => {
+            const api = fakeApi();
+            api.createInvite.mockResolvedValue(pending('inv-s', 100));
+            api.inviteStatus.mockResolvedValue(pending('inv-s', 100));
+
+            renderShell(api);
+            await waitFor(() => expect(screen.getByTestId('balance')).toBeTruthy());
+            fireEvent.click(await screen.findByTestId('invite'));
+            await screen.findByTestId('stake-picker');
+
+            const option = (n: number) => screen.getByTestId(`stake-${n}`) as HTMLButtonElement;
+            expect([0, 100, 500, 1000, 5000].map((n) => option(n).disabled)).toEqual([
+                false,
+                false,
+                false,
+                true,
+                true,
+            ]);
+            expect(option(0).textContent).toContain(t('stake.friendly'));
+            fireEvent.click(option(100));
+
+            await waitFor(() =>
+                expect(screen.getByTestId('invite-stake').getAttribute('data-stake')).toBe('100'),
+            );
+            expect(api.createInvite).toHaveBeenCalledWith(100);
+            expect(screen.queryByTestId('stake-picker')).toBeNull();
+        });
+
+        it.each(['INSUFFICIENT_COINS', 'INVALID_STAKE'])('explains a rejected stake (%s)', async (reason) => {
+            const api = fakeApi();
+            api.createInvite.mockRejectedValue(new ApiError(400, { reason }));
+
+            renderShell(api);
+            await inviteWithStake(0);
+
+            await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(t(`reason.${reason}`)));
+        });
+
+        it('explains an invite that cannot be accepted for lack of coins', async () => {
+            const api = fakeApi();
+            api.acceptInvite.mockRejectedValue(new ApiError(400, { reason: 'INSUFFICIENT_COINS' }));
+
+            renderShell(api, { invite: 'inv-rich' });
+
+            await waitFor(() =>
+                expect(screen.getByRole('alert').textContent).toBe(t('reason.INSUFFICIENT_COINS')),
+            );
+        });
+
+        it('refreshes the balance after a duel', async () => {
+            const api = fakeApi();
+            api.activeDuels.mockResolvedValue([{ duelId: 'd-active' }]);
+            api.wallet.mockResolvedValueOnce(walletView(400)).mockResolvedValue(walletView(600));
+
+            renderShell(api);
+            fireEvent.click(await screen.findByText('leave'));
+
+            await waitFor(() =>
+                expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('600'),
+            );
+        });
     });
 
     it('lands on the lobby with the greeting and bottom navigation', async () => {
@@ -112,7 +248,7 @@ describe('Shell', () => {
         const telegram: Telegram = { ...resolveTelegram({}), inTelegram: true, openTelegramLink: vi.fn() };
 
         renderShell(api, { telegram });
-        fireEvent.click(await screen.findByTestId('invite'));
+        await inviteWithStake(0);
 
         await waitFor(() => expect(screen.getByTestId('invite-code').textContent).toBe('inv-9'));
         expect(telegram.openTelegramLink).toHaveBeenCalledWith(
@@ -129,7 +265,7 @@ describe('Shell', () => {
         const telegram = resolveTelegram({ open });
 
         renderShell(api, { telegram });
-        fireEvent.click(await screen.findByTestId('invite'));
+        await inviteWithStake(0);
 
         await screen.findByTestId('invite-code');
         expect(open).not.toHaveBeenCalled();
@@ -143,7 +279,7 @@ describe('Shell', () => {
         api.inviteStatus.mockResolvedValue(pending('inv-2'));
 
         renderShell(api);
-        fireEvent.click(await screen.findByTestId('invite'));
+        await inviteWithStake(0);
         fireEvent.click(await screen.findByTestId('cancel-invite'));
 
         await waitFor(() => expect(screen.getByTestId('invite')).toBeTruthy());
@@ -158,7 +294,7 @@ describe('Shell', () => {
         api.inviteStatus.mockRejectedValue(new ApiError(404));
 
         renderShell(api);
-        fireEvent.click(await screen.findByTestId('invite'));
+        await inviteWithStake(0);
 
         await waitFor(() =>
             expect(screen.getByRole('alert').textContent).toBe(t('lobby.errors.waitExpired')),

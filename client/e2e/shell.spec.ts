@@ -45,6 +45,7 @@ test('the shell navigates, remembers settings and resumes a pending invite', asy
         window.location.hash = '#/';
     });
     await page.getByTestId('invite').click();
+    await page.getByTestId('stake-0').click();
     const code = (await page.getByTestId('invite-code').textContent())?.trim() ?? '';
     expect(code).toMatch(/^[0-9a-f-]{36}$/);
     await signInAs(page, username);

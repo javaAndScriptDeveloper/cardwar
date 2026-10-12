@@ -1,18 +1,36 @@
 import { useState } from 'preact/hooks';
+import type { WalletView } from '../../api/types';
 import type { SignedInPlayer } from '../../auth/session';
 import { t } from '../../i18n';
-import { Avatar, Badge, Button } from '../kit';
+import { Avatar, Badge, Button, CoinAmount } from '../kit';
+import { DailyBonus } from './DailyBonus';
 import { JoinByCode } from './JoinByCode';
 
 interface Props {
     player: SignedInPlayer;
     error: string | undefined;
-    onInvite: () => Promise<void>;
+    /** Undefined until the first load; the chip and the bonus card wait for it. */
+    wallet: WalletView | undefined;
+    /** An invite is being created (after a stake was picked). */
+    creating: boolean;
+    /** Opens the stake picker; the invite itself is created once a stake is chosen. */
+    onInvite: () => void;
     onJoin: (inviteId: string) => Promise<void>;
+    onClaimBonus: () => Promise<void>;
+    onBonusDue: () => void;
 }
 
 /** The start screen: who you are, one big button to invite, and the way in when a friend sent you a code. */
-export function Lobby({ player, error, onInvite, onJoin }: Props) {
+export function Lobby({
+    player,
+    error,
+    wallet,
+    creating,
+    onInvite,
+    onJoin,
+    onClaimBonus,
+    onBonusDue,
+}: Props) {
     const [busy, setBusy] = useState(false);
     const name = player.displayName ?? player.username;
     const run = (action: () => Promise<void>) => async () => {
@@ -32,6 +50,16 @@ export function Lobby({ player, error, onInvite, onJoin }: Props) {
                     <h1>{t('lobby.greeting', { name })}</h1>
                     <p class="notice">{t('lobby.tagline')}</p>
                 </div>
+                {wallet && (
+                    <span
+                        class="balance-chip"
+                        data-testid="balance"
+                        data-balance={wallet.balance}
+                        aria-label={t('lobby.balance')}
+                    >
+                        <CoinAmount amount={wallet.balance} />
+                    </span>
+                )}
             </header>
             {error && (
                 <p class="error" role="alert">
@@ -41,12 +69,14 @@ export function Lobby({ player, error, onInvite, onJoin }: Props) {
             <Button
                 variant="primary"
                 size="lg"
-                busy={busy}
-                onClick={() => void run(onInvite)()}
+                busy={creating}
+                disabled={busy}
+                onClick={onInvite}
                 data-testid="invite"
             >
                 {t('lobby.invite')}
             </Button>
+            {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
             <div class="panel soon" data-testid="quick-match">
                 <div class="row">
                     <span class="title">{t('lobby.quickMatch')}</span>

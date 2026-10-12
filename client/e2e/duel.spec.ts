@@ -106,6 +106,7 @@ test('two players play a duel to a result through the Mini App', async ({ browse
     const alice = await signIn(browser, `e2e-a-${suffix}`);
 
     await alice.getByTestId('invite').click();
+    await alice.getByTestId('stake-0').click();
     const code = (await alice.getByTestId('invite-code').textContent())?.trim() ?? '';
     expect(code).toMatch(/^[0-9a-f-]{36}$/);
 
