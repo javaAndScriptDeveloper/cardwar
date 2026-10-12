@@ -14,7 +14,8 @@
     "gen:cards": "node scripts/gen-cards.mjs",
     "e2e": "playwright test",
     "gen:sounds": "node scripts/gen-sounds.mjs",
-    "gen:pack:memes": "node scripts/gen-pack-memes.mjs"
+    "gen:pack:memes": "node scripts/gen-pack-memes.mjs",
+    "gen:music": "node scripts/gen-music.mjs"
   },
   "dependencies": {
     "@preact/signals": "^2.11.3",

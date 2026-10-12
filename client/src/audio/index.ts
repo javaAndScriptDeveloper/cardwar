@@ -1,3 +1,4 @@
+import { effect } from '@preact/signals';
 import { settings } from '../state/settings';
 
 export type Channel = 'sfx' | 'voice' | 'music';
@@ -33,12 +34,66 @@ export class AudioManager {
     private readonly makeContext: () => AudioContext | undefined;
     private readonly fetchImpl: typeof fetch;
     private readonly now: () => number;
+    /** The background track wanted, and the source playing it while music is on. */
+    private music: string | undefined;
+    private musicSource: AudioBufferSourceNode | undefined;
+    private musicStarting = false;
     unlocked = false;
 
     constructor(deps: Deps = {}) {
         this.makeContext = deps.context ?? defaultContext;
         this.fetchImpl = deps.fetchImpl ?? ((input, init) => fetch(input, init));
         this.now = deps.now ?? (() => performance.now());
+        // The music toggle takes effect at once, in both directions.
+        effect(() => {
+            void settings.value.music;
+            this.syncMusic();
+        });
+    }
+
+    /** Names the registered track to loop in the background whenever music is on and audio is unlocked. */
+    setMusic(name: string | undefined): void {
+        if (name !== this.music) {
+            this.stopMusic();
+            this.music = name;
+        }
+        this.syncMusic();
+    }
+
+    private syncMusic(): void {
+        const entry = this.music === undefined ? undefined : this.entries.get(this.music);
+        const ctx = this.ctx;
+        if (!entry || !ctx || !this.unlocked || !settings.value.music) {
+            this.stopMusic();
+            return;
+        }
+        if (this.musicSource || this.musicStarting) {
+            return;
+        }
+        this.musicStarting = true;
+        void this.load(entry, ctx).then(() => {
+            this.musicStarting = false;
+            // Music may have been switched off, or the track changed, while the file was loading.
+            if (
+                !entry.buffer ||
+                this.musicSource ||
+                !settings.value.music ||
+                this.entries.get(this.music ?? '') !== entry
+            ) {
+                return;
+            }
+            const source = ctx.createBufferSource();
+            source.buffer = entry.buffer;
+            source.loop = true;
+            source.connect(this.gain(entry.channel, ctx));
+            source.start();
+            this.musicSource = source;
+        });
+    }
+
+    private stopMusic(): void {
+        this.musicSource?.stop();
+        this.musicSource = undefined;
     }
 
     /**
@@ -56,6 +111,7 @@ export class AudioManager {
                 .resume()
                 .then(() => {
                     this.unlocked = true;
+                    this.syncMusic();
                 })
                 .catch(() => {});
         };
@@ -145,3 +201,6 @@ export const audio = new AudioManager();
 for (const name of DEFAULT_SOUNDS) {
     audio.register(name, `${import.meta.env.BASE_URL}sounds/default/${name}.wav`);
 }
+/** The background loop; plays only with the music setting on (off by default). */
+export const THEME = 'theme';
+audio.register(THEME, `${import.meta.env.BASE_URL}sounds/default/${THEME}.wav`, 'music');

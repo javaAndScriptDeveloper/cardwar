@@ -5,7 +5,7 @@ import { openDuelStream } from './api/events';
 import { Session } from './auth/session';
 import { linkConfigFromEnv } from './telegram/links';
 import { resolveTelegram, type TelegramHost } from './telegram/webapp';
-import { audio } from './audio';
+import { audio, THEME } from './audio';
 import { equip, PackLoader } from './content/loader';
 import { loadSettings, settings } from './state/settings';
 import { App } from './ui/App';
@@ -19,6 +19,7 @@ document.documentElement.dataset['scheme'] = telegram.colorScheme;
 loadSettings();
 // Browsers allow audio only after a gesture; the first tap anywhere unlocks it.
 audio.installUnlock(document);
+audio.setMusic(THEME);
 // The equipped deck loads lazily, and again only when the player picks another one.
 const packs = new PackLoader();
 const deck = computed(() => settings.value.deck);

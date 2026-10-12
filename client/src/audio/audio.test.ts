@@ -3,7 +3,7 @@ import { DEFAULT_SETTINGS, settings } from '../state/settings';
 import { AudioManager } from './index';
 
 function fakeContext() {
-    const source = { buffer: null as unknown, connect: vi.fn(), start: vi.fn() };
+    const source = { buffer: null as unknown, loop: false, connect: vi.fn(), start: vi.fn(), stop: vi.fn() };
     const gain = { gain: { value: 1 }, connect: vi.fn() };
     const ctx = {
         state: 'suspended',
@@ -136,5 +136,37 @@ describe('AudioManager', () => {
 
         await vi.waitFor(() => expect(source.start).toHaveBeenCalledTimes(1));
         expect((ctx.resume as unknown as { mock: { calls: unknown[] } }).mock.calls.length).toBe(resumes + 1);
+    });
+
+    it('loops the background track on the music channel only while music is on', async () => {
+        const { ctx, source } = fakeContext();
+        const audio = new AudioManager({ context: () => ctx, fetchImpl: okFetch() });
+        audio.register('theme', '/x/theme.wav', 'music');
+        audio.setMusic('theme');
+        await unlock(audio);
+
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        expect(source.start).not.toHaveBeenCalled();
+
+        settings.value = { ...DEFAULT_SETTINGS, music: true };
+        await vi.waitFor(() => expect(source.start).toHaveBeenCalledTimes(1));
+        expect(source.loop).toBe(true);
+
+        settings.value = { ...DEFAULT_SETTINGS, music: false };
+        expect(source.stop).toHaveBeenCalledTimes(1);
+    });
+
+    it('starts the music on the first gesture when it was already switched on', async () => {
+        settings.value = { ...DEFAULT_SETTINGS, music: true };
+        const { ctx, source } = fakeContext();
+        const audio = new AudioManager({ context: () => ctx, fetchImpl: okFetch() });
+        audio.register('theme', '/x/theme.wav', 'music');
+        audio.setMusic('theme');
+
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        expect(source.start).not.toHaveBeenCalled();
+
+        await unlock(audio);
+        await vi.waitFor(() => expect(source.start).toHaveBeenCalledTimes(1));
     });
 });
