@@ -6,6 +6,7 @@ import type { DuelView } from '../api/types';
 import { c, view } from '../game/fixtures/views';
 import { resolveTelegram } from '../telegram/webapp';
 import { audio } from '../audio';
+import { DEFAULT_SETTINGS, settings } from '../state/settings';
 import { animate } from '../motion';
 import { DuelScreen } from './DuelScreen';
 
@@ -242,6 +243,66 @@ describe('moves', () => {
                 expect(screen.getByTestId('result').getAttribute('data-result')).toBe('LOST'),
             );
             expect(audio.play).toHaveBeenCalledWith('lose');
+        });
+
+        it('stays silent on the phone when vibration is off', async () => {
+            settings.value = { ...DEFAULT_SETTINGS, haptics: false };
+            try {
+                const before = view({
+                    attacker: 'them',
+                    phase: 'DEFEND',
+                    table: [{ attack: c('SEVEN', 'SPADES') }],
+                });
+                const after = view({
+                    attacker: 'them',
+                    phase: 'DEFEND',
+                    table: [{ attack: c('SEVEN', 'SPADES'), defence: c('NINE', 'SPADES') }],
+                    hand: [c('SIX', 'CLUBS'), c('ACE', 'HEARTS')],
+                    version: 1,
+                });
+                const { api, telegram } = setup(before);
+                api.move.mockResolvedValue(after);
+
+                await tap('NINE_OF_SPADES');
+
+                await waitFor(() => expect(audio.play).toHaveBeenCalledWith('beat'));
+                expect(telegram.haptic).not.toHaveBeenCalled();
+            } finally {
+                settings.value = DEFAULT_SETTINGS;
+            }
+        });
+
+        it('plays the result sound and buzzes when the result comes from the history', async () => {
+            const api = {
+                duel: vi.fn().mockRejectedValue(new ApiError(404)),
+                move: vi.fn(),
+                history: vi.fn().mockResolvedValue([
+                    {
+                        duelId: 'duel-1',
+                        result: 'LOST',
+                        endReason: 'OUT_OF_CARDS',
+                        opponentUsername: 'bob',
+                    },
+                ]),
+                activeDuels: vi.fn().mockResolvedValue([]),
+            };
+            const telegram = { ...resolveTelegram({}), haptic: vi.fn() };
+            render(
+                <DuelScreen
+                    duelId="duel-1"
+                    player={{ playerId: 'me', username: 'alice' }}
+                    api={api}
+                    telegram={telegram}
+                    openStream={() => () => {}}
+                    onExit={vi.fn()}
+                />,
+            );
+
+            await waitFor(() =>
+                expect(screen.getByTestId('result').getAttribute('data-result')).toBe('LOST'),
+            );
+            expect(audio.play).toHaveBeenCalledWith('lose');
+            expect(telegram.haptic).toHaveBeenCalledWith('error');
         });
 
         it('shakes the hand on an illegal move', async () => {

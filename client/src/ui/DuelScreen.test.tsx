@@ -143,6 +143,20 @@ describe('DuelScreen', () => {
         expect(screen.getByRole('alert').textContent).toBe(t('duel.gone'));
     }, 10000);
 
+    it('stops retrying the history once the screen is gone', async () => {
+        const { api, nudge, unmount } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockRejectedValue(new ApiError(404));
+        api.history.mockResolvedValue([]);
+        nudge();
+        await waitFor(() => expect(api.history).toHaveBeenCalledTimes(1));
+
+        unmount();
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        expect(api.history).toHaveBeenCalledTimes(1);
+    }, 10000);
+
     it('calls a draw a draw', async () => {
         const { api, closed } = setup();
         await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());

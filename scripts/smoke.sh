@@ -53,6 +53,8 @@ grep -q '^HTTP/[0-9.]* 200' <<<"$APP_HEADERS" && pass "GET /app/ → 200" || fai
 grep -q '<div id="app">' /tmp/smoke.app && pass "client shell served" || fail "GET /app/ is not the client shell"
 grep -qi '^content-security-policy:.*frame-ancestors' <<<"$APP_HEADERS" && pass "CSP lets Telegram frame the app" \
   || fail "no CSP frame-ancestors on /app/"
+grep -qi '^content-security-policy:.*img-src[^;]*https://t\.me' <<<"$APP_HEADERS" && pass "CSP lets Telegram profile photos load" \
+  || fail "CSP img-src on /app/ does not allow https://t.me"
 ASSET="$(grep -o '/app/assets/[^"]*\.js' /tmp/smoke.app | head -1)"
 [ -n "$ASSET" ] && [ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL$ASSET")" = 200 ] \
   && pass "hashed bundle served" || fail "bundle $ASSET not served"

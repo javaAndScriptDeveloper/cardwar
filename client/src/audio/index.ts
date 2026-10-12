@@ -5,6 +5,7 @@ export type DefaultSound = 'slide' | 'beat' | 'take' | 'deal' | 'turn' | 'win' |
 
 /** A flurry of events must not stack the same sound on itself. */
 const DEDUPE_MS = 150;
+const UNLOCK_EVENTS = ['pointerup', 'touchend', 'click', 'keydown'] as const;
 
 interface Entry {
     url: string;
@@ -40,24 +41,27 @@ export class AudioManager {
         this.now = deps.now ?? (() => performance.now());
     }
 
-    /** Resumes the context on the first pointer or key gesture, then stops listening. */
+    /**
+     * Resumes the context on the first gesture browsers accept as activation: on touch screens that is the end of
+     * the touch or the click, not pointerdown. The listeners stay installed, because iOS suspends the context again
+     * when the app is backgrounded and only a gesture may resume it.
+     */
     installUnlock(target: EventTarget): void {
         const unlock = () => {
             this.ctx ??= this.makeContext();
-            if (!this.ctx) {
+            if (!this.ctx || this.ctx.state === 'running') {
                 return;
             }
             void this.ctx
                 .resume()
                 .then(() => {
                     this.unlocked = true;
-                    target.removeEventListener('pointerdown', unlock);
-                    target.removeEventListener('keydown', unlock);
                 })
                 .catch(() => {});
         };
-        target.addEventListener('pointerdown', unlock);
-        target.addEventListener('keydown', unlock);
+        for (const type of UNLOCK_EVENTS) {
+            target.addEventListener(type, unlock, { passive: true });
+        }
     }
 
     register(name: string, url: string, channel: Channel = 'sfx'): void {
@@ -75,8 +79,11 @@ export class AudioManager {
         }
         this.lastPlayed.set(name, at);
         const ctx = this.ctx;
-        void this.load(entry, ctx).then(() => {
-            if (!entry.buffer) {
+        // The platform may have suspended the context again (iOS does after backgrounding); a play that follows a
+        // gesture is allowed to resume it.
+        const ready = ctx.state === 'running' ? Promise.resolve() : ctx.resume().catch(() => {});
+        void Promise.all([ready, this.load(entry, ctx)]).then(() => {
+            if (!entry.buffer || ctx.state !== 'running') {
                 return;
             }
             const source = ctx.createBufferSource();

@@ -24,7 +24,7 @@ const okFetch = () => vi.fn().mockResolvedValue(new Response(new ArrayBuffer(8))
 async function unlock(audio: AudioManager) {
     const target = new EventTarget();
     audio.installUnlock(target);
-    target.dispatchEvent(new Event('pointerdown'));
+    target.dispatchEvent(new Event('pointerup'));
     await vi.waitFor(() => expect(audio.unlocked).toBe(true));
 }
 
@@ -92,7 +92,7 @@ describe('AudioManager', () => {
         audio.register('beat', '/x/beat.wav');
         const target = new EventTarget();
         audio.installUnlock(target);
-        target.dispatchEvent(new Event('pointerdown'));
+        target.dispatchEvent(new Event('pointerup'));
 
         expect(() => audio.play('beat')).not.toThrow();
         expect(audio.unlocked).toBe(false);
@@ -108,5 +108,33 @@ describe('AudioManager', () => {
         audio.play('beat');
         await new Promise((resolve) => setTimeout(resolve, 5));
         expect(source.start).not.toHaveBeenCalled();
+    });
+
+    it.each(['pointerup', 'touchend', 'click', 'keydown'])(
+        'unlocks on %s, the gestures browsers accept',
+        async (type) => {
+            const { ctx } = fakeContext();
+            const audio = new AudioManager({ context: () => ctx, fetchImpl: okFetch() });
+            const target = new EventTarget();
+            audio.installUnlock(target);
+
+            target.dispatchEvent(new Event(type));
+
+            await vi.waitFor(() => expect(audio.unlocked).toBe(true));
+        },
+    );
+
+    it('resumes a context the platform suspended again before playing', async () => {
+        const { ctx, source } = fakeContext();
+        const audio = new AudioManager({ context: () => ctx, fetchImpl: okFetch() });
+        audio.register('beat', '/x/beat.wav');
+        await unlock(audio);
+        (ctx as unknown as { state: string }).state = 'suspended';
+        const resumes = (ctx.resume as unknown as { mock: { calls: unknown[] } }).mock.calls.length;
+
+        audio.play('beat');
+
+        await vi.waitFor(() => expect(source.start).toHaveBeenCalledTimes(1));
+        expect((ctx.resume as unknown as { mock: { calls: unknown[] } }).mock.calls.length).toBe(resumes + 1);
     });
 });

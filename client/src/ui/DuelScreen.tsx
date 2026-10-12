@@ -11,7 +11,7 @@ import { settings } from '../state/settings';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
-import type { Telegram } from '../telegram/webapp';
+import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 import { Table } from './Table';
 
@@ -57,6 +57,22 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
     const [opponentName, setOpponentName] = useState(t('duel.opponent'));
     const version = useRef(-1);
     const previousView = useRef<DuelView>(undefined);
+    const mounted = useRef(true);
+    useEffect(() => {
+        mounted.current = true;
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
+    // Vibration is a setting; every haptic goes through here so the toggle means what it says.
+    const buzz = useCallback(
+        (kind: HapticKind) => {
+            if (settings.value.haptics) {
+                telegram.haptic(kind);
+            }
+        },
+        [telegram],
+    );
     const [lastEvents, setLastEvents] = useState<TableEvent[]>([]);
     const tableRef = useRef<HTMLDivElement>(null);
     const closeStream = useRef<() => void>(() => {});
@@ -67,12 +83,17 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
      * declaring the duel gone.
      */
     const finishFromHistory = useCallback(async () => {
-        for (let attempt = 1; ; attempt++) {
+        for (let attempt = 1; mounted.current; attempt++) {
             try {
                 const entry = (await api.history()).find((row) => row.duelId === duelId);
+                if (!mounted.current) {
+                    return;
+                }
                 if (entry) {
                     setOpponentName(entry.opponentUsername);
                     setState({ kind: 'over', result: { result: entry.result, reason: entry.endReason } });
+                    // This player did not make the last move, so no view carried the finish: react to it here.
+                    react({ type: 'duel_finished', result: entry.result }, buzz);
                     return;
                 }
                 if (attempt >= HISTORY_ATTEMPTS) {
@@ -90,7 +111,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             }
             await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
         }
-    }, [api, duelId]);
+    }, [api, duelId, buzz]);
 
     const show = useCallback(
         (view: DuelView) => {
@@ -102,7 +123,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             previousView.current = view;
             // Sounds and haptics need no element, so they fire here; animations wait for the render (see below).
             for (const event of events) {
-                react(event, telegram.haptic);
+                react(event, buzz);
             }
             setLastEvents(events);
             if (view.phase === 'FINISHED') {
@@ -112,7 +133,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 setState({ kind: 'playing', view });
             }
         },
-        [telegram],
+        [buzz],
     );
 
     // Animate what the last view changed, once its elements exist.
@@ -211,7 +232,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             show(await api.move(duelId, move));
             setSelectedTarget(undefined);
             setToast(undefined);
-            telegram.haptic('tap');
+            buzz('tap');
         } catch (error) {
             if (error instanceof ApiError && error.status === 409) {
                 // Somebody else's move landed first: re-read rather than retry a move made against a stale table.
@@ -223,7 +244,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 say(t('duel.connectionLost'), 'network');
                 await refresh();
             } else {
-                telegram.haptic('error');
+                buzz('error');
                 const hand = tableRef.current?.querySelector('[data-testid="hand"]');
                 if (hand) {
                     void animate(hand, 'shake', {});
@@ -335,7 +356,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
 }
 
 /** Sounds and haptics for one table event. Cosmetic by contract: nothing here can produce a move. */
-function react(event: TableEvent, haptic: Telegram['haptic']): void {
+function react(event: TableEvent, haptic: (kind: HapticKind) => void): void {
     switch (event.type) {
         case 'card_played':
             audio.play('slide');
