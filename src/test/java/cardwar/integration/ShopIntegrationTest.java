@@ -8,19 +8,36 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import cardwar.bot.service.TelegramBotService;
 import cardwar.monetization.service.StarsService;
+import cardwar.support.MutableClock;
+import cardwar.support.StubStreakSource;
 import cardwar.wallet.service.WalletService;
+import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import tools.jackson.databind.ObjectMapper;
 
-/** Coins buy cosmetics; cosmetics are equipped and seen at the table; Stars buy coins. */
+/**
+ * Coins buy cosmetics; cosmetics are equipped and seen at the table; Stars buy coins. Some items are earned by a
+ * win streak instead, and some are on sale one week in four.
+ */
 class ShopIntegrationTest extends AbstractIntegrationTest {
+
+    /** Saturday of ISO week 12, 2027 (12 % 4 == 0): Kyiv moves to summer time the next morning. */
+    private static final Instant SLOT_0_WEEK = Instant.parse("2027-03-27T12:00:00Z");
+
+    /** Monday 2027-03-29 00:00 in Kyiv, already EEST (UTC+3). A naive "+7 days" from the week's start is an hour off. */
+    private static final Instant SLOT_0_WEEK_ENDS = Instant.parse("2027-03-28T21:00:00Z");
+
+    /** ISO week 42, 2026 (42 % 4 == 2): no drop on sale. */
+    private static final Instant OFF_WEEK = Instant.parse("2026-10-13T10:00:00Z");
 
     @Autowired
     MockMvc mvc;
@@ -37,6 +54,15 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     TelegramBotService bot;
 
+    @Autowired
+    MutableClock clock;
+
+    @Autowired
+    StubStreakSource streaks;
+
+    @Autowired
+    JdbcTemplate jdbc;
+
     ApiDriver api;
     ApiDriver.Player alice;
     ApiDriver.Player bob;
@@ -46,6 +72,115 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
         api = new ApiDriver(mvc, mapper);
         alice = api.register(ApiDriver.uniqueUsername("alice"));
         bob = api.register(ApiDriver.uniqueUsername("bob"));
+    }
+
+    @AfterEach
+    void unpin() {
+        clock.reset();
+        streaks.reset();
+    }
+
+    private ResultActions shop(ApiDriver.Player player) throws Exception {
+        return mvc.perform(get("/api/v1/shop").headers(api.bearer(player))).andExpect(status().isOk());
+    }
+
+    @Test
+    void earnedItemsAreListedWithTheirRequirementAndAreNotForSale() throws Exception {
+        shop(alice)
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-sluhy-narodu')].price")
+                        .value(1500))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-sluhy-narodu')].unlock")
+                        .isEmpty())
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-blogery')].unlock.kind")
+                        .value("WIN_STREAK"))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-blogery')].unlock.value")
+                        .value(3))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-blogery')].unlock.met")
+                        .value(false))
+                .andExpect(
+                        jsonPath("$.items[?(@.code == 'deck-blogery')].owned").value(false))
+                .andExpect(jsonPath("$.items[?(@.code == 'frame-kozak')].unlock.value")
+                        .value(5))
+                .andExpect(jsonPath("$.items[?(@.code == 'emote-ty-sho')].name").value("Ти шо, Кличко?"))
+                .andExpect(
+                        jsonPath("$.items[?(@.code == 'emote-ty-sho')].price").value(200))
+                .andExpect(
+                        jsonPath("$.items[?(@.code == 'table-blackout')].name").value("Хрещатик при блекауті"));
+
+        buy(alice, "deck-blogery")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("NOT_FOR_SALE"));
+        assertThat(wallets.balance(alice.id())).isEqualTo(500);
+    }
+
+    @Test
+    void aWinStreakGrantsItsItemOnTheNextShopVisitExactlyOnce() throws Exception {
+        streaks.set(alice.id(), 3);
+
+        for (int visit = 0; visit < 2; visit++) {
+            shop(alice)
+                    .andExpect(jsonPath("$.items[?(@.code == 'deck-blogery')].owned")
+                            .value(true))
+                    .andExpect(jsonPath("$.items[?(@.code == 'deck-blogery')].unlock.met")
+                            .value(true))
+                    .andExpect(jsonPath("$.items[?(@.code == 'frame-kozak')].owned")
+                            .value(false));
+        }
+        assertThat(jdbc.queryForList(
+                        "SELECT source FROM owned_item WHERE player_id = ? AND item_code = ?",
+                        String.class,
+                        alice.id(),
+                        "deck-blogery"))
+                .containsExactly("STREAK");
+        assertThat(wallets.balance(alice.id())).isEqualTo(500);
+
+        equip(alice, "deck-blogery")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deck").value("blogery"));
+        shop(bob)
+                .andExpect(
+                        jsonPath("$.items[?(@.code == 'deck-blogery')].owned").value(false));
+    }
+
+    @Test
+    void aDropIsOnSaleOnlyInItsKyivWeekAndSaysWhenTheWeekEnds() throws Exception {
+        clock.pin(SLOT_0_WEEK);
+        shop(alice)
+                .andExpect(jsonPath("$.drops.length()").value(1))
+                .andExpect(jsonPath("$.drops[0].code").value("back-bavovna"))
+                .andExpect(jsonPath("$.drops[0].availableUntil").value(SLOT_0_WEEK_ENDS.toString()))
+                .andExpect(jsonPath("$.items[?(@.code == 'back-bavovna')].unlock.kind")
+                        .value("DROP"))
+                .andExpect(jsonPath("$.items[?(@.code == 'back-bavovna')].unlock.met")
+                        .value(true))
+                .andExpect(jsonPath("$.items[?(@.code == 'table-kabmin')].unlock.kind")
+                        .value("DROP"))
+                .andExpect(jsonPath("$.items[?(@.code == 'table-kabmin')].unlock.value")
+                        .value(1))
+                .andExpect(jsonPath("$.items[?(@.code == 'table-kabmin')].unlock.met")
+                        .value(false))
+                .andExpect(jsonPath("$.items[?(@.code == 'table-kabmin')].availableUntil")
+                        .isEmpty());
+        buy(alice, "table-kabmin")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("NOT_ON_SALE"));
+        buy(alice, "back-bavovna")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.owned").value(true));
+        assertThat(wallets.balance(alice.id())).isEqualTo(0);
+
+        clock.pin(OFF_WEEK);
+        shop(alice)
+                .andExpect(jsonPath("$.drops").isEmpty())
+                .andExpect(
+                        jsonPath("$.items[?(@.code == 'back-bavovna')].owned").value(true))
+                .andExpect(jsonPath("$.items[?(@.code == 'back-bavovna')].unlock.met")
+                        .value(false))
+                .andExpect(jsonPath("$.items[?(@.code == 'back-bavovna')].availableUntil")
+                        .isEmpty());
+        buy(bob, "back-bavovna")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.reason").value("NOT_ON_SALE"));
     }
 
     private ResultActions buy(ApiDriver.Player player, String code) throws Exception {

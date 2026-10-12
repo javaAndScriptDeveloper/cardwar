@@ -31,13 +31,17 @@ public class ShopController {
     }
 
     @GetMapping("/api/v1/shop")
-    @Operation(summary = "Every cosmetic with the caller's ownership and equipped state, and the coin packs")
+    @Operation(
+            summary = "Every cosmetic with the caller's ownership, equipped state and unlock, this week's drops,"
+                    + " and the coin packs; grants items the caller's win streak has earned")
     public ShopView shop(@AuthenticationPrincipal PlayerIdentity caller) {
         return shop.shop(caller.playerId());
     }
 
     @PostMapping("/api/v1/shop/items/{code}/buy")
-    @Operation(summary = "Buy a cosmetic for coins (400 INSUFFICIENT_COINS, 409 ALREADY_OWNED)")
+    @Operation(
+            summary = "Buy a cosmetic for coins (400 INSUFFICIENT_COINS, 400 NOT_FOR_SALE for earned items,"
+                    + " 400 NOT_ON_SALE for a drop outside its week, 409 ALREADY_OWNED)")
     public ShopItemView buy(@AuthenticationPrincipal PlayerIdentity caller, @PathVariable String code) {
         return shop.buy(caller.playerId(), code);
     }

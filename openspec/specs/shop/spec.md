@@ -13,6 +13,27 @@ caller owns and has equipped it. Default items SHALL be owned by everybody. Buyi
 ownership in one transaction; buying an owned item SHALL be 409 `ALREADY_OWNED`, an unaffordable one 400
 `INSUFFICIENT_COINS`.
 
+### Requirement: Earned items
+An item with `unlock_kind = WIN_STREAK` SHALL cost nothing and SHALL never be sold: buying it is 400 `NOT_FOR_SALE`.
+`GET /shop` SHALL grant it (`owned_item.source = STREAK`) the first time the caller's best win streak, read through
+the `StreakSource` port, reaches `unlock_value`, and SHALL never grant it twice. Its view SHALL carry
+`unlock: { kind: "WIN_STREAK", value, met }`; an item coins simply buy carries no `unlock`.
+
+#### Scenario: Streak reached between visits
+- **WHEN** a player whose best win streak is 3 opens the shop
+- **THEN** `deck-blogery` is owned, with `unlock.met = true`, and a second visit changes nothing
+
+### Requirement: Weekly drops
+An item with a `drop_slot` (0..3) SHALL be on sale only in weeks whose ISO week number, taken in `Europe/Kyiv`,
+equals the slot modulo 4. In its week the view SHALL carry `unlock: { kind: "DROP", value: slot, met: true }` and
+`availableUntil`, the instant of the next Monday 00:00 in Kyiv; `ShopView.drops` SHALL list exactly the items on
+sale. Outside its week the item SHALL be shown with `met: false`, no `availableUntil`, and buying it SHALL be 400
+`NOT_ON_SALE`. The server decides; the client only counts down.
+
+#### Scenario: Week with a daylight-saving change
+- **WHEN** the shop is read on Saturday 2027-03-27 (ISO week 12, Kyiv moves to summer time the next morning)
+- **THEN** `back-bavovna` (slot 0) is on sale until `2027-03-28T21:00:00Z`, which is Monday 00:00 EEST
+
 ### Requirement: Loadout
 A player SHALL equip one owned item per slot (deck, card back, table, frame); equipping an unowned item SHALL be 400
 `NOT_OWNED`, and emotes are not equipped (400 `NOT_EQUIPPABLE`). The opponent's card back and frame SHALL be visible

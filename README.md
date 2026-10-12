@@ -120,8 +120,8 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/friends/{id}/challenge` | Challenge a friend at a stake; the bot DMs them a Join button        |
 | `GET  /api/v1/challenges`          | Challenges waiting for you                                             |
 | `POST /api/v1/duels/invites/{id}/decline` | Decline a challenge addressed to you                           |
-| `GET  /api/v1/shop`                | Cosmetics with ownership/equipped state, and Stars coin packs          |
-| `POST /api/v1/shop/items/{code}/buy` | Buy for coins (`400 INSUFFICIENT_COINS`, `409 ALREADY_OWNED`)        |
+| `GET  /api/v1/shop`                | Cosmetics with ownership/equipped state and `unlock`, this week's `drops`, Stars coin packs; grants items your win streak earned |
+| `POST /api/v1/shop/items/{code}/buy` | Buy for coins (`400 INSUFFICIENT_COINS`, `400 NOT_FOR_SALE` earned item, `400 NOT_ON_SALE` drop off-week, `409 ALREADY_OWNED`) |
 | `POST /api/v1/shop/items/{code}/equip` | Equip an owned item                                                |
 | `GET  /api/v1/me/loadout`          | What you have equipped, and your emotes                                |
 | `POST /api/v1/shop/stars/invoice`  | Telegram Stars invoice link for a coin pack                            |

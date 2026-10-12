@@ -1,6 +1,7 @@
 package cardwar.monetization.domain;
 
 import cardwar.monetization.dto.ItemType;
+import cardwar.monetization.dto.UnlockKind;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -43,4 +44,24 @@ public class ShopItem {
 
     @Column(name = "active", nullable = false)
     private boolean active;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "unlock_kind", nullable = false)
+    private UnlockKind unlockKind;
+
+    /** The streak length for a WIN_STREAK item; 0 otherwise. */
+    @Column(name = "unlock_value", nullable = false)
+    private int unlockValue;
+
+    /** 0..3 for a weekly drop (on sale when the Kyiv ISO week mod 4 equals it); null for an always-on item. */
+    @Column(name = "drop_slot")
+    private Integer dropSlot;
+
+    public boolean isEarned() {
+        return unlockKind == UnlockKind.WIN_STREAK;
+    }
+
+    public boolean isDrop() {
+        return dropSlot != null;
+    }
 }
