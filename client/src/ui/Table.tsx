@@ -168,12 +168,18 @@ export function Table({
             </p>
 
             <div class="actions">
-                <button data-testid="take" disabled={busy || !canTake(view)} onClick={onTake}>
+                <button
+                    data-testid="take"
+                    data-idle={canTake(view) ? undefined : ''}
+                    disabled={busy || !canTake(view)}
+                    onClick={onTake}
+                >
                     {t('duel.take')}
                 </button>
                 <button
                     class="primary"
                     data-testid="end-attack"
+                    data-idle={canEndAttack(view) ? undefined : ''}
                     disabled={busy || !canEndAttack(view)}
                     onClick={onEndAttack}
                 >

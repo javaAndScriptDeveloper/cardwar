@@ -102,6 +102,14 @@ describe('Table', () => {
     it('disables everything while a move is in flight', () => {
         renderTable({ view: defending, busy: true });
         expect((screen.getByTestId('take') as HTMLButtonElement).disabled).toBe(true);
+        // Busy is momentary: the button stays in sight rather than blinking out.
+        expect(screen.getByTestId('take').hasAttribute('data-idle')).toBe(false);
+    });
+
+    it('marks an action that does not apply right now as idle, so it is hidden instead of greyed out', () => {
+        renderTable({ view: defending });
+        expect(screen.getByTestId('end-attack').hasAttribute('data-idle')).toBe(true);
+        expect(screen.getByTestId('take').hasAttribute('data-idle')).toBe(false);
     });
 
     it('marks playable hand cards and reports taps on hand and table cards', () => {

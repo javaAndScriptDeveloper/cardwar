@@ -100,7 +100,11 @@ button.primary,
     color: var(--danger);
 }
 
-.btn.lg,
+.btn.lg {
+    padding: 16px 20px;
+    font-size: var(--font-l);
+}
+
 button:disabled {
     opacity: 0.45;
     cursor: default;
@@ -747,6 +751,11 @@ button:disabled {
     gap: 10px;
 }
 
+/* An action that does not apply keeps its place (no layout jump) but is not drawn as a dead, greyed-out button. */
+.actions button[data-idle] {
+    visibility: hidden;
+}
+
 .hand {
     display: flex;
     gap: 6px;
@@ -762,7 +771,6 @@ button:disabled {
     padding: 0;
     background: none;
     border-radius: 8px;
-    opacity: 0.55;
     transition:
         transform 120ms,
         opacity 120ms;
