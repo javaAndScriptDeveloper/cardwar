@@ -17,7 +17,7 @@ const api = new ApiClient(
     (input, init) => fetch(input, init),
     () => session.token(),
 );
-// Telegram hands the invite over as start_param; the browser dev shim uses ?invite= in the URL instead.
+// A named-app link hands the invite over as start_param; the bot's Join button and the dev shim use ?invite=.
 const invite = telegram.startParam ?? new URLSearchParams(window.location.search).get('invite') ?? undefined;
 const links = linkConfigFromEnv(window.location.origin);
 const openStream: StreamOpener = (duelId, options) =>

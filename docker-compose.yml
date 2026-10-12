@@ -76,6 +76,7 @@ services:
       JWT_TTL: ${JWT_TTL:-2h}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:?TELEGRAM_BOT_TOKEN must be set (see .env.example)}
       TELEGRAM_INIT_DATA_MAX_AGE: ${TELEGRAM_INIT_DATA_MAX_AGE:-1h}
+      TELEGRAM_MINI_APP_URL: https://${DOMAIN:-localhost}/app/
       DUEL_STATE_TTL: ${DUEL_STATE_TTL:-2h}
       DUEL_INVITE_TTL: ${DUEL_INVITE_TTL:-15m}
     healthcheck:

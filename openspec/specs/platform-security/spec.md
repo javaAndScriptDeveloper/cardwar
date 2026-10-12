@@ -51,6 +51,17 @@ The system SHALL accept a Telegram Mini App `initData` string at `POST /api/v1/a
 - **WHEN** a client posts correctly signed initData whose `auth_date` is older than the maximum age
 - **THEN** the API responds with 401
 
+### Requirement: Telegram bot webhook
+The system SHALL accept Telegram bot updates at the public `POST /api/v1/telegram/webhook` only when the `X-Telegram-Bot-Api-Secret-Token` header equals a secret derived one-way from the bot token (HMAC-SHA256 of a fixed label), compared in constant time, and SHALL answer 403 otherwise. In a private chat, `/start <inviteId>` SHALL be answered with a button that opens the Mini App at `/app/?invite=<inviteId>`, and any other message with a greeting and a Play button that opens `/app/`. Groups and other update kinds SHALL get no reply. A failed reply SHALL be logged without the request URL, which contains the bot token.
+
+#### Scenario: Invite deep link through the bot
+- **WHEN** a user opens `https://t.me/<bot>?start=<inviteId>` and starts the bot
+- **THEN** the bot replies with a Join button that opens the Mini App on that invite
+
+#### Scenario: Forged update
+- **WHEN** a request reaches the webhook without the derived secret header
+- **THEN** the API responds with 403 and sends nothing
+
 ### Requirement: Stateless session policy
 The API SHALL be stateless: no server-side HTTP session SHALL be created for authenticated requests, and CSRF protection SHALL be disabled only because authentication is bearer-token based rather than cookie based.
 
@@ -59,7 +70,7 @@ The API SHALL be stateless: no server-side HTTP session SHALL be created for aut
 - **THEN** no HTTP session is created for it
 
 ### Requirement: Public and protected endpoint separation
-Registration, login, the health endpoint and the API documentation SHALL be reachable without authentication. Every other endpoint SHALL require authentication by default, so that a newly added endpoint is protected unless it is explicitly opened.
+Registration, login, Telegram sign-in, the Telegram webhook (which checks its own secret header), the health endpoint and the API documentation SHALL be reachable without authentication. Every other endpoint SHALL require authentication by default, so that a newly added endpoint is protected unless it is explicitly opened.
 
 #### Scenario: Public endpoints reachable
 - **WHEN** an unauthenticated client calls registration, login or the health endpoint

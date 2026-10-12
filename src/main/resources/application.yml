@@ -91,6 +91,10 @@ cardwar:
       # Stricter bucket for /api/v1/auth/**, keyed on client address.
       auth-capacity: ${RATE_LIMIT_AUTH_CAPACITY:10}
       auth-refill-period: ${RATE_LIMIT_AUTH_REFILL_PERIOD:1m}
+  bot:
+    # Public Mini App URL the bot's Play / Join buttons open. Compose derives it from DOMAIN.
+    mini-app-url: ${TELEGRAM_MINI_APP_URL:https://localhost/app/}
+    api-url: ${TELEGRAM_BOT_API_URL:https://api.telegram.org}
   duel:
     # Abandoned duels expire on their own; refreshed on every accepted move.
     state-ttl: ${DUEL_STATE_TTL:2h}

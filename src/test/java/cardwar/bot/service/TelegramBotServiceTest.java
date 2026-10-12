@@ -1,0 +1,95 @@
+package cardwar.bot.service;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import cardwar.bot.BotProperties;
+import cardwar.bot.client.TelegramBotApi;
+import cardwar.security.telegram.TelegramProperties;
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.json.JsonMapper;
+
+class TelegramBotServiceTest {
+
+    record Sent(long chatId, String text, String buttonText, String buttonUrl) {}
+
+    final List<Sent> sent = new ArrayList<>();
+    final TelegramBotApi api =
+            (chatId, text, buttonText, buttonUrl) -> sent.add(new Sent(chatId, text, buttonText, buttonUrl));
+    final TelegramBotService bot = new TelegramBotService(
+            new TelegramProperties("123:token", null),
+            new BotProperties("https://cardwar.example/app/", "https://api.telegram.example"),
+            api);
+
+    private static JsonNode update(String chatType, String text) {
+        return JsonMapper.builder()
+                .build()
+                .readTree(
+                        """
+                        {"update_id": 1, "message": {"message_id": 7, "chat": {"id": 42, "type": "%s"},
+                         "from": {"id": 42, "first_name": "Ann"}, "text": "%s"}}
+                        """
+                                .formatted(chatType, text));
+    }
+
+    @Test
+    void startGreetsAndOffersThePlayButton() {
+        bot.handle(update("private", "/start"));
+
+        assertThat(sent).singleElement().satisfies(reply -> {
+            assertThat(reply.chatId()).isEqualTo(42);
+            assertThat(reply.text()).contains("Play");
+            assertThat(reply.buttonText()).isEqualTo("Play");
+            assertThat(reply.buttonUrl()).isEqualTo("https://cardwar.example/app/");
+        });
+    }
+
+    @Test
+    void startWithAnInviteOffersToJoinThatDuel() {
+        String invite = "1916ee93-b43f-4e8a-bc55-0459c2815751";
+
+        bot.handle(update("private", "/start " + invite));
+
+        assertThat(sent).singleElement().satisfies(reply -> {
+            assertThat(reply.buttonText()).isEqualTo("Join the duel");
+            assertThat(reply.buttonUrl()).isEqualTo("https://cardwar.example/app/?invite=" + invite);
+        });
+    }
+
+    @Test
+    void aMalformedStartPayloadGetsThePlainGreeting() {
+        bot.handle(update("private", "/start <script>"));
+
+        assertThat(sent).singleElement().extracting(Sent::buttonUrl).isEqualTo("https://cardwar.example/app/");
+    }
+
+    @Test
+    void anyOtherPrivateMessageIsPointedAtThePlayButton() {
+        bot.handle(update("private", "hello?"));
+
+        assertThat(sent).singleElement().extracting(Sent::buttonText).isEqualTo("Play");
+    }
+
+    @Test
+    void groupsAndNonMessageUpdatesAreIgnored() {
+        bot.handle(update("group", "/start"));
+        bot.handle(JsonMapper.builder().build().readTree("{\"update_id\": 2, \"my_chat_member\": {}}"));
+
+        assertThat(sent).isEmpty();
+    }
+
+    @Test
+    void theWebhookSecretIsDerivedFromTheTokenAndCheckedExactly() {
+        String secret = bot.webhookSecret();
+
+        assertThat(secret).matches("[0-9a-f]{64}");
+        assertThat(bot.acceptsSecret(secret)).isTrue();
+        assertThat(bot.acceptsSecret(secret.substring(1))).isFalse();
+        assertThat(bot.acceptsSecret(null)).isFalse();
+        var tokenless = new TelegramBotService(
+                new TelegramProperties("", null), new BotProperties("https://x/app/", "https://y"), api);
+        assertThat(tokenless.acceptsSecret(tokenless.webhookSecret())).isFalse();
+    }
+}

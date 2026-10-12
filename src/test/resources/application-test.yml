@@ -24,6 +24,9 @@ cardwar:
       # Effectively off for the suite; the throttling test asks for its own tight limits and its own context.
       capacity: 100000
       auth-capacity: 100000
+  bot:
+    # Nothing listens here: replies fail fast and are swallowed, so tests never reach the real Bot API.
+    api-url: http://127.0.0.1:9
   duel:
     stream:
       # A heartbeat every second so the idle-stream test does not wait for the production interval.

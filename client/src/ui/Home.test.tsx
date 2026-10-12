@@ -96,7 +96,7 @@ describe('Home', () => {
         await waitFor(() => expect(screen.getByText('inv-9')).toBeTruthy());
         fireEvent.click(screen.getByRole('button', { name: 'Share invite' }));
         expect(telegram.openTelegramLink).toHaveBeenCalledWith(
-            expect.stringContaining(encodeURIComponent('https://t.me/cardwar_gaming_bot?startapp=inv-9')),
+            expect.stringContaining(encodeURIComponent('https://t.me/cardwar_gaming_bot?start=inv-9')),
         );
         await waitFor(() => expect(screen.getByText('table d-9')).toBeTruthy());
     });

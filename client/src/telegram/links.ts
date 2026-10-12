@@ -16,16 +16,20 @@ export function linkConfigFromEnv(origin: string): LinkConfig {
 }
 
 /**
- * The link a friend taps. Telegram passes `startapp` to the Mini App as `start_param`; outside Telegram (no bot
- * configured) the app reads `?invite=` from its own URL instead, so the dev shim has a deep link too.
+ * The link a friend taps. With a named Mini App, `startapp` opens the app directly and arrives as `start_param`.
+ * Otherwise the link opens the bot chat with `/start <id>`, and the bot answers with a button that opens
+ * `/app/?invite=<id>`: that works without a BotFather Main Mini App. Outside Telegram (no bot configured) the
+ * link is the app URL itself, so the dev shim has a deep link too.
  */
 export function inviteLink(inviteId: string, config: LinkConfig): string {
     const id = encodeURIComponent(inviteId);
     if (!config.botUsername) {
         return `${config.origin}/app/?invite=${id}`;
     }
-    const app = config.appName ? `/${config.appName}` : '';
-    return `https://t.me/${config.botUsername}${app}?startapp=${id}`;
+    if (config.appName) {
+        return `https://t.me/${config.botUsername}/${config.appName}?startapp=${id}`;
+    }
+    return `https://t.me/${config.botUsername}?start=${id}`;
 }
 
 export function shareUrl(link: string, text: string): string {

@@ -26,6 +26,8 @@ public class SecurityConfig {
         "/api/v1/auth/register",
         "/api/v1/auth/login",
         "/api/v1/auth/telegram",
+        // Telegram's servers carry no player token; the controller checks the webhook secret header instead.
+        "/api/v1/telegram/webhook",
         "/actuator/health",
         "/actuator/health/**",
         "/actuator/info",

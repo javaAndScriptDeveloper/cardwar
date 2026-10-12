@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { inviteLink, shareUrl } from './links';
 
 describe('inviteLink', () => {
-    it('uses the main Mini App deep link when only the bot is known', () => {
+    it('links to the bot chat when only the bot is known; its /start reply opens the app', () => {
         expect(inviteLink('abc-1', { botUsername: 'cardwar_gaming_bot', origin: 'https://x' })).toBe(
-            'https://t.me/cardwar_gaming_bot?startapp=abc-1',
+            'https://t.me/cardwar_gaming_bot?start=abc-1',
         );
     });
 

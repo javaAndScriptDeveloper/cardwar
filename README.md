@@ -130,9 +130,12 @@ Two Telegram accounts open the Mini App from the bot, one invites the other, and
   creates a password-less account (`tg_<telegram id>`). The answer is the same JWT a password login returns, so every
   later request, filter and service is unchanged. The token lives in memory only.
 - **Matchmaking is an invite.** A creates an invite (Redis, 15 minutes) and shares
-  `https://t.me/<bot>?startapp=<inviteId>`. Telegram hands `startapp` to the app as `start_param`, and B's app
-  accepts it on launch. A cannot subscribe to a duel that does not exist yet, so A's app polls the invite every
-  2 seconds until it names the duel. Accepting is an atomic Redis claim: one acceptor, ever.
+  `https://t.me/<bot>?start=<inviteId>`. That opens the bot chat; the bot (webhook `POST /api/v1/telegram/webhook`)
+  answers `/start <inviteId>` with a **Join the duel** button that opens `/app/?invite=<inviteId>`, and B's app
+  accepts it on launch. This needs no BotFather Main Mini App. A cannot subscribe to a duel that does not exist
+  yet, so A's app polls the invite every 2 seconds until it names the duel. Accepting is an atomic Redis claim: one
+  acceptor, ever. A player has one pending invite at a time: Telegram reloads the app whenever A switches to a chat
+  to send it, and on reload the app asks `GET /duels/invites/pending` and shows the same code again.
 - **Resuming.** On launch the app asks `GET /duels/active` and goes straight back to a running duel.
 - **Live updates.** The client reads the duel's server-sent events with `fetch` (EventSource cannot send the bearer
   header). Each event, and each reconnect, is only a nudge to re-fetch `GET /duels/{id}`; REST is the truth. A
@@ -154,10 +157,15 @@ Two Telegram accounts open the Mini App from the bot, one invites the other, and
    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setChatMenuButton" -H 'Content-Type: application/json' \
      -d '{"menu_button":{"type":"web_app","text":"Play","web_app":{"url":"https://<your domain>/app/"}}}'
    ```
-3. Invite links: *Bot Settings → Configure Mini App → Enable Mini App*, URL `https://<your domain>/app/`. This makes
-   it the bot's **Main Mini App**, which `https://t.me/<bot>?startapp=<invite>` links open. BotFather is the only
-   way to do this. Until it is done, players can still join: the start screen accepts a pasted invite code, and the
-   waiting screen shows it. (A named app from `/newapp` works too; set `TELEGRAM_APP_NAME` to its short name.)
+3. Webhook, so the bot answers `/start` (a greeting with a Play button, or a Join button for an invite link). The
+   secret is HMAC-SHA256 of `cardwar-webhook` keyed by the token, so there is nothing new to store:
+   ```bash
+   SECRET=$(printf 'cardwar-webhook' | openssl dgst -sha256 -hmac "$TELEGRAM_BOT_TOKEN" -r | cut -d' ' -f1)
+   curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" -H 'Content-Type: application/json' \
+     -d "{\"url\":\"https://<your domain>/api/v1/telegram/webhook\",\"secret_token\":\"$SECRET\",\"allowed_updates\":[\"message\"]}"
+   ```
+4. Optional: a named app from `/newapp` (set `TELEGRAM_APP_NAME` to its short name) makes invite links
+   `t.me/<bot>/<app>?startapp=<invite>`, which open the app directly without the bot chat in between.
 
 ### Deploy
 
@@ -178,8 +186,9 @@ Renew weekly with `make certs-prod` from cron. Updating later is `git pull && ma
 ### Play
 
 1. Both players open the bot and tap **Play** (the menu button). The app signs them in with Telegram.
-2. A taps **Invite a friend**, then **Share invite** and picks B's chat. (Or reads B the code under it.)
-3. B taps the link (or pastes the code under *Join*). The duel opens for both.
+2. A taps **Invite a friend**, then **Share invite** and picks B's chat. (Or **Copy code** and sends it.)
+3. B taps the link, presses **Start** in the bot chat, then **Join the duel** (or pastes the code under *Join*).
+   The duel opens for both.
 4. The attacker taps a card to attack or throw in; the defender taps the card to beat (only needed when several are
    open) and then a card from hand. **Take** and **End attack** do what they say. The line under the table always
    says whose move it is.
@@ -218,6 +227,7 @@ src/main/java/cardwar
 ├── account/        # Registration, login, player progress.
 ├── monetization/   # Entitlements, unlock rules and the pluggable EntitlementGrantSource implementations.
 ├── security/       # JWT issue/verify, PrincipalResolver/PlayerIdentity, filter chain, rate limiting.
+├── bot/            # Telegram bot webhook: answers /start with a Play button, or a Join button for an invite.
 ├── api/            # Cross-cutting web concerns: ProblemDetail handler, the /me aggregate.
 ├── config/         # Beans: engine, cache, Redis listener container, OpenAPI.
 └── exception/      # ApplicationException and its HTTP-mapped subclasses.
@@ -267,6 +277,8 @@ documents every variable the stack needs with non-production placeholders; copy 
 | `TELEGRAM_BOT_TOKEN` | *(none)*                                | BotFather token; verifies initData. **Required in prod.** |
 | `TELEGRAM_INIT_DATA_MAX_AGE` | `1h`                            | Oldest initData accepted for sign-in                 |
 | `TELEGRAM_BOT_USERNAME` | *(empty)*                            | nginx build arg: bot named in invite links           |
+| `TELEGRAM_MINI_APP_URL` | `https://localhost/app/`             | What the bot's buttons open; compose sets it from `DOMAIN` |
+| `TELEGRAM_BOT_API_URL` | `https://api.telegram.org`            | Bot API base the bot replies through                 |
 | `TELEGRAM_APP_NAME` | *(empty)*                                | nginx build arg: BotFather named app, if any         |
 
 Outside the `prod` profile a missing `JWT_SECRET` yields an ephemeral random key (tokens die with the process), and a
