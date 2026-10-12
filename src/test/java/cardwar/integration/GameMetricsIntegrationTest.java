@@ -34,9 +34,11 @@ class GameMetricsIntegrationTest extends AbstractIntegrationTest {
         api = new ApiDriver(mvc, mapper);
     }
 
+    /** Sum over every series matching the tags: a partial tag set can match several (one per move type, say). */
     private double count(String name, String... tags) {
-        var counter = registry.find(name).tags(tags).counter();
-        return counter == null ? 0 : counter.count();
+        return registry.find(name).tags(tags).counters().stream()
+                .mapToDouble(c -> c.count())
+                .sum();
     }
 
     @Test

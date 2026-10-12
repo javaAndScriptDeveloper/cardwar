@@ -5,6 +5,7 @@ import cardwar.exception.NotFoundException;
 import cardwar.session.domain.DuelResult;
 import cardwar.session.dto.DuelHistoryEntry;
 import cardwar.session.repository.DuelResultRepository;
+import cardwar.wallet.service.WalletService;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +29,12 @@ public class DuelHistoryService {
     private final DuelResultRepository results;
     private final AccountService accounts;
 
-    public DuelHistoryService(DuelResultRepository results, AccountService accounts) {
+    private final WalletService wallets;
+
+    public DuelHistoryService(DuelResultRepository results, AccountService accounts, WalletService wallets) {
         this.results = results;
         this.accounts = accounts;
+        this.wallets = wallets;
     }
 
     @Transactional(readOnly = true)
@@ -52,7 +56,11 @@ public class DuelHistoryService {
                 row.getEndReason(),
                 row.getStartedAt(),
                 row.getFinishedAt(),
-                row.getMoveCount());
+                row.getMoveCount(),
+                row.getStake(),
+                row.getStake() == 0
+                        ? 0
+                        : wallets.netFor(playerId, row.getDuelId().toString()));
     }
 
     private static String resultFor(UUID playerId, DuelResult row) {

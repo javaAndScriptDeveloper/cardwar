@@ -12,4 +12,8 @@ public class ConflictException extends ApplicationException {
     public ConflictException(String message) {
         super(HttpStatus.CONFLICT, message);
     }
+
+    public ConflictException(String message, String reason) {
+        super(HttpStatus.CONFLICT, message, reason);
+    }
 }

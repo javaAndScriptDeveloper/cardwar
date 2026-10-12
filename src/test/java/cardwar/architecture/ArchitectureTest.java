@@ -97,6 +97,8 @@ class ArchitectureTest {
                     "cardwar.session..",
                     "cardwar.account..",
                     "cardwar.monetization..",
+                    "cardwar.wallet..",
+                    "cardwar.metrics..",
                     "cardwar.security..",
                     "cardwar.api..",
                     "cardwar.config..",
@@ -145,6 +147,9 @@ class ArchitectureTest {
 
     @ArchTest
     static final ArchRule monetizationInternalsStayInternal = internalsStayInternal("monetization");
+
+    @ArchTest
+    static final ArchRule walletInternalsStayInternal = internalsStayInternal("wallet");
 
     private static ArchRule internalsStayInternal(String module) {
         return noClasses()

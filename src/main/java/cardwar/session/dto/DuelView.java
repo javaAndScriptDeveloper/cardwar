@@ -28,9 +28,10 @@ public record DuelView(
         UUID attacker,
         DuelPhase phase,
         OutcomeView outcome,
-        long version) {
+        long version,
+        long stake) {
 
-    public static DuelView of(DuelState state, PlayerId viewer) {
+    public static DuelView of(DuelState state, PlayerId viewer, long stake) {
         PlayerId opponent = state.opponentOf(viewer);
         return new DuelView(
                 state.duelId().value(),
@@ -46,6 +47,7 @@ public record DuelView(
                 state.attackerId().value(),
                 state.phase(),
                 state.outcome() == null ? null : OutcomeView.of(state.outcome()),
-                state.version());
+                state.version(),
+                stake);
     }
 }

@@ -8,4 +8,10 @@ import java.util.UUID;
  * from the full redacted view, fetched once the client opens the duel.
  */
 public record DuelSummary(
-        UUID duelId, UUID opponentId, String opponentUsername, UUID attacker, DuelPhase phase, long version) {}
+        UUID duelId,
+        UUID opponentId,
+        String opponentUsername,
+        UUID attacker,
+        DuelPhase phase,
+        long version,
+        long stake) {}

@@ -11,8 +11,11 @@ import java.util.UUID;
  */
 public interface InviteStore {
 
-    /** A new invite, or the creator's existing one while it is still pending: a player has one open invite. */
-    StoredInvite create(UUID creator);
+    /**
+     * A new invite, or the creator's existing one while it is still pending at the same stake: a player has one open
+     * invite. A pending invite at another stake is withdrawn and replaced.
+     */
+    StoredInvite create(UUID creator, long stake);
 
     Optional<StoredInvite> find(UUID inviteId);
 

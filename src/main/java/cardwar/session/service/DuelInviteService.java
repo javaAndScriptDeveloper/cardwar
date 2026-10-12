@@ -12,7 +12,9 @@ import cardwar.session.dto.DuelView;
 import cardwar.session.dto.InviteView;
 import cardwar.session.store.InviteStore;
 import cardwar.session.store.StoredInvite;
+import cardwar.wallet.service.WalletService;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,17 +34,33 @@ public class DuelInviteService {
     private final InviteStore invites;
     private final DuelService duels;
     private final GameMetrics metrics;
+    private final WalletService wallets;
 
-    public DuelInviteService(InviteStore invites, DuelService duels, GameMetrics metrics) {
+    /** The tables a duel can be played at; 0 is a friendly duel. */
+    public static final Set<Long> STAKES = Set.of(0L, 100L, 500L, 1000L, 5000L);
+
+    public DuelInviteService(InviteStore invites, DuelService duels, GameMetrics metrics, WalletService wallets) {
         this.invites = invites;
         this.duels = duels;
         this.metrics = metrics;
+        this.wallets = wallets;
     }
 
-    /** Idempotent while the caller's invite is pending, so reopening the app and tapping again keeps the code. */
-    public InviteView create(PlayerId caller) {
-        boolean reused = invites.findPending(caller.value()).isPresent();
-        StoredInvite invite = invites.create(caller.value());
+    /**
+     * Idempotent while the caller's invite is pending at the same stake, so reopening the app and tapping again keeps
+     * the code. The stake is only checked here; it is taken from both players when somebody accepts.
+     */
+    public InviteView create(PlayerId caller, long stake) {
+        if (!STAKES.contains(stake)) {
+            throw new BadRequestException("Stakes are 0, 100, 500, 1000 or 5000 coins", "INVALID_STAKE");
+        }
+        if (wallets.balance(caller.value()) < stake) {
+            throw new BadRequestException("Not enough coins for this stake", WalletService.INSUFFICIENT_COINS);
+        }
+        boolean reused = invites.findPending(caller.value())
+                .filter(pending -> pending.stake() == stake)
+                .isPresent();
+        StoredInvite invite = invites.create(caller.value(), stake);
         log.info("Invite {} issued", invite.inviteId());
         metrics.invite(reused ? InviteEvent.REUSED : InviteEvent.CREATED);
         return view(invite);
@@ -57,16 +75,29 @@ public class DuelInviteService {
         if (invite.creator().equals(caller.value())) {
             throw new BadRequestException("You cannot accept your own invite");
         }
+        if (invite.status() != StoredInvite.Status.PENDING) {
+            throw new ConflictException("This invite has already been accepted");
+        }
         var duelId = new DuelId(UUID.randomUUID());
+        String reference = duelId.value().toString();
+        // Coins first, in Postgres, so a player who cannot pay never gets a duel; if the Redis claim is then lost to
+        // another acceptor, the escrow is returned.
+        wallets.escrow(reference, invite.stake(), invite.creator(), caller.value());
         switch (invites.claim(invite.inviteId(), caller.value(), duelId.value())) {
-            case MISSING -> throw new NotFoundException("No such invite, or it has expired");
-            case ALREADY_ACCEPTED -> throw new ConflictException("This invite has already been accepted");
+            case MISSING -> {
+                wallets.refund(reference);
+                throw new NotFoundException("No such invite, or it has expired");
+            }
+            case ALREADY_ACCEPTED -> {
+                wallets.refund(reference);
+                throw new ConflictException("This invite has already been accepted");
+            }
             case CLAIMED -> log.info("Invite {} accepted", invite.inviteId());
         }
         metrics.invite(InviteEvent.ACCEPTED);
         // The acceptor is now busy; their own open invite must not drag them into a second duel.
         invites.cancelPending(caller.value());
-        return duels.start(caller, new PlayerId(invite.creator()), duelId);
+        return duels.start(caller, new PlayerId(invite.creator()), duelId, invite.stake());
     }
 
     public InviteView status(PlayerId caller, String inviteId) {
@@ -89,6 +120,7 @@ public class DuelInviteService {
     }
 
     private static InviteView view(StoredInvite invite) {
-        return new InviteView(invite.inviteId(), invite.status().name(), invite.duelId(), invite.expiresAt());
+        return new InviteView(
+                invite.inviteId(), invite.status().name(), invite.duelId(), invite.expiresAt(), invite.stake());
     }
 }

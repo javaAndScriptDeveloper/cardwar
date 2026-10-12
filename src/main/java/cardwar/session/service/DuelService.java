@@ -60,29 +60,29 @@ public class DuelService {
     /** Every duel is between two real accounts; there is deliberately no way to ask for a bot here. */
     public DuelView create(PlayerId caller, String opponentUsername) {
         UUID opponentId = accounts.requireIdByUsername(opponentUsername);
-        return start(caller, new PlayerId(opponentId), new DuelId(UUID.randomUUID()), StartMode.DIRECT);
+        return start(caller, new PlayerId(opponentId), new DuelId(UUID.randomUUID()), 0, StartMode.DIRECT);
     }
 
     /**
      * Starts a duel between two known players under a caller-chosen id. The invite flow picks the id before the duel
      * exists so it can record it atomically with the acceptance.
      */
-    public DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId) {
-        return start(caller, opponent, duelId, StartMode.INVITE);
+    public DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId, long stake) {
+        return start(caller, opponent, duelId, stake, StartMode.INVITE);
     }
 
-    private DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId, StartMode mode) {
+    private DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId, long stake, StartMode mode) {
         if (opponent.equals(caller)) {
             throw new BadRequestException("A duel needs two different players");
         }
         var result = engine.start(duelId, caller, opponent);
-        var stored = new StoredDuel(result.state(), Instant.now());
+        var stored = new StoredDuel(result.state(), Instant.now(), stake);
 
         store.save(stored, GameStateStore.ABSENT);
         publisher.publish(duelId, result.events());
         log.info("Duel {} created", duelId.value());
         metrics.duelStarted(mode);
-        return DuelView.of(result.state(), caller);
+        return DuelView.of(result.state(), caller, stake);
     }
 
     /**
@@ -114,15 +114,15 @@ public class DuelService {
             // Only once the result is durable: until then the state store is the only copy of this duel.
             store.delete(next.state().duelId());
         }
-        return DuelView.of(next.state(), caller);
+        return DuelView.of(next.state(), caller, next.stake());
     }
 
     /** Only the caller's own duels: the index is per player, so there is nothing else to filter out. */
     public List<DuelSummary> active(PlayerId caller) {
         return store.findActive(caller).stream()
-                .map(StoredDuel::state)
-                .filter(state -> state.hasParticipant(caller))
-                .map(state -> {
+                .filter(stored -> stored.state().hasParticipant(caller))
+                .map(stored -> {
+                    var state = stored.state();
                     PlayerId opponent = state.opponentOf(caller);
                     return new DuelSummary(
                             state.duelId().value(),
@@ -130,13 +130,15 @@ public class DuelService {
                             accounts.summary(opponent.value()).username(),
                             state.attackerId().value(),
                             state.phase(),
-                            state.version());
+                            state.version(),
+                            stored.stake());
                 })
                 .toList();
     }
 
     public DuelView viewFor(UUID duelId, PlayerId caller) {
-        return DuelView.of(requireParticipation(duelId, caller).state(), caller);
+        StoredDuel stored = requireParticipation(duelId, caller);
+        return DuelView.of(stored.state(), caller, stored.stake());
     }
 
     /** Used by the event stream, which needs the participation check without needing the state itself. */

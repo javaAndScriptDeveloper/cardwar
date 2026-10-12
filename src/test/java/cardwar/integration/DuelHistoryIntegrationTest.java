@@ -58,7 +58,8 @@ class DuelHistoryIntegrationTest extends AbstractIntegrationTest {
                 "OPPONENT_OUT_OF_CARDS",
                 now.minus(2, ChronoUnit.HOURS),
                 now.minus(1, ChronoUnit.HOURS),
-                12));
+                12,
+                0));
         results.save(new DuelResult(
                 UUID.randomUUID(),
                 drawnDuel,
@@ -70,7 +71,8 @@ class DuelHistoryIntegrationTest extends AbstractIntegrationTest {
                 "DRAW",
                 now.minusSeconds(60),
                 now,
-                7));
+                7,
+                0));
     }
 
     @Test

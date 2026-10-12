@@ -6,12 +6,13 @@ import cardwar.account.dto.PlayerSummary;
 import cardwar.account.dto.ProgressView;
 import cardwar.account.repository.PlayerProgressRepository;
 import cardwar.account.repository.PlayerRepository;
-import cardwar.exception.BadRequestException;
 import cardwar.exception.ConflictException;
 import cardwar.exception.NotFoundException;
 import cardwar.metrics.GameMetrics;
 import cardwar.metrics.GameMetrics.SignIn;
 import cardwar.security.PlayerIdentity;
+import cardwar.wallet.dto.CoinKind;
+import cardwar.wallet.service.WalletService;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,16 +32,19 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
 
     private final GameMetrics metrics;
+    private final WalletService wallets;
 
     public AccountService(
             PlayerRepository players,
             PlayerProgressRepository progress,
             PasswordEncoder passwordEncoder,
-            GameMetrics metrics) {
+            GameMetrics metrics,
+            WalletService wallets) {
         this.players = players;
         this.progress = progress;
         this.passwordEncoder = passwordEncoder;
         this.metrics = metrics;
+        this.wallets = wallets;
     }
 
     @Transactional
@@ -62,6 +66,7 @@ public class AccountService {
             throw new ConflictException("Username is already taken");
         }
         progress.save(new PlayerProgress(player.getId(), now));
+        wallets.open(player.getId());
         log.info("Registered player {}", player.getId());
         metrics.signIn(SignIn.REGISTER);
         return new PlayerIdentity(player.getId(), player.getUsername());
@@ -90,6 +95,7 @@ public class AccountService {
             throw new ConflictException("This Telegram account is being signed in already; try again");
         }
         progress.save(new PlayerProgress(player.getId(), now));
+        wallets.open(player.getId());
         log.info("Registered Telegram player {}", player.getId());
         return identityOf(player);
     }
@@ -158,7 +164,7 @@ public class AccountService {
     @Transactional(readOnly = true)
     public ProgressView progressOf(UUID playerId) {
         return progress.findById(playerId)
-                .map(row -> new ProgressView(row.getDuelsPlayed(), row.getDuelsWon(), row.getCurrencyBalance()))
+                .map(row -> new ProgressView(row.getDuelsPlayed(), row.getDuelsWon(), wallets.balance(playerId)))
                 .orElseThrow(() -> new NotFoundException("Player not found"));
     }
 
@@ -174,27 +180,18 @@ public class AccountService {
     }
 
     /**
-     * Deducts in-game currency. Runs in the caller's transaction so that a deduction and the entitlement it pays
-     * for either both happen or neither does — a spend without a grant is the worst outcome available here.
+     * Deducts in-game currency for an unlock. Runs in the caller's transaction so that a deduction and the
+     * entitlement it pays for either both happen or neither does. The coins live in the wallet's ledger.
      */
     @Transactional
     public void spendCurrency(UUID playerId, long amount) {
-        if (amount < 0) {
-            throw new BadRequestException("Amount must not be negative");
-        }
-        PlayerProgress row = progress.findById(playerId).orElseThrow(() -> new NotFoundException("Player not found"));
-        if (row.getCurrencyBalance() < amount) {
-            throw new BadRequestException("Insufficient balance");
-        }
-        row.setCurrencyBalance(row.getCurrencyBalance() - amount);
-        row.setUpdatedAt(Instant.now());
+        wallets.debit(playerId, amount, CoinKind.PURCHASE, "purchase:" + UUID.randomUUID());
     }
 
+    /** A manual credit (support, tests); every call is its own ledger row. */
     @Transactional
     public void creditCurrency(UUID playerId, long amount) {
-        PlayerProgress row = progress.findById(playerId).orElseThrow(() -> new NotFoundException("Player not found"));
-        row.setCurrencyBalance(row.getCurrencyBalance() + amount);
-        row.setUpdatedAt(Instant.now());
+        wallets.credit(playerId, amount, CoinKind.ADJUSTMENT, "adjustment:" + UUID.randomUUID());
     }
 
     /**

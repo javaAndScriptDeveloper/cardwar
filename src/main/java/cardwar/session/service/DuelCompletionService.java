@@ -5,6 +5,7 @@ import cardwar.engine.Outcome;
 import cardwar.session.domain.DuelResult;
 import cardwar.session.repository.DuelResultRepository;
 import cardwar.session.store.StoredDuel;
+import cardwar.wallet.service.WalletService;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +25,12 @@ public class DuelCompletionService {
 
     private final DuelResultRepository results;
     private final AccountService accounts;
+    private final WalletService wallets;
 
-    public DuelCompletionService(DuelResultRepository results, AccountService accounts) {
+    public DuelCompletionService(DuelResultRepository results, AccountService accounts, WalletService wallets) {
         this.results = results;
         this.accounts = accounts;
+        this.wallets = wallets;
     }
 
     /** Idempotent: a retry after a crashed completion must not double-count anybody's duels. */
@@ -55,10 +58,13 @@ public class DuelCompletionService {
                 outcome.reason().name(),
                 duel.startedAt(),
                 finishedAt,
-                duel.moveCount()));
+                duel.moveCount(),
+                duel.stake()));
 
         accounts.recordDuelPlayed(playerA, playerA.equals(winner));
         accounts.recordDuelPlayed(playerB, playerB.equals(winner));
+        // Same transaction as the result row: the pot is paid exactly when the result becomes durable.
+        wallets.settle(duelId.toString(), winner);
         log.info("Duel {} finished after {} moves", duelId, duel.moveCount());
     }
 }

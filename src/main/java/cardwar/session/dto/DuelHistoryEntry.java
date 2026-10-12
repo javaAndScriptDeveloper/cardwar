@@ -15,4 +15,6 @@ public record DuelHistoryEntry(
         String endReason,
         Instant startedAt,
         Instant finishedAt,
-        int moveCount) {}
+        int moveCount,
+        long stake,
+        long coinDelta) {}

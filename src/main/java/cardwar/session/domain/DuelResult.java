@@ -55,6 +55,9 @@ public class DuelResult {
     @Column(name = "move_count", nullable = false)
     private int moveCount;
 
+    @Column(name = "stake", nullable = false)
+    private long stake;
+
     @SuppressWarnings("checkstyle:ParameterNumber")
     public DuelResult(
             UUID id,
@@ -67,7 +70,8 @@ public class DuelResult {
             String endReason,
             Instant startedAt,
             Instant finishedAt,
-            int moveCount) {
+            int moveCount,
+            long stake) {
         this.id = id;
         this.duelId = duelId;
         this.playerA = playerA;
@@ -79,5 +83,6 @@ public class DuelResult {
         this.startedAt = startedAt;
         this.finishedAt = finishedAt;
         this.moveCount = moveCount;
+        this.stake = stake;
     }
 }

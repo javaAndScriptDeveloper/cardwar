@@ -23,7 +23,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApplicationException.class)
     public ProblemDetail handleApplicationException(ApplicationException ex) {
         log.debug("Application error: {}", ex.getMessage());
-        return ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
+        var problem = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
+        if (ex.getReason() != null) {
+            problem.setProperty("reason", ex.getReason());
+        }
+        return problem;
     }
 
     /**

@@ -2,6 +2,7 @@ package cardwar.session.controller;
 
 import cardwar.engine.PlayerId;
 import cardwar.security.PlayerIdentity;
+import cardwar.session.dto.CreateInviteRequest;
 import cardwar.session.dto.DuelView;
 import cardwar.session.dto.InviteView;
 import cardwar.session.service.DuelInviteService;
@@ -13,6 +14,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,8 +34,10 @@ public class DuelInviteController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create an invite to share; anyone who accepts it plays the caller")
-    public InviteView create(@AuthenticationPrincipal PlayerIdentity caller) {
-        return invites.create(actor(caller));
+    public InviteView create(
+            @AuthenticationPrincipal PlayerIdentity caller,
+            @RequestBody(required = false) CreateInviteRequest request) {
+        return invites.create(actor(caller), request == null ? 0 : request.stakeOrZero());
     }
 
     @GetMapping("/pending")

@@ -41,6 +41,7 @@ public class RedisGameStateStore implements GameStateStore {
     private static final String FIELD_STATE = "state";
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_STARTED_AT = "startedAt";
+    private static final String FIELD_STAKE = "stake";
 
     private static final RedisScript<Long> COMPARE_AND_SET = new DefaultRedisScript<>(
             """
@@ -50,7 +51,7 @@ public class RedisGameStateStore implements GameStateStore {
             elseif stored ~= ARGV[1] then
                 return 0
             end
-            redis.call('HSET', KEYS[1], 'version', ARGV[2], 'state', ARGV[3], 'startedAt', ARGV[4])
+            redis.call('HSET', KEYS[1], 'version', ARGV[2], 'state', ARGV[3], 'startedAt', ARGV[4], 'stake', ARGV[7])
             redis.call('PEXPIRE', KEYS[1], ARGV[5])
             for i = 2, 3 do
                 redis.call('SADD', KEYS[i], ARGV[6])
@@ -73,13 +74,17 @@ public class RedisGameStateStore implements GameStateStore {
 
     @Override
     public Optional<StoredDuel> find(DuelId duelId) {
-        List<Object> fields = redis.opsForHash().multiGet(key(duelId), List.of(FIELD_STATE, FIELD_STARTED_AT));
+        List<Object> fields =
+                redis.opsForHash().multiGet(key(duelId), List.of(FIELD_STATE, FIELD_STARTED_AT, FIELD_STAKE));
         Object state = fields.get(0);
         Object startedAt = fields.get(1);
+        Object stake = fields.get(2);
         if (state == null || startedAt == null) {
             return Optional.empty();
         }
-        return Optional.of(new StoredDuel(read((String) state), Instant.parse((String) startedAt)));
+        // Duels stored before stakes existed have no stake field: they were friendly.
+        long coins = stake == null ? 0 : Long.parseLong((String) stake);
+        return Optional.of(new StoredDuel(read((String) state), Instant.parse((String) startedAt), coins));
     }
 
     @Override
@@ -95,7 +100,8 @@ public class RedisGameStateStore implements GameStateStore {
                 write(duel.state()),
                 duel.startedAt().toString(),
                 Long.toString(ttl.toMillis()),
-                duel.state().duelId().value().toString());
+                duel.state().duelId().value().toString(),
+                Long.toString(duel.stake()));
         if (applied == null || applied == 0L) {
             throw new ConflictException("The duel moved on while this move was being made");
         }

@@ -24,14 +24,21 @@ public class RedisInviteStore implements InviteStore {
 
     private static final String KEY_PREFIX = "cardwar:invite:";
 
-    /** Returns the id of the creator's still-pending invite if there is one, else stores the new one. */
+    /**
+     * Returns the id of the creator's still-pending invite at the same stake if there is one; a pending invite at
+     * another stake is withdrawn; otherwise the new one is stored.
+     */
     private static final RedisScript<String> CREATE = new DefaultRedisScript<>(
             """
             local current = redis.call('GET', KEYS[1])
             if current and redis.call('HGET', ARGV[5] .. current, 'status') == 'PENDING' then
-                return current
+                local stake = redis.call('HGET', ARGV[5] .. current, 'stake') or '0'
+                if stake == ARGV[6] then
+                    return current
+                end
+                redis.call('DEL', ARGV[5] .. current)
             end
-            redis.call('HSET', KEYS[2], 'creator', ARGV[1], 'status', 'PENDING', 'expiresAt', ARGV[2])
+            redis.call('HSET', KEYS[2], 'creator', ARGV[1], 'status', 'PENDING', 'expiresAt', ARGV[2], 'stake', ARGV[6])
             redis.call('PEXPIRE', KEYS[2], ARGV[3])
             redis.call('SET', KEYS[1], ARGV[4], 'PX', ARGV[3])
             return ARGV[4]
@@ -71,7 +78,7 @@ public class RedisInviteStore implements InviteStore {
     }
 
     @Override
-    public StoredInvite create(UUID creator) {
+    public StoredInvite create(UUID creator, long stake) {
         var inviteId = UUID.randomUUID();
         Instant expiresAt = Instant.now().plus(ttl);
         String stored = redis.execute(
@@ -81,12 +88,13 @@ public class RedisInviteStore implements InviteStore {
                 expiresAt.toString(),
                 Long.toString(ttl.toMillis()),
                 inviteId.toString(),
-                KEY_PREFIX);
+                KEY_PREFIX,
+                Long.toString(stake));
         if (inviteId.toString().equals(stored)) {
-            return new StoredInvite(inviteId, creator, StoredInvite.Status.PENDING, null, null, expiresAt);
+            return new StoredInvite(inviteId, creator, StoredInvite.Status.PENDING, null, null, expiresAt, stake);
         }
         // An existing invite can expire between the script and this read; a fresh one is then the right answer.
-        return find(UUID.fromString(stored)).orElseGet(() -> create(creator));
+        return find(UUID.fromString(stored)).orElseGet(() -> create(creator, stake));
     }
 
     @Override
@@ -115,7 +123,8 @@ public class RedisInviteStore implements InviteStore {
                 StoredInvite.Status.valueOf((String) fields.get("status")),
                 uuidOrNull(fields.get("acceptor")),
                 uuidOrNull(fields.get("duelId")),
-                Instant.parse((String) fields.get("expiresAt"))));
+                Instant.parse((String) fields.get("expiresAt")),
+                fields.get("stake") == null ? 0 : Long.parseLong((String) fields.get("stake"))));
     }
 
     @Override

@@ -10,6 +10,7 @@ import cardwar.monetization.dto.EntitlementSource;
 import cardwar.monetization.dto.TargetType;
 import cardwar.monetization.repository.EntitlementRepository;
 import cardwar.monetization.service.EntitlementService;
+import cardwar.wallet.service.WalletService;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -104,6 +105,8 @@ class EntitlementIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void currencyUnlockWithInsufficientBalanceIsRejectedAndTheBalanceIsUnchanged() throws Exception {
+        // Spend the starter coins first so the balance is exactly 100.
+        accounts.spendCurrency(player.id(), WalletService.STARTER_COINS);
         accounts.creditCurrency(player.id(), 100);
 
         api.unlockSkin(player, CURRENCY_SKIN).andExpect(status().isBadRequest());
@@ -114,6 +117,7 @@ class EntitlementIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void currencyUnlockDeductsThePriceAndRecordsTheCurrencySource() throws Exception {
+        accounts.spendCurrency(player.id(), WalletService.STARTER_COINS);
         accounts.creditCurrency(player.id(), 700);
 
         api.unlockSkin(player, CURRENCY_SKIN)

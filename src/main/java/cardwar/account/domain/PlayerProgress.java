@@ -13,7 +13,8 @@ import lombok.Setter;
 
 /**
  * Gameplay progress, kept apart from the account row because it is written after every duel while the account
- * itself is not.
+ * itself is not. The legacy currency_balance column is no longer mapped: coins live in the wallet module's ledger
+ * (changeset 007 moved them there).
  */
 @Entity
 @Table(name = "player_progress")
@@ -31,9 +32,6 @@ public class PlayerProgress {
 
     @Column(name = "duels_won", nullable = false)
     private int duelsWon;
-
-    @Column(name = "currency_balance", nullable = false)
-    private long currencyBalance;
 
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

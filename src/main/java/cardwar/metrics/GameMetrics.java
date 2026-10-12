@@ -91,6 +91,27 @@ public class GameMetrics {
                 .increment();
     }
 
+    /** Coins created (in) and destroyed (out), by why they moved; the amount is the increment, not a count. */
+    public void coins(Enum<?> kind, long amount) {
+        if (amount == 0) {
+            return;
+        }
+        long abs = Math.abs(amount);
+        String direction = amount > 0 ? "in" : "out";
+        afterCommit(() -> Counter.builder("cardwar.coins")
+                .description("Coins moved through the ledger")
+                .tag("kind", label(kind))
+                .tag("direction", direction)
+                .register(registry)
+                .increment(abs));
+    }
+
+    public void bonusClaimed(int streakDay) {
+        String day = streakDay >= 7 ? "7+" : Integer.toString(streakDay);
+        afterCommit(() -> counter("cardwar.bonus.claims", "Daily bonus claims by streak day", "day", day)
+                .increment());
+    }
+
     private static void afterCommit(Runnable action) {
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
