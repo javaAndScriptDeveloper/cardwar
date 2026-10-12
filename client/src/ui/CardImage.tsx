@@ -1,4 +1,5 @@
-import { type Card, cardName } from '../game/cards';
+import type { Card } from '../game/cards';
+import { cardLabel, t } from '../i18n';
 
 /**
  * The one place a card becomes an image. Skins will later swap this for a catalog lookup (the seed's image_ref is
@@ -22,7 +23,7 @@ export function CardImage({
         <img
             class={className ?? 'card'}
             src={cardImageUrl(card)}
-            alt={cardName(card)}
+            alt={cardLabel(card)}
             draggable={false}
             {...rest}
         />
@@ -34,7 +35,7 @@ export function CardBack({ class: className }: { class?: string }) {
         <img
             class={className ?? 'card'}
             src={`${import.meta.env.BASE_URL}cards/classic/back.svg`}
-            alt="Card back"
+            alt={t('card.back')}
             draggable={false}
         />
     );

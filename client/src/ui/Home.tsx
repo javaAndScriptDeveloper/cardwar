@@ -4,6 +4,7 @@ import { ApiError, type ApiClient } from '../api/client';
 import type { SignedInPlayer } from '../auth/session';
 import { inviteLink, shareUrl, type LinkConfig } from '../telegram/links';
 import type { Telegram } from '../telegram/webapp';
+import { t } from '../i18n';
 import { describeError } from './errors';
 
 type LobbyApi = Pick<
@@ -33,14 +34,14 @@ function inviteProblem(error: unknown): string {
     if (error instanceof ApiError) {
         switch (error.status) {
             case 404:
-                return 'That invite has expired or does not exist.';
+                return t('lobby.errors.inviteExpired');
             case 400:
-                return 'That is your own invite. Send it to a friend instead.';
+                return t('lobby.errors.ownInvite');
             case 409:
-                return 'Somebody already accepted that invite.';
+                return t('lobby.errors.inviteTaken');
         }
     }
-    return `Could not join: ${describeError(error)}.`;
+    return t('lobby.errors.join', { error: describeError(error) });
 }
 
 /**
@@ -78,7 +79,7 @@ export function Home({ player, api, telegram, invite, links, table, pollMs = 200
                 if (!cancelled) {
                     setScreen({
                         kind: 'start',
-                        error: `Could not load your duels: ${describeError(error)}.`,
+                        error: t('lobby.errors.loadDuels', { error: describeError(error) }),
                     });
                 }
                 return;
@@ -108,13 +109,16 @@ export function Home({ player, api, telegram, invite, links, table, pollMs = 200
             const created = await api.createInvite();
             setScreen({ kind: 'waiting', inviteId: created.inviteId });
         } catch (error) {
-            setScreen({ kind: 'start', error: `Could not create an invite: ${describeError(error)}.` });
+            setScreen({
+                kind: 'start',
+                error: t('lobby.errors.createInvite', { error: describeError(error) }),
+            });
         }
     };
 
     switch (screen.kind) {
         case 'loading':
-            return <p class="notice">Loading…</p>;
+            return <p class="notice">{t('app.loading')}</p>;
         case 'table':
             return table(screen.duelId, () => setScreen({ kind: 'start' }));
         case 'waiting':
@@ -124,13 +128,9 @@ export function Home({ player, api, telegram, invite, links, table, pollMs = 200
                     api={api}
                     pollMs={pollMs}
                     link={inviteLink(screen.inviteId, links)}
-                    onShare={(link) =>
-                        telegram.openTelegramLink(shareUrl(link, 'Play Durak with me on Cardwar!'))
-                    }
+                    onShare={(link) => telegram.openTelegramLink(shareUrl(link, t('waiting.shareText')))}
                     onAccepted={(duelId) => setScreen({ kind: 'table', duelId })}
-                    onExpired={() =>
-                        setScreen({ kind: 'start', error: 'Your invite expired before anybody joined.' })
-                    }
+                    onExpired={() => setScreen({ kind: 'start', error: t('lobby.errors.waitExpired') })}
                     onCancel={() => setScreen({ kind: 'start' })}
                 />
             );
@@ -160,17 +160,12 @@ function Start({
 
     return (
         <section class="lobby">
-            <h1>Cardwar</h1>
-            <p class="notice">Signed in as {player.username}. Two players, 36 cards, throw-in Durak.</p>
+            <h1>{t('lobby.greeting', { name: player.username })}</h1>
+            <p class="notice">{t('lobby.tagline')}</p>
             <ol class="how-to">
-                <li>
-                    Tap <b>Invite a friend</b> and send the invite to a friend: share the link, or copy the
-                    code.
-                </li>
-                <li>
-                    Your friend taps the link, or opens this app and pastes the code under <b>Join</b>.
-                </li>
-                <li>The duel starts for both of you as soon as they join.</li>
+                <li>{t('lobby.howTo1')}</li>
+                <li>{t('lobby.howTo2')}</li>
+                <li>{t('lobby.howTo3')}</li>
             </ol>
             {error && (
                 <p class="error" role="alert">
@@ -178,7 +173,7 @@ function Start({
                 </p>
             )}
             <button class="primary big" data-testid="invite" disabled={busy} onClick={run(onInvite)}>
-                Invite a friend
+                {t('lobby.invite')}
             </button>
             <form
                 class="panel"
@@ -190,18 +185,18 @@ function Start({
                 }}
             >
                 <label>
-                    Invite code
+                    {t('lobby.joinTitle')}
                     <input
                         name="invite-code"
                         data-testid="join-code"
                         value={code}
                         onInput={(e) => setCode(e.currentTarget.value)}
-                        placeholder="Paste a code from a friend"
+                        placeholder={t('lobby.joinPlaceholder')}
                         autoComplete="off"
                     />
                 </label>
                 <button type="submit" data-testid="join" disabled={busy || !code.trim()}>
-                    Join
+                    {t('lobby.join')}
                 </button>
             </form>
         </section>
@@ -222,11 +217,9 @@ function CopyButton({ text }: { text: string }) {
     return (
         <>
             <button data-testid="copy-code" onClick={() => void copy()}>
-                {state === 'copied' ? 'Copied' : 'Copy code'}
+                {state === 'copied' ? t('waiting.copied') : t('waiting.copy')}
             </button>
-            {state === 'failed' && (
-                <span class="notice">Copying is blocked here: press and hold the code.</span>
-            )}
+            {state === 'failed' && <span class="notice">{t('waiting.copyBlocked')}</span>}
         </>
     );
 }
@@ -275,7 +268,7 @@ function Waiting({
                     onExpired();
                     return;
                 }
-                setProblem(`Connection trouble: ${describeError(error)}. Still trying.`);
+                setProblem(t('waiting.trouble', { error: describeError(error) }));
             }
             timer = setTimeout(poll, pollMs);
         };
@@ -288,13 +281,13 @@ function Waiting({
 
     return (
         <section class="lobby">
-            <h1>Waiting for a friend</h1>
-            <p class="notice">Send the invite. The duel starts as soon as your friend opens it.</p>
+            <h1>{t('waiting.title')}</h1>
+            <p class="notice">{t('waiting.hint')}</p>
             <button class="primary big" data-testid="share-invite" onClick={() => onShare(link)}>
-                Share invite
+                {t('waiting.share')}
             </button>
             <div class="panel">
-                <span class="notice">Or give them this code to paste under Join:</span>
+                <span class="notice">{t('waiting.codeHint')}</span>
                 <code class="invite-code" data-testid="invite-code">
                     {inviteId}
                 </code>
@@ -305,7 +298,7 @@ function Waiting({
                     {problem}
                 </p>
             )}
-            <button onClick={onCancel}>Cancel</button>
+            <button onClick={onCancel}>{t('waiting.cancel')}</button>
         </section>
     );
 }

@@ -5,6 +5,7 @@ import type { DuelResult, DuelView, MoveRequest } from '../api/types';
 import { type Card, sameCard } from '../game/cards';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
+import { t } from '../i18n';
 import type { Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 import { Table } from './Table';
@@ -45,15 +46,8 @@ function resultOf(view: DuelView): Result {
 /** Delay before re-trying a re-fetch that failed (429 or no network). */
 const RETRY_MS = 1500;
 
-const HEADINGS: Record<DuelResult, string> = { WON: 'You won', LOST: 'You lost', DRAW: 'Draw' };
-
 function explain(result: Result, opponentName: string): string {
-    if (result.result === 'DRAW') {
-        return 'You both got rid of your cards in the same round.';
-    }
-    return result.result === 'WON'
-        ? 'You got rid of all your cards first.'
-        : `${opponentName} got rid of all their cards first. You are the durak this time.`;
+    return t(`duel.explain.${result.result}`, { name: opponentName });
 }
 
 /**
@@ -65,7 +59,7 @@ function explain(result: Result, opponentName: string): string {
  */
 export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props) {
     const [state, setState] = useState<State>({ kind: 'loading' });
-    const [opponentName, setOpponentName] = useState('Opponent');
+    const [opponentName, setOpponentName] = useState(t('duel.opponent'));
     const version = useRef(-1);
     const closeStream = useRef<() => void>(() => {});
 
@@ -76,10 +70,10 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                 setOpponentName(entry.opponentUsername);
                 setState({ kind: 'over', result: { result: entry.result, reason: entry.endReason } });
             } else {
-                setState({ kind: 'gone', message: 'This duel is no longer available. It may have expired.' });
+                setState({ kind: 'gone', message: t('duel.gone') });
             }
         } catch (error) {
-            setState({ kind: 'gone', message: `Could not load the result: ${describeError(error)}.` });
+            setState({ kind: 'gone', message: t('duel.loadResult', { error: describeError(error) }) });
         }
     }, [api, duelId]);
 
@@ -190,7 +184,7 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                 await refresh();
             } else if (error instanceof ApiError && error.status === 0) {
                 // The move may or may not have reached the server before the connection dropped; re-read to find out.
-                say('Connection lost. Check the table and try again.', 'network');
+                say(t('duel.connectionLost'), 'network');
                 await refresh();
             } else {
                 telegram.haptic('error');
@@ -224,7 +218,7 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                       return candidates.length === 1 ? candidates[0] : undefined;
                   })());
         if (!target) {
-            say('Tap the card you want to beat first.', 'pick-target');
+            say(t('duel.pickTarget'), 'pick-target');
             return;
         }
         void play({ type: 'DEFEND', attackCard: target, card });
@@ -244,7 +238,7 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
 
     switch (state.kind) {
         case 'loading':
-            return <p class="notice">Loading the duel…</p>;
+            return <p class="notice">{t('duel.loading')}</p>;
         case 'gone':
             return (
                 <section class="lobby">
@@ -252,7 +246,7 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                         {state.message}
                     </p>
                     <button data-testid="back-to-lobby" onClick={exit}>
-                        Back to start
+                        {t('duel.back')}
                     </button>
                 </section>
             );
@@ -263,10 +257,10 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                     data-testid="result"
                     data-result={state.result.result}
                 >
-                    <h1>{HEADINGS[state.result.result]}</h1>
+                    <h1>{t(`duel.result.${state.result.result}`)}</h1>
                     <p>{explain(state.result, opponentName)}</p>
                     <button class="primary big" data-testid="back-to-lobby" onClick={exit}>
-                        Back to start
+                        {t('duel.back')}
                     </button>
                 </section>
             );

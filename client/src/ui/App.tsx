@@ -3,6 +3,7 @@ import { useEffect, useState } from 'preact/hooks';
 import type { ApiClient } from '../api/client';
 import type { SignedInPlayer, Session } from '../auth/session';
 import type { Telegram } from '../telegram/webapp';
+import { t } from '../i18n';
 import { DevLogin } from './DevLogin';
 import { describeError } from './errors';
 
@@ -38,7 +39,7 @@ export function App({ telegram, api, session, home }: Props) {
             .catch((error: unknown) =>
                 setState({
                     kind: 'failed',
-                    message: `Could not sign in with Telegram: ${describeError(error)}`,
+                    message: t('app.signInFailed', { error: describeError(error) }),
                 }),
             );
     }, [telegram, api, session]);
@@ -49,11 +50,11 @@ export function App({ telegram, api, session, home }: Props) {
                 home(state.player)
             ) : (
                 <>
-                    <h1>Cardwar</h1>
-                    {state.kind === 'signing-in' && <p class="notice">Signing in…</p>}
+                    <h1>{t('app.title')}</h1>
+                    {state.kind === 'signing-in' && <p class="notice">{t('app.signingIn')}</p>}
                     {state.kind === 'failed' && (
                         <p class="error" role="alert">
-                            {state.message}. Close the app and open it again from the bot.
+                            {state.message}
                         </p>
                     )}
                     {state.kind === 'login' && (

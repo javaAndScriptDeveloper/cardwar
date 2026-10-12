@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
 import { c, view } from '../game/fixtures/views';
+import { cardLabel, t } from '../i18n';
 import { Table, type TableProps } from './Table';
 
 function renderTable(overrides: Partial<TableProps> = {}) {
@@ -38,48 +39,51 @@ describe('Table', () => {
         expect(screen.getByText('Bob')).toBeTruthy();
         expect(screen.getByTestId('opponent-count').textContent).toBe('4');
         expect(screen.getByTestId('talon-count').textContent).toBe('12');
-        expect(screen.getByAltText('Ten of Hearts')).toBeTruthy();
+        expect(screen.getByAltText(cardLabel(c('TEN', 'HEARTS')))).toBeTruthy();
         expect(
-            screen.getByRole('button', { name: 'Seven of Spades, beaten by Eight of Spades' }),
+            screen.getByRole('button', {
+                name: t('duel.beatenBy', {
+                    attack: cardLabel(c('SEVEN', 'SPADES')),
+                    defence: cardLabel(c('EIGHT', 'SPADES')),
+                }),
+            }),
         ).toBeTruthy();
-        expect(screen.getByRole('button', { name: 'Seven of Clubs' })).toBeTruthy();
-        expect(screen.getByRole('status').textContent).toBe('Defend');
-        expect(screen.getAllByAltText('Card back').length).toBe(4 + 1);
+        expect(screen.getByRole('button', { name: cardLabel(c('SEVEN', 'CLUBS')) })).toBeTruthy();
+        expect(screen.getByRole('status').getAttribute('data-state')).toBe('defend');
+        expect(screen.getAllByAltText(t('card.back')).length).toBe(4 + 1);
     });
 
     it('enables Take for the defender facing an open attack, and End attack never', () => {
         renderTable({ view: defending });
-        expect((screen.getByRole('button', { name: 'Take' }) as HTMLButtonElement).disabled).toBe(false);
-        expect((screen.getByRole('button', { name: 'End attack' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByTestId('take') as HTMLButtonElement).disabled).toBe(false);
+        expect((screen.getByTestId('end-attack') as HTMLButtonElement).disabled).toBe(true);
     });
 
     it('enables End attack only once everything on the table is beaten', () => {
         renderTable({
             view: view({ table: [{ attack: c('SIX', 'SPADES'), defence: c('NINE', 'SPADES') }] }),
         });
-        expect((screen.getByRole('button', { name: 'End attack' }) as HTMLButtonElement).disabled).toBe(
-            false,
-        );
-        expect((screen.getByRole('button', { name: 'Take' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByTestId('end-attack') as HTMLButtonElement).disabled).toBe(false);
+        expect((screen.getByTestId('take') as HTMLButtonElement).disabled).toBe(true);
     });
 
     it('disables everything while a move is in flight', () => {
         renderTable({ view: defending, busy: true });
-        expect((screen.getByRole('button', { name: 'Take' }) as HTMLButtonElement).disabled).toBe(true);
+        expect((screen.getByTestId('take') as HTMLButtonElement).disabled).toBe(true);
     });
 
     it('marks playable hand cards and reports taps on hand and table cards', () => {
         const { props } = renderTable({ view: defending });
 
-        const six = screen.getByRole('button', { name: 'Six of Clubs' });
-        const nine = screen.getByRole('button', { name: 'Nine of Spades' });
+        const hand = (id: string) => document.querySelector(`.hand-card[data-card="${id}"]`) as HTMLElement;
+        const six = hand('SIX_OF_CLUBS');
         expect(six.dataset['playable']).toBe('false');
-        expect(nine.dataset['playable']).toBe('false'); // spades do not beat clubs
-        expect(screen.getByRole('button', { name: 'Ace of Hearts' }).dataset['playable']).toBe('true');
+        expect(hand('NINE_OF_SPADES').dataset['playable']).toBe('false'); // spades do not beat clubs
+        expect(hand('ACE_OF_HEARTS').dataset['playable']).toBe('true');
 
         fireEvent.click(six);
         expect(props.onHandCard).toHaveBeenCalledWith(c('SIX', 'CLUBS'));
-        fireEvent.click(screen.getByRole('button', { name: 'Seven of Clubs' }));
+        fireEvent.click(document.querySelector('.pair[data-attack="SEVEN_OF_CLUBS"]') as HTMLElement);
         expect(props.onTableCard).toHaveBeenCalledWith(c('SEVEN', 'CLUBS'));
     });
 
@@ -98,8 +102,10 @@ describe('Table', () => {
 
     it('highlights the selected defence target', () => {
         renderTable({ view: defending, selectedTarget: c('SEVEN', 'CLUBS') });
-        expect(screen.getByRole('button', { name: 'Seven of Clubs' }).getAttribute('aria-pressed')).toBe(
-            'true',
-        );
+        expect(
+            (document.querySelector('.pair[data-attack="SEVEN_OF_CLUBS"]') as HTMLElement).getAttribute(
+                'aria-pressed',
+            ),
+        ).toBe('true');
     });
 });

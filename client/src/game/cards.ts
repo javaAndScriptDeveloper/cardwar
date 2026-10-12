@@ -20,13 +20,6 @@ export function rankValue(rank: Rank): number {
     return RANKS.indexOf(rank);
 }
 
-const capitalised = (word: string) => word.charAt(0) + word.slice(1).toLowerCase();
-
-/** "Six of Clubs": the same display name the catalog seed uses. */
-export function cardName(card: Card): string {
-    return `${capitalised(card.rank)} of ${capitalised(card.suit)}`;
-}
-
 /** Stable machine id ("SEVEN_OF_SPADES"), used in data-* attributes so tests never depend on display names. */
 export function cardId(card: Card): string {
     return `${card.rank}_OF_${card.suit}`;

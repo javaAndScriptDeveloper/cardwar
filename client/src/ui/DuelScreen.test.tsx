@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { t } from '../i18n';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import { view } from '../game/fixtures/views';
@@ -46,22 +47,26 @@ describe('DuelScreen', () => {
         const { openStream } = setup();
 
         await waitFor(() => expect(screen.getByText('bob')).toBeTruthy());
-        expect(screen.getByRole('status').textContent).toBe('Your attack');
+        expect(screen.getByRole('status').getAttribute('data-state')).toBe('your-attack');
         expect(openStream).toHaveBeenCalledWith('duel-1', expect.anything());
     });
 
     it('re-fetches the duel on every nudge and ignores stale answers', async () => {
         const { api, nudge } = setup();
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Your attack'));
+        await waitFor(() =>
+            expect(screen.getByRole('status').getAttribute('data-state')).toBe('your-attack'),
+        );
 
         api.duel.mockResolvedValueOnce(view({ version: 2, attacker: 'them' }));
         nudge();
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'));
+        await waitFor(() =>
+            expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack'),
+        );
 
         api.duel.mockResolvedValueOnce(view({ version: 1 }));
         nudge();
         await new Promise((resolve) => setTimeout(resolve, 10));
-        expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack');
+        expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack');
     });
 
     it('shows the result when the duel it reads has finished', async () => {
@@ -77,7 +82,7 @@ describe('DuelScreen', () => {
         );
         nudge();
 
-        await waitFor(() => expect(screen.getByRole('heading', { name: 'You won' })).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole('heading', { name: t('duel.result.WON') })).toBeTruthy());
     });
 
     it('falls back to the history once the finished duel is gone, and goes back to start', async () => {
@@ -91,9 +96,12 @@ describe('DuelScreen', () => {
         ]);
         nudge();
 
-        await waitFor(() => expect(screen.getByRole('heading', { name: 'You lost' })).toBeTruthy());
-        expect(screen.getByText(/bob got rid of all their cards/i)).toBeTruthy();
-        fireEvent.click(screen.getByRole('button', { name: 'Back to start' }));
+        await waitFor(() =>
+            expect(screen.getByRole('heading', { name: t('duel.result.LOST') })).toBeTruthy(),
+        );
+        expect(screen.getByTestId('result').getAttribute('data-result')).toBe('LOST');
+        expect(screen.getByText(t('duel.explain.LOST', { name: 'bob' }))).toBeTruthy();
+        fireEvent.click(screen.getByTestId('back-to-lobby'));
         expect(onExit).toHaveBeenCalled();
         expect(close).toHaveBeenCalled();
     });
@@ -108,7 +116,9 @@ describe('DuelScreen', () => {
         ]);
         closed(404);
 
-        await waitFor(() => expect(screen.getByRole('heading', { name: 'Draw' })).toBeTruthy());
+        await waitFor(() =>
+            expect(screen.getByRole('heading', { name: t('duel.result.DRAW') })).toBeTruthy(),
+        );
     });
 
     it('coalesces a burst of nudges into one follow-up fetch', async () => {
@@ -125,7 +135,9 @@ describe('DuelScreen', () => {
         nudge();
         release(view({ version: 4 }));
 
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'));
+        await waitFor(() =>
+            expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack'),
+        );
         expect(api.duel).toHaveBeenCalledTimes(2);
     });
 
@@ -138,7 +150,7 @@ describe('DuelScreen', () => {
         nudge();
 
         await waitFor(
-            () => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'),
+            () => expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack'),
             {
                 timeout: 4000,
             },

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { t } from '../i18n';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import type { DuelView } from '../api/types';
@@ -26,7 +27,14 @@ function setup(start: DuelView) {
     return { api, telegram };
 }
 
-const tap = async (name: string) => fireEvent.click(await screen.findByRole('button', { name }));
+/** Taps a hand card or table pair by card id, or an action by its testid. */
+const tap = async (target: string) => {
+    const selector = /^[A-Z]+_OF_[A-Z]+$/.test(target)
+        ? `.hand-card[data-card="${target}"], .pair[data-attack="${target}"]`
+        : `[data-testid="${target}"]`;
+    await waitFor(() => expect(document.querySelector(selector)).toBeTruthy());
+    fireEvent.click(document.querySelector(selector) as HTMLElement);
+};
 
 const twoOpenAttacks = view({
     attacker: 'them',
@@ -42,10 +50,10 @@ describe('moves', () => {
             view({ version: 1, phase: 'DEFEND', table: [{ attack: c('SIX', 'CLUBS') }] }),
         );
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
         expect(api.move).toHaveBeenCalledWith('duel-1', { type: 'ATTACK', card: c('SIX', 'CLUBS') });
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('bob is defending'));
+        await waitFor(() => expect(screen.getByRole('status').getAttribute('data-state')).toBe('defending'));
         expect(telegram.haptic).toHaveBeenCalledWith('tap');
     });
 
@@ -55,7 +63,7 @@ describe('moves', () => {
         );
         api.move.mockResolvedValue(view({ version: 1, attacker: 'them' }));
 
-        await tap('Nine of Spades');
+        await tap('NINE_OF_SPADES');
 
         expect(api.move).toHaveBeenCalledWith('duel-1', {
             type: 'DEFEND',
@@ -68,11 +76,13 @@ describe('moves', () => {
         const { api } = setup(twoOpenAttacks);
         api.move.mockResolvedValue({ ...twoOpenAttacks, version: 1 });
 
-        await tap('Eight of Diamonds');
-        expect(screen.getByRole('button', { name: 'Eight of Diamonds' }).getAttribute('aria-pressed')).toBe(
-            'true',
-        );
-        await tap('Ace of Hearts');
+        await tap('EIGHT_OF_DIAMONDS');
+        expect(
+            (document.querySelector('.pair[data-attack="EIGHT_OF_DIAMONDS"]') as HTMLElement).getAttribute(
+                'aria-pressed',
+            ),
+        ).toBe('true');
+        await tap('ACE_OF_HEARTS');
 
         expect(api.move).toHaveBeenCalledWith('duel-1', {
             type: 'DEFEND',
@@ -85,7 +95,7 @@ describe('moves', () => {
         const { api } = setup(twoOpenAttacks);
         api.move.mockResolvedValue({ ...twoOpenAttacks, version: 1 });
 
-        await tap('Nine of Spades');
+        await tap('NINE_OF_SPADES');
 
         expect(api.move).toHaveBeenCalledWith(
             'duel-1',
@@ -96,10 +106,10 @@ describe('moves', () => {
     it('asks for a target when the card could beat several', async () => {
         const { api } = setup(twoOpenAttacks);
 
-        await tap('Ace of Hearts');
+        await tap('ACE_OF_HEARTS');
 
         expect(api.move).not.toHaveBeenCalled();
-        expect(screen.getByRole('alert').textContent).toMatch(/tap the card you want to beat/i);
+        expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('pick-target');
     });
 
     it('takes and ends the attack with the buttons', async () => {
@@ -110,9 +120,9 @@ describe('moves', () => {
             view({ version: 1, table: [{ attack: c('SIX', 'SPADES'), defence: c('NINE', 'SPADES') }] }),
         );
 
-        await tap('Take');
+        await tap('take');
         expect(api.move).toHaveBeenLastCalledWith('duel-1', { type: 'TAKE' });
-        await tap('End attack');
+        await tap('end-attack');
         expect(api.move).toHaveBeenLastCalledWith('duel-1', { type: 'END_ATTACK' });
     });
 
@@ -123,10 +133,13 @@ describe('moves', () => {
             new ApiError(400, { reason: 'NOT_YOUR_TURN', detail: 'it is not your move' }),
         );
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('Not your turn.'));
-        expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack');
+        await waitFor(() =>
+            expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('NOT_YOUR_TURN'),
+        );
+        expect(screen.getByRole('alert').textContent).toBe(t('reason.NOT_YOUR_TURN'));
+        expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack');
         expect(telegram.haptic).toHaveBeenCalledWith('error');
     });
 
@@ -135,9 +148,11 @@ describe('moves', () => {
         api.move.mockRejectedValue(new ApiError(409));
         api.duel.mockResolvedValue(view({ version: 3, attacker: 'them' }));
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Waiting for bob to attack'));
+        await waitFor(() =>
+            expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack'),
+        );
         expect(api.move).toHaveBeenCalledTimes(1);
     });
 
@@ -148,20 +163,20 @@ describe('moves', () => {
             view({ version: 1, phase: 'DEFEND', table: [{ attack: c('SIX', 'CLUBS') }] }),
         );
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/connection/i));
+        await waitFor(() => expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('network'));
         // The move may have reached the server before the connection dropped; the re-read shows whether it did.
-        await waitFor(() => expect(screen.getByRole('status').textContent).toBe('bob is defending'));
+        await waitFor(() => expect(screen.getByRole('status').getAttribute('data-state')).toBe('defending'));
     });
 
     it('asks to slow down when the server throttles a move', async () => {
         const { api } = setup(view());
         api.move.mockRejectedValue(new ApiError(429, { detail: 'Rate limit exceeded. Try again shortly.' }));
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/slow down/i));
+        await waitFor(() => expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('throttled'));
     });
 
     it('shows the result straight away when its own move ends the duel', async () => {
@@ -175,8 +190,8 @@ describe('moves', () => {
             }),
         );
 
-        await tap('Six of Clubs');
+        await tap('SIX_OF_CLUBS');
 
-        await waitFor(() => expect(screen.getByRole('heading', { name: 'You won' })).toBeTruthy());
+        await waitFor(() => expect(screen.getByRole('heading', { name: t('duel.result.WON') })).toBeTruthy());
     });
 });

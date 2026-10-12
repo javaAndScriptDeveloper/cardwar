@@ -1,4 +1,5 @@
 import type { DuelView } from '../api/types';
+import { t } from '../i18n';
 import { type Card, type Suit, rankValue, sameCard } from './cards';
 
 /**
@@ -118,20 +119,5 @@ export function statusState(view: DuelView): StatusState {
 }
 
 export function status(view: DuelView, opponentName: string): string {
-    switch (statusState(view)) {
-        case 'over':
-            return 'Duel over';
-        case 'your-attack':
-            return 'Your attack';
-        case 'defending':
-            return `${opponentName} is defending`;
-        case 'throw-in':
-            return 'Throw in or end the attack';
-        case 'waiting-attack':
-            return `Waiting for ${opponentName} to attack`;
-        case 'defend':
-            return 'Defend';
-        case 'waiting':
-            return `Waiting for ${opponentName}`;
-    }
+    return t(`duel.status.${statusState(view)}`, { name: opponentName });
 }

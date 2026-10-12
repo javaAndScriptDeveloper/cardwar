@@ -1,5 +1,6 @@
 import type { DuelView } from '../api/types';
-import { type Card, cardId, cardName, sameCard } from '../game/cards';
+import { type Card, cardId, sameCard } from '../game/cards';
+import { cardLabel, t } from '../i18n';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { CardBack, CardImage } from './CardImage';
 
@@ -59,18 +60,21 @@ export function Table({
                         data-testid="trump"
                         data-card={cardId(view.trumpCard)}
                     />
-                    <span class="hint">Trump</span>
+                    <span class="hint">{t('duel.trump')}</span>
                 </div>
                 <div class="pairs">
                     {view.table.map((pair) => {
                         const label = pair.defence
-                            ? `${cardName(pair.attack)}, beaten by ${cardName(pair.defence)}`
-                            : cardName(pair.attack);
+                            ? t('duel.beatenBy', {
+                                  attack: cardLabel(pair.attack),
+                                  defence: cardLabel(pair.defence),
+                              })
+                            : cardLabel(pair.attack);
                         const selected =
                             selectedTarget !== undefined && sameCard(selectedTarget, pair.attack);
                         return (
                             <button
-                                key={cardName(pair.attack)}
+                                key={cardId(pair.attack)}
                                 class={`pair${selected ? ' selected' : ''}`}
                                 aria-label={label}
                                 aria-pressed={selected}
@@ -85,7 +89,9 @@ export function Table({
                         );
                     })}
                 </div>
-                {view.discardCount > 0 && <span class="hint discard">Discarded: {view.discardCount}</span>}
+                {view.discardCount > 0 && (
+                    <span class="hint discard">{t('duel.discarded', { n: view.discardCount })}</span>
+                )}
             </div>
 
             <p class="status" role="status" data-state={statusState(view)}>
@@ -94,7 +100,7 @@ export function Table({
 
             <div class="actions">
                 <button data-testid="take" disabled={busy || !canTake(view)} onClick={onTake}>
-                    Take
+                    {t('duel.take')}
                 </button>
                 <button
                     class="primary"
@@ -102,16 +108,16 @@ export function Table({
                     disabled={busy || !canEndAttack(view)}
                     onClick={onEndAttack}
                 >
-                    End attack
+                    {t('duel.endAttack')}
                 </button>
             </div>
 
             <div class="hand">
                 {view.hand.map((card) => (
                     <button
-                        key={cardName(card)}
+                        key={cardId(card)}
                         class={`hand-card${isUsable(card) ? ' usable' : ''}`}
-                        aria-label={cardName(card)}
+                        aria-label={cardLabel(card)}
                         data-card={cardId(card)}
                         data-playable={String(isUsable(card))}
                         disabled={busy}

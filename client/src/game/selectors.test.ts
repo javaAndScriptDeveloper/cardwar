@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { t } from '../i18n';
 import { cardId } from './cards';
 import { c, view } from './fixtures/views';
 import {
@@ -32,7 +33,7 @@ describe('as the attacker', () => {
         expect(v.hand.every((card) => canAttackWith(v, card))).toBe(true);
         expect(canTake(v)).toBe(false);
         expect(canEndAttack(v)).toBe(false);
-        expect(status(v, 'Bob')).toBe('Your attack');
+        expect(status(v, 'Bob')).toBe(t('duel.status.your-attack'));
     });
 
     it('may throw in only ranks on the table, even while the defender is still to answer', () => {
@@ -40,14 +41,14 @@ describe('as the attacker', () => {
         expect(canAttackWith(v, c('SIX', 'CLUBS'))).toBe(true);
         expect(canAttackWith(v, c('NINE', 'SPADES'))).toBe(false);
         expect(canEndAttack(v)).toBe(false);
-        expect(status(v, 'Bob')).toBe('Bob is defending');
+        expect(status(v, 'Bob')).toBe(t('duel.status.defending', { name: 'Bob' }));
     });
 
     it('counts defence ranks as on the table too', () => {
         const v = view({ table: [{ attack: c('EIGHT', 'SPADES'), defence: c('NINE', 'SPADES') }] });
         expect(canAttackWith(view({ ...v, hand: [c('NINE', 'CLUBS')] }), c('NINE', 'CLUBS'))).toBe(true);
         expect(canEndAttack(v)).toBe(true);
-        expect(status(v, 'Bob')).toBe('Throw in or end the attack');
+        expect(status(v, 'Bob')).toBe(t('duel.status.throw-in'));
     });
 
     it('stops at six attacks per round', () => {
@@ -78,7 +79,7 @@ describe('as the defender', () => {
         expect(canDefend(v, c('SEVEN', 'SPADES'), c('JACK', 'DIAMONDS'))).toBe(false);
         expect(canTake(v)).toBe(true);
         expect(canAttackWith(v, c('SIX', 'CLUBS'))).toBe(false);
-        expect(status(v, 'Bob')).toBe('Defend');
+        expect(status(v, 'Bob')).toBe(t('duel.status.defend'));
     });
 
     it('cannot defend an already beaten card, nor take when everything is beaten', () => {
@@ -89,11 +90,13 @@ describe('as the defender', () => {
         });
         expect(canDefend(v, c('SEVEN', 'SPADES'), c('ACE', 'HEARTS'))).toBe(false);
         expect(canTake(v)).toBe(false);
-        expect(status(v, 'Bob')).toBe('Waiting for Bob');
+        expect(status(v, 'Bob')).toBe(t('duel.status.waiting', { name: 'Bob' }));
     });
 
     it('waits while the opponent leads', () => {
-        expect(status(view({ attacker: 'them' }), 'Bob')).toBe('Waiting for Bob to attack');
+        expect(status(view({ attacker: 'them' }), 'Bob')).toBe(
+            t('duel.status.waiting-attack', { name: 'Bob' }),
+        );
     });
 });
 
@@ -107,7 +110,7 @@ describe('playable', () => {
     it('nothing is playable once the duel is over', () => {
         const v = view({ phase: 'FINISHED', outcome: { draw: true, reason: 'DRAW' } });
         expect(canAttackWith(v, c('SIX', 'CLUBS'))).toBe(false);
-        expect(status(v, 'Bob')).toBe('Duel over');
+        expect(status(v, 'Bob')).toBe(t('duel.status.over'));
     });
 });
 

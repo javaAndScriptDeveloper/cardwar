@@ -1,4 +1,5 @@
 import { useState } from 'preact/hooks';
+import { t } from '../i18n';
 import { describeError } from './errors';
 
 /**
@@ -25,11 +26,9 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
 
     return (
         <form class="panel" onSubmit={submit}>
-            <p class="notice">
-                Running outside Telegram: dev shim. Sign in with any name; new names are registered.
-            </p>
+            <p class="notice">{t('dev.notice')}</p>
             <label>
-                Username
+                {t('dev.username')}
                 <input
                     name="username"
                     data-testid="dev-username"
@@ -41,7 +40,7 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
                 />
             </label>
             <label>
-                Password
+                {t('dev.password')}
                 <input
                     name="password"
                     data-testid="dev-password"
@@ -59,7 +58,7 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
                 </p>
             )}
             <button type="submit" class="primary" data-testid="dev-sign-in" disabled={busy}>
-                Sign in
+                {t('dev.signIn')}
             </button>
         </form>
     );

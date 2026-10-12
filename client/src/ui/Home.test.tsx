@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { t } from '../i18n';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import type { DuelView, InviteView } from '../api/types';
@@ -64,22 +65,22 @@ describe('Home', () => {
         await waitFor(() => expect(screen.getByText('table d-new')).toBeTruthy());
         expect(api.acceptInvite).toHaveBeenCalledWith('inv-1');
         fireEvent.click(screen.getByText('leave'));
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Invite a friend' })).toBeTruthy());
+        await waitFor(() => expect(screen.getByTestId('invite')).toBeTruthy());
         expect(api.acceptInvite).toHaveBeenCalledTimes(1);
     });
 
     it.each([
-        [404, /expired/i],
-        [400, /your own invite/i],
-        [409, /already/i],
+        [404, 'lobby.errors.inviteExpired'],
+        [400, 'lobby.errors.ownInvite'],
+        [409, 'lobby.errors.inviteTaken'],
     ])('explains a failed invite (%i) and offers the start screen', async (status, message) => {
         const api = fakeApi();
         api.acceptInvite.mockRejectedValue(new ApiError(status));
 
         renderHome(api, { invite: 'inv-1' });
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(message));
-        expect(screen.getByRole('button', { name: 'Invite a friend' })).toBeTruthy();
+        await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(t(message)));
+        expect(screen.getByTestId('invite')).toBeTruthy();
     });
 
     it('creates an invite, shares it through Telegram and opens the table once accepted', async () => {
@@ -91,10 +92,10 @@ describe('Home', () => {
         const telegram = { ...resolveTelegram({}), openTelegramLink: vi.fn() };
 
         renderHome(api, { telegram });
-        fireEvent.click(await screen.findByRole('button', { name: 'Invite a friend' }));
+        fireEvent.click(await screen.findByTestId('invite'));
 
         await waitFor(() => expect(screen.getByText('inv-9')).toBeTruthy());
-        fireEvent.click(screen.getByRole('button', { name: 'Share invite' }));
+        fireEvent.click(screen.getByTestId('share-invite'));
         expect(telegram.openTelegramLink).toHaveBeenCalledWith(
             expect.stringContaining(encodeURIComponent('https://t.me/cardwar_gaming_bot?start=inv-9')),
         );
@@ -107,10 +108,10 @@ describe('Home', () => {
         api.inviteStatus.mockResolvedValue(pending('inv-2'));
 
         renderHome(api);
-        fireEvent.click(await screen.findByRole('button', { name: 'Invite a friend' }));
-        fireEvent.click(await screen.findByRole('button', { name: 'Cancel' }));
+        fireEvent.click(await screen.findByTestId('invite'));
+        fireEvent.click(await screen.findByText(t('waiting.cancel')));
 
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Invite a friend' })).toBeTruthy());
+        await waitFor(() => expect(screen.getByTestId('invite')).toBeTruthy());
         const calls = api.inviteStatus.mock.calls.length;
         await new Promise((resolve) => setTimeout(resolve, 30));
         expect(api.inviteStatus.mock.calls.length).toBe(calls);
@@ -122,9 +123,11 @@ describe('Home', () => {
         api.inviteStatus.mockRejectedValue(new ApiError(404));
 
         renderHome(api);
-        fireEvent.click(await screen.findByRole('button', { name: 'Invite a friend' }));
+        fireEvent.click(await screen.findByTestId('invite'));
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/expired/i));
+        await waitFor(() =>
+            expect(screen.getByRole('alert').textContent).toBe(t('lobby.errors.waitExpired')),
+        );
     });
 
     it('reopening the app goes back to the invite it was waiting on', async () => {
@@ -156,16 +159,16 @@ describe('Home', () => {
         Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
 
         renderHome(api);
-        fireEvent.click(await screen.findByRole('button', { name: 'Copy code' }));
+        fireEvent.click(await screen.findByTestId('copy-code'));
 
         expect(writeText).toHaveBeenCalledWith('inv-copy');
-        await waitFor(() => expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy());
+        await waitFor(() => expect(screen.getByTestId('copy-code').textContent).toBe(t('waiting.copied')));
     });
 
     it('explains how to start on the start screen', async () => {
         renderHome(fakeApi());
 
-        expect(await screen.findByText(/send the invite to a friend/i)).toBeTruthy();
+        expect(await screen.findByText(t('lobby.howTo1'))).toBeTruthy();
     });
 
     it('joins with a pasted code', async () => {
@@ -173,8 +176,8 @@ describe('Home', () => {
         api.acceptInvite.mockResolvedValue(duelView('d-code'));
 
         renderHome(api);
-        fireEvent.input(await screen.findByLabelText('Invite code'), { target: { value: ' inv-7 ' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Join' }));
+        fireEvent.input(await screen.findByTestId('join-code'), { target: { value: ' inv-7 ' } });
+        fireEvent.click(screen.getByTestId('join'));
 
         await waitFor(() => expect(screen.getByText('table d-code')).toBeTruthy());
         expect(api.acceptInvite).toHaveBeenCalledWith('inv-7');

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
+import { t } from '../i18n';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
 import { Session } from '../auth/session';
@@ -37,10 +38,10 @@ describe('App sign-in', () => {
             />,
         );
 
-        expect(screen.getByText(/dev shim/i)).toBeTruthy();
-        fireEvent.input(screen.getByLabelText('Username'), { target: { value: 'alice' } });
-        fireEvent.input(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+        expect(screen.getByText(t('dev.notice'))).toBeTruthy();
+        fireEvent.input(screen.getByTestId('dev-username'), { target: { value: 'alice' } });
+        fireEvent.input(screen.getByTestId('dev-password'), { target: { value: 'correct-horse-battery' } });
+        fireEvent.click(screen.getByTestId('dev-sign-in'));
 
         await waitFor(() => expect(screen.getByText('home alice')).toBeTruthy());
         expect(api.passwordLogin).toHaveBeenCalledWith('alice', 'correct-horse-battery');
@@ -60,7 +61,7 @@ describe('App sign-in', () => {
         );
 
         await waitFor(() => expect(screen.getByText('home tg_1')).toBeTruthy());
-        expect(screen.queryByLabelText('Username')).toBeNull();
+        expect(screen.queryByTestId('dev-username')).toBeNull();
     });
 
     it('says plainly when Telegram sign-in fails', async () => {
@@ -76,6 +77,10 @@ describe('App sign-in', () => {
             />,
         );
 
-        await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/sign in/i));
+        await waitFor(() =>
+            expect(screen.getByRole('alert').textContent).toBe(
+                t('app.signInFailed', { error: 'Invalid credentials' }),
+            ),
+        );
     });
 });

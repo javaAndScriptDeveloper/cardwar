@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/preact';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FULL_DECK, cardName } from '../game/cards';
+import { FULL_DECK, cardId } from '../game/cards';
 import { CardBack, CardImage, cardImageUrl } from './CardImage';
 
 // Vitest runs from client/; jsdom's import.meta.url is not a file URL, so resolve from the working directory.
@@ -28,7 +28,7 @@ describe('CardImage', () => {
         render(
             <div>
                 {FULL_DECK.map((card) => (
-                    <CardImage key={cardName(card)} card={card} />
+                    <CardImage key={cardId(card)} card={card} />
                 ))}
                 <CardBack />
             </div>,
@@ -36,9 +36,11 @@ describe('CardImage', () => {
 
         const images = screen.getAllByRole('img');
         expect(images).toHaveLength(37);
-        expect(screen.getByAltText('Queen of Spades').getAttribute('src')).toBe(
+        expect(screen.getByAltText('Дама пік').getAttribute('src')).toBe(
             `${base}cards/classic/queen_of_spades.svg`,
         );
-        expect(screen.getByAltText('Card back').getAttribute('src')).toBe(`${base}cards/classic/back.svg`);
+        expect(screen.getByAltText('Сорочка карти').getAttribute('src')).toBe(
+            `${base}cards/classic/back.svg`,
+        );
     });
 });
