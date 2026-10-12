@@ -1,0 +1,407 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cardwar-gaming.duckdns.org/app/packs.schema.json",
+  "title": "Cardwar content pack",
+  "description": "client/public/packs/<id>/pack.json. Validated by npm run packs:check (src/content/schema.ts, which this file mirrors).",
+  "type": "object",
+  "required": ["id", "version", "type", "name", "cards"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "version": {
+      "const": 1
+    },
+    "type": {
+      "const": "DECK"
+    },
+    "name": {
+      "$ref": "#/$defs/localized"
+    },
+    "back": {
+      "$ref": "#/$defs/path"
+    },
+    "styles": {
+      "$ref": "#/$defs/path",
+      "description": "Stylesheet with the classes the css animations name."
+    },
+    "cards": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/cardId"
+      },
+      "required": [
+        "SIX_OF_CLUBS",
+        "SEVEN_OF_CLUBS",
+        "EIGHT_OF_CLUBS",
+        "NINE_OF_CLUBS",
+        "TEN_OF_CLUBS",
+        "JACK_OF_CLUBS",
+        "QUEEN_OF_CLUBS",
+        "KING_OF_CLUBS",
+        "ACE_OF_CLUBS",
+        "SIX_OF_DIAMONDS",
+        "SEVEN_OF_DIAMONDS",
+        "EIGHT_OF_DIAMONDS",
+        "NINE_OF_DIAMONDS",
+        "TEN_OF_DIAMONDS",
+        "JACK_OF_DIAMONDS",
+        "QUEEN_OF_DIAMONDS",
+        "KING_OF_DIAMONDS",
+        "ACE_OF_DIAMONDS",
+        "SIX_OF_HEARTS",
+        "SEVEN_OF_HEARTS",
+        "EIGHT_OF_HEARTS",
+        "NINE_OF_HEARTS",
+        "TEN_OF_HEARTS",
+        "JACK_OF_HEARTS",
+        "QUEEN_OF_HEARTS",
+        "KING_OF_HEARTS",
+        "ACE_OF_HEARTS",
+        "SIX_OF_SPADES",
+        "SEVEN_OF_SPADES",
+        "EIGHT_OF_SPADES",
+        "NINE_OF_SPADES",
+        "TEN_OF_SPADES",
+        "JACK_OF_SPADES",
+        "QUEEN_OF_SPADES",
+        "KING_OF_SPADES",
+        "ACE_OF_SPADES"
+      ],
+      "additionalProperties": {
+        "$ref": "#/$defs/card"
+      }
+    },
+    "sounds": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/path"
+      }
+    },
+    "animations": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z0-9_]+$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/animation"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      }
+    }
+  },
+  "$defs": {
+    "localized": {
+      "type": "object",
+      "required": ["uk"],
+      "properties": {
+        "uk": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?![a-zA-Z]+:)(?!/)",
+      "description": "Relative to the pack folder."
+    },
+    "tag": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "cardId": {
+      "enum": [
+        "SIX_OF_CLUBS",
+        "SEVEN_OF_CLUBS",
+        "EIGHT_OF_CLUBS",
+        "NINE_OF_CLUBS",
+        "TEN_OF_CLUBS",
+        "JACK_OF_CLUBS",
+        "QUEEN_OF_CLUBS",
+        "KING_OF_CLUBS",
+        "ACE_OF_CLUBS",
+        "SIX_OF_DIAMONDS",
+        "SEVEN_OF_DIAMONDS",
+        "EIGHT_OF_DIAMONDS",
+        "NINE_OF_DIAMONDS",
+        "TEN_OF_DIAMONDS",
+        "JACK_OF_DIAMONDS",
+        "QUEEN_OF_DIAMONDS",
+        "KING_OF_DIAMONDS",
+        "ACE_OF_DIAMONDS",
+        "SIX_OF_HEARTS",
+        "SEVEN_OF_HEARTS",
+        "EIGHT_OF_HEARTS",
+        "NINE_OF_HEARTS",
+        "TEN_OF_HEARTS",
+        "JACK_OF_HEARTS",
+        "QUEEN_OF_HEARTS",
+        "KING_OF_HEARTS",
+        "ACE_OF_HEARTS",
+        "SIX_OF_SPADES",
+        "SEVEN_OF_SPADES",
+        "EIGHT_OF_SPADES",
+        "NINE_OF_SPADES",
+        "TEN_OF_SPADES",
+        "JACK_OF_SPADES",
+        "QUEEN_OF_SPADES",
+        "KING_OF_SPADES",
+        "ACE_OF_SPADES"
+      ]
+    },
+    "card": {
+      "type": "object",
+      "required": ["image"],
+      "additionalProperties": false,
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/path"
+        },
+        "title": {
+          "$ref": "#/$defs/localized"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tag"
+          }
+        }
+      }
+    },
+    "animation": {
+      "type": "object",
+      "required": ["kind", "className", "durationMs"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "css"
+        },
+        "className": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+        },
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "trigger": {
+      "enum": [
+        "duel_started",
+        "turn_started",
+        "card_dealt",
+        "card_played",
+        "card_beaten",
+        "cards_taken",
+        "attack_ended",
+        "hand_changed",
+        "emote_received",
+        "duel_finished"
+      ]
+    },
+    "target": {
+      "enum": ["played", "beaten", "defence", "hand", "table", "you", "opponent"]
+    },
+    "haptic": {
+      "enum": ["success", "error", "warning", "tap"]
+    },
+    "layoutKind": {
+      "enum": ["stick_together", "pin_left", "pin_right"]
+    },
+    "matcher": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/cardId"
+        },
+        "rank": {
+          "enum": ["SIX", "SEVEN", "EIGHT", "NINE", "TEN", "JACK", "QUEEN", "KING", "ACE"]
+        },
+        "suit": {
+          "enum": ["CLUBS", "DIAMONDS", "HEARTS", "SPADES"]
+        },
+        "tag": {
+          "$ref": "#/$defs/tag"
+        }
+      }
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Every key must hold.",
+      "properties": {
+        "side": {
+          "enum": ["you", "opponent"]
+        },
+        "card": {
+          "$ref": "#/$defs/matcher"
+        },
+        "beaten": {
+          "$ref": "#/$defs/matcher"
+        },
+        "attacker": {
+          "$ref": "#/$defs/matcher"
+        },
+        "handHas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cardId"
+          }
+        },
+        "phase": {
+          "enum": ["ATTACK", "DEFEND", "FINISHED"]
+        },
+        "outcome": {
+          "enum": ["WON", "LOST", "DRAW"]
+        },
+        "random": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "all": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        },
+        "any": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/condition"
+          }
+        }
+      }
+    },
+    "soundEffect": {
+      "type": "object",
+      "required": ["sound"],
+      "additionalProperties": false,
+      "properties": {
+        "sound": {
+          "type": "string",
+          "description": "A key of sounds, or a default sound."
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "animEffect": {
+      "type": "object",
+      "required": ["anim"],
+      "additionalProperties": false,
+      "properties": {
+        "anim": {
+          "type": "string",
+          "description": "A key of animations, or a motion primitive."
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "bubbleEffect": {
+      "type": "object",
+      "required": ["bubble"],
+      "additionalProperties": false,
+      "properties": {
+        "bubble": {
+          "$ref": "#/$defs/localized"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "hapticEffect": {
+      "type": "object",
+      "required": ["haptic"],
+      "additionalProperties": false,
+      "properties": {
+        "haptic": {
+          "$ref": "#/$defs/haptic"
+        },
+        "target": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "layoutEffect": {
+      "type": "object",
+      "required": ["layout", "cards"],
+      "additionalProperties": false,
+      "properties": {
+        "layout": {
+          "$ref": "#/$defs/layoutKind"
+        },
+        "cards": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/cardId"
+          }
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "on", "do"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "on": {
+          "$ref": "#/$defs/trigger"
+        },
+        "if": {
+          "$ref": "#/$defs/condition"
+        },
+        "do": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/soundEffect"
+              },
+              {
+                "$ref": "#/$defs/animEffect"
+              },
+              {
+                "$ref": "#/$defs/bubbleEffect"
+              },
+              {
+                "$ref": "#/$defs/hapticEffect"
+              },
+              {
+                "$ref": "#/$defs/layoutEffect"
+              }
+            ]
+          }
+        },
+        "cooldownMs": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    }
+  }
+}

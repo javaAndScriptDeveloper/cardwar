@@ -1,0 +1,119 @@
+{
+  "id": "classic",
+  "version": 1,
+  "type": "DECK",
+  "name": {
+    "uk": "Класична"
+  },
+  "back": "../../cards/classic/back.svg",
+  "cards": {
+    "SIX_OF_CLUBS": {
+      "image": "../../cards/classic/six_of_clubs.svg"
+    },
+    "SEVEN_OF_CLUBS": {
+      "image": "../../cards/classic/seven_of_clubs.svg"
+    },
+    "EIGHT_OF_CLUBS": {
+      "image": "../../cards/classic/eight_of_clubs.svg"
+    },
+    "NINE_OF_CLUBS": {
+      "image": "../../cards/classic/nine_of_clubs.svg"
+    },
+    "TEN_OF_CLUBS": {
+      "image": "../../cards/classic/ten_of_clubs.svg"
+    },
+    "JACK_OF_CLUBS": {
+      "image": "../../cards/classic/jack_of_clubs.svg"
+    },
+    "QUEEN_OF_CLUBS": {
+      "image": "../../cards/classic/queen_of_clubs.svg"
+    },
+    "KING_OF_CLUBS": {
+      "image": "../../cards/classic/king_of_clubs.svg"
+    },
+    "ACE_OF_CLUBS": {
+      "image": "../../cards/classic/ace_of_clubs.svg"
+    },
+    "SIX_OF_DIAMONDS": {
+      "image": "../../cards/classic/six_of_diamonds.svg"
+    },
+    "SEVEN_OF_DIAMONDS": {
+      "image": "../../cards/classic/seven_of_diamonds.svg"
+    },
+    "EIGHT_OF_DIAMONDS": {
+      "image": "../../cards/classic/eight_of_diamonds.svg"
+    },
+    "NINE_OF_DIAMONDS": {
+      "image": "../../cards/classic/nine_of_diamonds.svg"
+    },
+    "TEN_OF_DIAMONDS": {
+      "image": "../../cards/classic/ten_of_diamonds.svg"
+    },
+    "JACK_OF_DIAMONDS": {
+      "image": "../../cards/classic/jack_of_diamonds.svg"
+    },
+    "QUEEN_OF_DIAMONDS": {
+      "image": "../../cards/classic/queen_of_diamonds.svg"
+    },
+    "KING_OF_DIAMONDS": {
+      "image": "../../cards/classic/king_of_diamonds.svg"
+    },
+    "ACE_OF_DIAMONDS": {
+      "image": "../../cards/classic/ace_of_diamonds.svg"
+    },
+    "SIX_OF_HEARTS": {
+      "image": "../../cards/classic/six_of_hearts.svg"
+    },
+    "SEVEN_OF_HEARTS": {
+      "image": "../../cards/classic/seven_of_hearts.svg"
+    },
+    "EIGHT_OF_HEARTS": {
+      "image": "../../cards/classic/eight_of_hearts.svg"
+    },
+    "NINE_OF_HEARTS": {
+      "image": "../../cards/classic/nine_of_hearts.svg"
+    },
+    "TEN_OF_HEARTS": {
+      "image": "../../cards/classic/ten_of_hearts.svg"
+    },
+    "JACK_OF_HEARTS": {
+      "image": "../../cards/classic/jack_of_hearts.svg"
+    },
+    "QUEEN_OF_HEARTS": {
+      "image": "../../cards/classic/queen_of_hearts.svg"
+    },
+    "KING_OF_HEARTS": {
+      "image": "../../cards/classic/king_of_hearts.svg"
+    },
+    "ACE_OF_HEARTS": {
+      "image": "../../cards/classic/ace_of_hearts.svg"
+    },
+    "SIX_OF_SPADES": {
+      "image": "../../cards/classic/six_of_spades.svg"
+    },
+    "SEVEN_OF_SPADES": {
+      "image": "../../cards/classic/seven_of_spades.svg"
+    },
+    "EIGHT_OF_SPADES": {
+      "image": "../../cards/classic/eight_of_spades.svg"
+    },
+    "NINE_OF_SPADES": {
+      "image": "../../cards/classic/nine_of_spades.svg"
+    },
+    "TEN_OF_SPADES": {
+      "image": "../../cards/classic/ten_of_spades.svg"
+    },
+    "JACK_OF_SPADES": {
+      "image": "../../cards/classic/jack_of_spades.svg"
+    },
+    "QUEEN_OF_SPADES": {
+      "image": "../../cards/classic/queen_of_spades.svg"
+    },
+    "KING_OF_SPADES": {
+      "image": "../../cards/classic/king_of_spades.svg"
+    },
+    "ACE_OF_SPADES": {
+      "image": "../../cards/classic/ace_of_spades.svg"
+    }
+  }
+}
