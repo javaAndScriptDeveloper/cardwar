@@ -13,6 +13,7 @@ export interface OutcomeView {
     winner?: string;
     loser?: string;
     draw: boolean;
+    /** Engine end reason; 'FORFEIT' when a player missed three moves. */
     reason: string;
 }
 
@@ -33,6 +34,22 @@ export interface DuelView {
     version: number;
     /** Coins each player put in; 0 is a friendly duel. The pot is twice this. */
     stake: number;
+    /** ISO instant the player to move must act by; absent when finished (and from servers without the clock). */
+    deadline?: string;
+    /** Player id whose clock runs. */
+    toMove?: string;
+    /** Missed moves so far; the third forfeits the duel. */
+    strikes?: { you: number; opponent: number };
+}
+
+export type MatchStatus = 'WAITING' | 'MATCHED' | 'EXPIRED';
+
+/** The caller's quick-match queue entry. `duelId` is set once MATCHED. */
+export interface MatchView {
+    status: MatchStatus;
+    stake: number;
+    since: string;
+    duelId?: string;
 }
 
 export interface AuthResponse {

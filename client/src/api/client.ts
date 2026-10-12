@@ -5,11 +5,13 @@ import type {
     DuelSummary,
     DuelView,
     InviteView,
+    MatchView,
     MeView,
     MoveRequest,
     ProblemDetail,
     WalletView,
 } from './types';
+import { serverOffset } from '../state/clock';
 
 export const API_BASE = '/api/v1';
 
@@ -37,6 +39,7 @@ export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 export class ApiClient {
     private readonly fetchImpl: FetchLike;
     private readonly token: () => string | undefined;
+    private offsetMs = 0;
 
     constructor(fetchImpl: FetchLike, token: () => string | undefined) {
         this.fetchImpl = fetchImpl;
@@ -86,6 +89,25 @@ export class ApiClient {
         return this.request('GET', '/wallet/transactions');
     }
 
+    /** Joins the queue at a stake table; the answer may already be MATCHED when someone was waiting there. */
+    enterMatchmaking(stake: number): Promise<MatchView> {
+        return this.request('POST', '/matchmaking', { stake });
+    }
+
+    /** The caller's queue entry; the server answers 204 (undefined here) when the caller is not queued. */
+    matchmakingStatus(): Promise<MatchView | undefined> {
+        return this.request('GET', '/matchmaking');
+    }
+
+    leaveMatchmaking(): Promise<void> {
+        return this.request('DELETE', '/matchmaking');
+    }
+
+    /** Last measured server-minus-device clock difference in ms (see src/state/clock). */
+    serverOffsetMs(): number {
+        return this.offsetMs;
+    }
+
     /** The caller's invite nobody has accepted yet; the server answers 204 when there is none. */
     pendingInvite(): Promise<InviteView | undefined> {
         return this.request('GET', '/duels/invites/pending');
@@ -117,7 +139,22 @@ export class ApiClient {
         return headers;
     }
 
-    private async request<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
+    /**
+     * The `Date` header has whole seconds, so a difference under one second cannot be told from a synced clock
+     * and is taken as zero rather than as a bias of up to a second.
+     */
+    private measureClock(response: Response): void {
+        const date = response.headers.get('Date');
+        const serverMs = date ? Date.parse(date) : NaN;
+        if (Number.isNaN(serverMs)) {
+            return;
+        }
+        const offset = serverMs - Date.now();
+        this.offsetMs = Math.abs(offset) < 1000 ? 0 : offset;
+        serverOffset.value = this.offsetMs;
+    }
+
+    private async request<T>(method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown): Promise<T> {
         const headers = this.authHeaders();
         headers.set('Accept', 'application/json');
         const init: RequestInit = { method, headers };
@@ -131,6 +168,7 @@ export class ApiClient {
         } catch {
             throw new ApiError(0, { detail: 'Network unavailable' });
         }
+        this.measureClock(response);
         if (!response.ok) {
             throw new ApiError(response.status, await problemOf(response));
         }

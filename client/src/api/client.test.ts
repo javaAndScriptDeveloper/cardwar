@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { serverOffset } from '../state/clock';
 import { ApiClient, ApiError } from './client';
 
 function respond(status: number, body?: unknown, contentType = 'application/json') {
@@ -142,5 +143,77 @@ describe('ApiClient', () => {
 
         const bodies = fetchMock.mock.calls.map(([, init]) => (init as RequestInit).body);
         expect(bodies).toEqual(['{"stake":500}', '{"stake":0}', undefined]);
+    });
+
+    it('reaches the matchmaking endpoints, reading no queue entry on 204', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(respond(200, { status: 'WAITING', stake: 100, since: 'x' }))
+            .mockResolvedValueOnce(new Response(null, { status: 204 }))
+            .mockResolvedValueOnce(new Response(null, { status: 204 }));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await expect(api.enterMatchmaking(100)).resolves.toMatchObject({ status: 'WAITING', stake: 100 });
+        await expect(api.matchmakingStatus()).resolves.toBeUndefined();
+        await expect(api.leaveMatchmaking()).resolves.toBeUndefined();
+
+        const calls = fetchMock.mock.calls.map(
+            ([url, init]) => `${(init as RequestInit).method ?? 'GET'} ${url}`,
+        );
+        expect(calls).toEqual([
+            'POST /api/v1/matchmaking',
+            'GET /api/v1/matchmaking',
+            'DELETE /api/v1/matchmaking',
+        ]);
+        expect((fetchMock.mock.calls[0]?.[1] as RequestInit).body).toBe('{"stake":100}');
+    });
+
+    it('measures the server clock offset from the Date header', async () => {
+        const ahead = new Date(Date.now() + 60_000).toUTCString();
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(
+                new Response('{}', {
+                    status: 200,
+                    headers: { Date: ahead, 'Content-Type': 'application/json' },
+                }),
+            )
+            .mockResolvedValueOnce(respond(200, {}));
+        const api = new ApiClient(fetchMock, () => 't');
+        expect(api.serverOffsetMs()).toBe(0);
+
+        await api.me();
+        expect(api.serverOffsetMs()).toBeGreaterThan(58_000);
+        expect(api.serverOffsetMs()).toBeLessThan(61_000);
+        expect(serverOffset.value).toBe(api.serverOffsetMs());
+
+        // A response without the header keeps the last measurement.
+        await api.me();
+        expect(api.serverOffsetMs()).toBeGreaterThan(58_000);
+    });
+
+    it('treats a sub-second difference as a synced clock (the header has whole seconds)', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValue(
+                new Response('{}', { status: 200, headers: { Date: new Date().toUTCString() } }),
+            );
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.me();
+
+        expect(api.serverOffsetMs()).toBe(0);
+    });
+
+    it('records the offset from error responses too', async () => {
+        const behind = new Date(Date.now() - 30_000).toUTCString();
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValue(new Response(null, { status: 503, headers: { Date: behind } }));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.me().catch(() => undefined);
+
+        expect(api.serverOffsetMs()).toBeLessThan(-29_000);
     });
 });
