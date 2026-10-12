@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { DuelResult, DuelView, MoveRequest } from '../api/types';
+import type { DuelView, MoveRequest } from '../api/types';
 import { type Card, sameCard } from '../game/cards';
+import { type Result, resultOf } from '../game/diff';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
@@ -24,24 +25,11 @@ interface Props {
     onExit: () => void;
 }
 
-interface Result {
-    result: DuelResult;
-    reason: string | undefined;
-}
-
 type State =
     | { kind: 'loading' }
     | { kind: 'playing'; view: DuelView }
     | { kind: 'over'; result: Result }
     | { kind: 'gone'; message: string };
-
-function resultOf(view: DuelView): Result {
-    const outcome = view.outcome;
-    if (!outcome || outcome.draw) {
-        return { result: 'DRAW', reason: outcome?.reason };
-    }
-    return { result: outcome.winner === view.you ? 'WON' : 'LOST', reason: outcome.reason };
-}
 
 /** Delay before re-trying a re-fetch that failed (429 or no network). */
 const RETRY_MS = 1500;
