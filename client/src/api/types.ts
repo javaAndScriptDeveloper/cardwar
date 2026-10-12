@@ -92,7 +92,14 @@ export interface WalletView {
 }
 
 export type CoinKind =
-    'STARTER' | 'DAILY_BONUS' | 'STAKE_ESCROW' | 'STAKE_PAYOUT' | 'STAKE_REFUND' | 'PURCHASE' | 'LEGACY';
+    | 'STARTER'
+    | 'DAILY_BONUS'
+    | 'STAKE_ESCROW'
+    | 'STAKE_PAYOUT'
+    | 'STAKE_REFUND'
+    | 'PURCHASE'
+    | 'LEGACY'
+    | 'ADJUSTMENT';
 
 export interface CoinTransactionView {
     /** Signed: credits positive, debits negative. */

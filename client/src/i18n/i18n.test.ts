@@ -58,6 +58,7 @@ describe('message catalog', () => {
             'STAKE_REFUND',
             'PURCHASE',
             'LEGACY',
+            'ADJUSTMENT',
         ].map((kind) => `profile.tx.${kind}`),
     ];
     dynamic.forEach((key) => used.add(key));

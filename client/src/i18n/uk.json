@@ -177,7 +177,8 @@
       "STAKE_PAYOUT": "Виграш",
       "STAKE_REFUND": "Повернення ставки",
       "PURCHASE": "Покупка",
-      "LEGACY": "Перенесено"
+      "LEGACY": "Перенесено",
+      "ADJUSTMENT": "Коригування"
     }
   },
   "settings": {
