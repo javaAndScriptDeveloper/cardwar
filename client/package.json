@@ -11,7 +11,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "gen:cards": "node scripts/gen-cards.mjs",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "gen:sounds": "node scripts/gen-sounds.mjs"
   },
   "dependencies": {
     "preact": "^11.0.1"
