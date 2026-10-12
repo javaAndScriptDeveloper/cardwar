@@ -6,6 +6,7 @@ import cardwar.session.dto.ChallengeRequest;
 import cardwar.session.dto.ChallengeView;
 import cardwar.session.dto.FriendView;
 import cardwar.session.dto.InviteView;
+import cardwar.session.dto.LeaderboardEntry;
 import cardwar.session.dto.OutgoingChallengeView;
 import cardwar.session.service.FriendsService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -33,6 +34,12 @@ public class FriendsController {
     @Operation(summary = "Everybody the caller has finished a duel against, most recent first, with the record")
     public List<FriendView> friends(@AuthenticationPrincipal PlayerIdentity caller) {
         return friends.friendsOf(new PlayerId(caller.playerId()));
+    }
+
+    @GetMapping("/api/v1/friends/leaderboard")
+    @Operation(summary = "You and your friends ranked by coins won in the last 7 days, then wins; at most 20")
+    public List<LeaderboardEntry> leaderboard(@AuthenticationPrincipal PlayerIdentity caller) {
+        return friends.leaderboard(new PlayerId(caller.playerId()));
     }
 
     @PostMapping("/api/v1/friends/{playerId}/challenge")

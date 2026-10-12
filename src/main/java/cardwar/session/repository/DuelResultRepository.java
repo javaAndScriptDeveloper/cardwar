@@ -1,6 +1,8 @@
 package cardwar.session.repository;
 
 import cardwar.session.domain.DuelResult;
+import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,4 +49,22 @@ public interface DuelResultRepository extends JpaRepository<DuelResult, UUID> {
     boolean havePlayed(
             @org.springframework.data.repository.query.Param("a") UUID a,
             @org.springframework.data.repository.query.Param("b") UUID b);
+
+    /** A player's wins and the stakes they took since a moment; players without a win in the window have no row. */
+    interface WinTotals {
+        UUID getPlayer();
+
+        long getWins();
+
+        long getCoinsWon();
+    }
+
+    @org.springframework.data.jpa.repository.Query(
+            value = "select winner_id as player, count(*) as wins, coalesce(sum(stake), 0) as coinsWon"
+                    + " from duel_result where winner_id in (:players) and finished_at >= :since"
+                    + " group by winner_id",
+            nativeQuery = true)
+    List<WinTotals> winsSince(
+            @org.springframework.data.repository.query.Param("players") Collection<UUID> players,
+            @org.springframework.data.repository.query.Param("since") Instant since);
 }

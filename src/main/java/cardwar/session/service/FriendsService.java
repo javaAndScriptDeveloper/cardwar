@@ -7,13 +7,22 @@ import cardwar.exception.BadRequestException;
 import cardwar.session.dto.ChallengeView;
 import cardwar.session.dto.FriendView;
 import cardwar.session.dto.InviteView;
+import cardwar.session.dto.LeaderboardEntry;
 import cardwar.session.dto.OutgoingChallengeView;
+import cardwar.session.dto.PlayerProfileView;
 import cardwar.session.policy.ChallengeCooldown;
 import cardwar.session.repository.DuelResultRepository;
+import cardwar.session.repository.DuelResultRepository.WinTotals;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +35,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FriendsService {
 
+    static final Duration LEADERBOARD_WINDOW = Duration.ofDays(7);
+    static final int LEADERBOARD_SIZE = 20;
+
     private final DuelResultRepository results;
     private final AccountService accounts;
     private final DuelInviteService invites;
     private final TelegramBotService bot;
     private final ChallengeCooldown cooldown;
+    private final Clock clock;
 
     public FriendsService(
             DuelResultRepository results,
@@ -43,6 +56,39 @@ public class FriendsService {
         this.invites = invites;
         this.bot = bot;
         this.cooldown = new ChallengeCooldown(clock, Duration.ofMinutes(1));
+        this.clock = clock;
+    }
+
+    /**
+     * The caller among their friends, ranked by the coins their wins took in the last week, then by wins. Everybody
+     * is listed even with nothing won this week, so a quiet week still shows who is around; the caller is always on
+     * it, which is what makes the board worth beating.
+     */
+    @Transactional(readOnly = true)
+    public List<LeaderboardEntry> leaderboard(PlayerId caller) {
+        List<UUID> players = new ArrayList<>();
+        players.add(caller.value());
+        results.opponentsOf(caller.value()).forEach(row -> players.add(row.getOpponent()));
+        Instant since = clock.instant().minus(LEADERBOARD_WINDOW);
+        Map<UUID, WinTotals> totals = results.winsSince(players, since).stream()
+                .collect(Collectors.toMap(WinTotals::getPlayer, Function.identity()));
+        return players.stream()
+                .map(id -> {
+                    WinTotals won = totals.get(id);
+                    return new LeaderboardEntry(
+                            id,
+                            PlayerProfileView.of(accounts.summary(id)),
+                            won == null ? 0 : (int) won.getWins(),
+                            won == null ? 0 : won.getCoinsWon(),
+                            id.equals(caller.value()));
+                })
+                .sorted(Comparator.comparingLong(LeaderboardEntry::coinsWon)
+                        .reversed()
+                        .thenComparing(
+                                Comparator.comparingInt(LeaderboardEntry::wins).reversed())
+                        .thenComparing(LeaderboardEntry::playerId))
+                .limit(LEADERBOARD_SIZE)
+                .toList();
     }
 
     @Transactional(readOnly = true)

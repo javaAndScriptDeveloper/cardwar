@@ -121,6 +121,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `DELETE /api/v1/matchmaking`       | Leave the queue                                                        |
 | `GET  /api/v1/friends`             | Everybody you played (name, handle, photo), with the record between you |
 | `POST /api/v1/friends/{id}/challenge` | Challenge a friend at a stake; the bot DMs them a Join button        |
+| `GET  /api/v1/friends/leaderboard` | You and your friends ranked by coins won in the last 7 days, then wins (top 20, `you` flagged) |
 | `GET  /api/v1/challenges`          | Challenges waiting for you                                             |
 | `POST /api/v1/duels/invites/{id}/decline` | Decline a challenge addressed to you                           |
 | `GET  /api/v1/shop`                | Cosmetics with ownership/equipped state and `unlock`, this week's `drops`, Stars coin packs; grants items your win streak earned |

@@ -25,3 +25,19 @@ most 20, each naming the friend and the stake with a status of `WAITING`, `ACCEP
 invite that timed out, or that the challenger replaced with a newer one, reads `EXPIRED`; an answer stays visible
 after the invite itself has expired. Open invites by link are not challenges and SHALL not be listed. The existing
 `GET /api/v1/challenges` (incoming) is unchanged. The friends screen SHALL show them under its incoming challenges.
+
+### Requirement: Friends leaderboard
+`GET /api/v1/friends/leaderboard` SHALL rank the caller together with their friends (as the friends list defines
+them) by the coins their wins took in the last 7 days (`coinsWon` = the sum of the stake over duels won), then by
+wins, at most 20 entries, each as `{playerId, player: {username, displayName, handle?, photoUrl?}, wins, coinsWon,
+you}`. Every friend SHALL appear even with nothing won this week, and the caller SHALL always appear with
+`you = true`. Results older than 7 days SHALL count for neither wins nor coins, though they still make a friend.
+The profile screen SHALL show this list as «Топ друзів».
+
+#### Scenario: A quiet caller among active friends
+- **WHEN** a friend won a 500-coin duel this week, another a 100-coin one, and the caller won two friendly duels
+- **THEN** the board reads the first friend, the second, then the caller with 2 wins and 0 coins, flagged `you`
+
+#### Scenario: Last week's win
+- **WHEN** a friend's only win against the caller was 8 days ago
+- **THEN** the friend is on the board with 0 wins and 0 coins

@@ -32,11 +32,16 @@ final class FinishedDuels {
 
     /** {@code winner} beats {@code loser} for {@code stake} each; the stake is escrowed first, as on acceptance. */
     UUID won(ApiDriver.Player winner, ApiDriver.Player loser, long stake) {
-        return complete(decided(winner, loser, stake));
+        return won(winner, loser, stake, Instant.now());
+    }
+
+    /** The same, finished at a chosen moment: a result from last week for anything with a time window. */
+    UUID won(ApiDriver.Player winner, ApiDriver.Player loser, long stake, Instant finishedAt) {
+        return complete(decided(winner, loser, stake), finishedAt);
     }
 
     UUID drawn(ApiDriver.Player one, ApiDriver.Player two, long stake) {
-        return complete(finished(one, two, Outcome.drawn(), stake));
+        return complete(finished(one, two, Outcome.drawn(), stake), Instant.now());
     }
 
     StoredDuel decided(ApiDriver.Player winner, ApiDriver.Player loser, long stake) {
@@ -66,8 +71,8 @@ final class FinishedDuels {
         return new StoredDuel(state, Instant.now().minusSeconds(60), stake);
     }
 
-    private UUID complete(StoredDuel duel) {
-        completion.complete(duel, Instant.now());
+    private UUID complete(StoredDuel duel, Instant finishedAt) {
+        completion.complete(duel, finishedAt);
         return duel.state().duelId().value();
     }
 }
