@@ -66,7 +66,7 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                 <Avatar name={name} photoUrl={player.photoUrl} size={56} data-testid="profile-avatar" />
                 <div>
                     <h1>{name}</h1>
-                    <p class="notice">@{player.username}</p>
+                    {player.handle && <p class="notice">@{player.handle}</p>}
                 </div>
             </header>
             <div class="stats">

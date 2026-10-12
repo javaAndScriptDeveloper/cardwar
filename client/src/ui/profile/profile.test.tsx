@@ -175,4 +175,26 @@ describe('Profile', () => {
 
         await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('boom'));
     });
+
+    it('shows the Telegram handle when there is one and never the internal tg_ username', () => {
+        const api = { history: vi.fn().mockResolvedValue([]), transactions: noTransactions() };
+        const { unmount } = render(
+            <Profile
+                player={{ playerId: 'me', username: 'tg_7', displayName: 'Оля' }}
+                api={api}
+                onOpenSettings={() => {}}
+            />,
+        );
+        expect(screen.queryByText(/^@/)).toBeNull();
+        unmount();
+
+        render(
+            <Profile
+                player={{ playerId: 'me', username: 'tg_7', displayName: 'Оля', handle: 'olya' }}
+                api={api}
+                onOpenSettings={() => {}}
+            />,
+        );
+        expect(screen.getByText('@olya')).toBeTruthy();
+    });
 });

@@ -61,6 +61,7 @@ if (root) {
                             ? [telegram.user.firstName, telegram.user.lastName].filter(Boolean).join(' ')
                             : player.username,
                         ...(telegram.user?.photoUrl !== undefined && { photoUrl: telegram.user.photoUrl }),
+                        ...(telegram.user?.username !== undefined && { handle: telegram.user.username }),
                     }}
                     api={api}
                     telegram={telegram}

@@ -10,6 +10,8 @@ export interface SignedInPlayer {
     /** What to call the player on screen; the Telegram name when known, else the username. */
     displayName?: string;
     photoUrl?: string;
+    /** Telegram @username, when the player has one; never the internal tg_ login. */
+    handle?: string;
 }
 
 /**
