@@ -25,7 +25,15 @@ public class GameMetrics {
 
     public enum StartMode {
         DIRECT,
-        INVITE
+        INVITE,
+        QUICK
+    }
+
+    public enum MatchmakingEvent {
+        ENTERED,
+        MATCHED,
+        LEFT,
+        EXPIRED
     }
 
     public enum MoveOutcome {
@@ -106,6 +114,20 @@ public class GameMetrics {
                 .tag("direction", direction)
                 .register(registry)
                 .increment(abs));
+    }
+
+    public void matchmaking(MatchmakingEvent event) {
+        afterCommit(() -> counter("cardwar.matchmaking", "Quick match queue events", "event", label(event))
+                .increment());
+    }
+
+    /** How long the player who was waiting waited before an opponent arrived. */
+    public void matchmakingWait(java.time.Duration waited) {
+        afterCommit(() -> io.micrometer.core.instrument.Timer.builder("cardwar.matchmaking.wait")
+                .description("Time a quick-match player waited for an opponent")
+                .publishPercentileHistogram()
+                .register(registry)
+                .record(waited));
     }
 
     public void bonusClaimed(int streakDay) {

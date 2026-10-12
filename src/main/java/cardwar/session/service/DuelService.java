@@ -85,6 +85,11 @@ public class DuelService {
         return start(caller, opponent, duelId, stake, StartMode.INVITE);
     }
 
+    /** As {@link #start}, for a pair the quick-match queue made. */
+    public DuelView startQuickMatch(PlayerId caller, PlayerId opponent, DuelId duelId, long stake) {
+        return start(caller, opponent, duelId, stake, StartMode.QUICK);
+    }
+
     private DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId, long stake, StartMode mode) {
         if (opponent.equals(caller)) {
             throw new BadRequestException("A duel needs two different players");
