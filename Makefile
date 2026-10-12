@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := help
 .PHONY: help run dev test build format check db-up db-down up down logs ps migrate seed certs certs-prod image e2e smoke clean \
-	observability-up observability-down alloy-logs
+	observability-up observability-down alloy-logs dashboards-json dashboards alerting
 
 # Prefer .env if present, otherwise fall back to the committed example.
 ENV_FILE := $(if $(wildcard .env),.env,.env.example)
@@ -10,7 +10,11 @@ export
 
 # The full stack is always started from the base file alone: docker-compose.override.yml publishes the datastores
 # on loopback for local `bootRun` and must never be loaded on a server.
-COMPOSE_FULL := docker compose -f docker-compose.yml --env-file $(ENV_FILE) --profile full
+# An explicit --profile makes compose ignore COMPOSE_PROFILES, so the profiles listed there (production sets
+# COMPOSE_PROFILES=observability in .env to run Alloy) are passed on as flags too.
+comma := ,
+COMPOSE_FULL := docker compose -f docker-compose.yml --env-file $(ENV_FILE) --profile full \
+	$(foreach p,$(subst $(comma), ,$(COMPOSE_PROFILES)),--profile $(p))
 
 help: ## Show this help
 	@grep -hE '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -109,3 +113,12 @@ observability-down: ## Stop the local observability harness (the app stack keeps
 
 alloy-logs: ## Follow Alloy's log (rejected pushes and empty discovery show here)
 	$(COMPOSE_OBS) logs -f --tail=200 alloy
+
+dashboards-json: ## Regenerate the dashboard and alert-rule files (never hand-edit them)
+	node observability/grafana/build.mjs
+
+dashboards: ## Push the Cardwar folder and dashboards to Grafana Cloud (GRAFANA_URL, GRAFANA_API_TOKEN in .env)
+	@set -a; . ./.env; set +a; node observability/grafana/push.mjs dashboards
+
+alerting: ## Push the Telegram contact point and alert rules to Grafana Cloud (see docs/observability.md)
+	@set -a; . ./.env; set +a; node observability/grafana/push.mjs alerting
