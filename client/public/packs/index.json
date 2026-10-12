@@ -11,6 +11,18 @@
     ]
   },
   {
+    "id": "blogery",
+    "name": {
+      "uk": "Блогери і медіа (сатира)"
+    },
+    "preview": [
+      "packs/blogery/cards/ACE_OF_HEARTS.svg",
+      "packs/blogery/cards/KING_OF_SPADES.svg",
+      "packs/blogery/cards/QUEEN_OF_DIAMONDS.svg"
+    ],
+    "demoSound": "packs/blogery/sounds/lose_money.wav"
+  },
+  {
     "id": "memes-demo",
     "name": {
       "uk": "Мемна колода (демо)"

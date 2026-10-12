@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
+<defs>
+<filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur stdDeviation="4" result="blur"/>
+<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse">
+<rect width="4" height="2" fill="#ffffff" fill-opacity="0.05"/>
+</pattern>
+</defs>
+<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="#0a0a0f"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="url(#scan)"/>
+<g filter="url(#glow)">
+<rect x="52" y="134" width="136" height="68" rx="14" fill="none" stroke="#ff2d55" stroke-width="4"/>
+<circle cx="78" cy="168" r="8" fill="#ff2d55"/>
+<text x="138" y="180" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="34" letter-spacing="3" fill="#ff2d55">LIVE</text>
+</g>
+<text x="120" y="228" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="12" letter-spacing="4" fill="#5ee7ff">● ON AIR</text>
+<text x="120" y="294" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="#ff2d55">САТИРА</text>
+</svg>

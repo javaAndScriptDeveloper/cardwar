@@ -138,7 +138,10 @@ describe('shipped packs', () => {
                     for (const word of persona.quotes[suit].split(' ')) {
                         expect(svg, `${persona.rank} ${suit}: ${word}`).toContain(escapeXml(word));
                     }
-                    expect(svg).toContain(escapeXml(persona.name));
+                    // A long name wraps onto two lines, so it is checked word by word like the quote.
+                    for (const word of persona.name.split(' ')) {
+                        expect(svg, `${persona.rank} ${suit}: ${word}`).toContain(escapeXml(word));
+                    }
                 }
             }
         });
@@ -169,7 +172,7 @@ describe('shipped packs', () => {
 });
 
 /** The satire decks and the prefix of their four per-suit stick-together rules. */
-const STICKY = { 'sluhy-narodu': 'inseparable-' } as const;
+const STICKY = { 'sluhy-narodu': 'inseparable-', blogery: 'fund-duo-' } as const;
 const SATIRE = Object.keys(STICKY) as (keyof typeof STICKY)[];
 const RANKS = ['SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'JACK', 'QUEEN', 'KING', 'ACE'] as const;
 const SUITS = ['CLUBS', 'DIAMONDS', 'HEARTS', 'SPADES'] as const;

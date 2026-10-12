@@ -1,0 +1,280 @@
+{
+  "id": "blogery",
+  "version": 1,
+  "type": "DECK",
+  "name": { "uk": "Блогери і медіа (сатира)" },
+  "back": "cards/back.svg",
+  "styles": "anim/fx.css",
+  "cards": {
+    "SIX_OF_CLUBS": { "image": "cards/SIX_OF_CLUBS.svg", "title": { "uk": "Лачен" }, "tags": ["lachen"] },
+    "SEVEN_OF_CLUBS": {
+      "image": "cards/SEVEN_OF_CLUBS.svg",
+      "title": { "uk": "Раміна" },
+      "tags": ["ramina"]
+    },
+    "EIGHT_OF_CLUBS": {
+      "image": "cards/EIGHT_OF_CLUBS.svg",
+      "title": { "uk": "Дурнєв" },
+      "tags": ["durnev"]
+    },
+    "NINE_OF_CLUBS": {
+      "image": "cards/NINE_OF_CLUBS.svg",
+      "title": { "uk": "Стерненко" },
+      "tags": ["sternenko"]
+    },
+    "TEN_OF_CLUBS": { "image": "cards/TEN_OF_CLUBS.svg", "title": { "uk": "Притула" }, "tags": ["prytula"] },
+    "JACK_OF_CLUBS": { "image": "cards/JACK_OF_CLUBS.svg", "title": { "uk": "MC Петя" }, "tags": ["petya"] },
+    "QUEEN_OF_CLUBS": {
+      "image": "cards/QUEEN_OF_CLUBS.svg",
+      "title": { "uk": "Леся Нікітюк" },
+      "tags": ["nikitiuk"]
+    },
+    "KING_OF_CLUBS": {
+      "image": "cards/KING_OF_CLUBS.svg",
+      "title": { "uk": "Гороховський" },
+      "tags": ["horokhovskyi"]
+    },
+    "ACE_OF_CLUBS": { "image": "cards/ACE_OF_CLUBS.svg", "title": { "uk": "Усик" }, "tags": ["usyk"] },
+    "SIX_OF_DIAMONDS": {
+      "image": "cards/SIX_OF_DIAMONDS.svg",
+      "title": { "uk": "Лачен" },
+      "tags": ["lachen"]
+    },
+    "SEVEN_OF_DIAMONDS": {
+      "image": "cards/SEVEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Раміна" },
+      "tags": ["ramina"]
+    },
+    "EIGHT_OF_DIAMONDS": {
+      "image": "cards/EIGHT_OF_DIAMONDS.svg",
+      "title": { "uk": "Дурнєв" },
+      "tags": ["durnev"]
+    },
+    "NINE_OF_DIAMONDS": {
+      "image": "cards/NINE_OF_DIAMONDS.svg",
+      "title": { "uk": "Стерненко" },
+      "tags": ["sternenko"]
+    },
+    "TEN_OF_DIAMONDS": {
+      "image": "cards/TEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Притула" },
+      "tags": ["prytula"]
+    },
+    "JACK_OF_DIAMONDS": {
+      "image": "cards/JACK_OF_DIAMONDS.svg",
+      "title": { "uk": "MC Петя" },
+      "tags": ["petya"]
+    },
+    "QUEEN_OF_DIAMONDS": {
+      "image": "cards/QUEEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Леся Нікітюк" },
+      "tags": ["nikitiuk"]
+    },
+    "KING_OF_DIAMONDS": {
+      "image": "cards/KING_OF_DIAMONDS.svg",
+      "title": { "uk": "Гороховський" },
+      "tags": ["horokhovskyi"]
+    },
+    "ACE_OF_DIAMONDS": { "image": "cards/ACE_OF_DIAMONDS.svg", "title": { "uk": "Усик" }, "tags": ["usyk"] },
+    "SIX_OF_HEARTS": { "image": "cards/SIX_OF_HEARTS.svg", "title": { "uk": "Лачен" }, "tags": ["lachen"] },
+    "SEVEN_OF_HEARTS": {
+      "image": "cards/SEVEN_OF_HEARTS.svg",
+      "title": { "uk": "Раміна" },
+      "tags": ["ramina"]
+    },
+    "EIGHT_OF_HEARTS": {
+      "image": "cards/EIGHT_OF_HEARTS.svg",
+      "title": { "uk": "Дурнєв" },
+      "tags": ["durnev"]
+    },
+    "NINE_OF_HEARTS": {
+      "image": "cards/NINE_OF_HEARTS.svg",
+      "title": { "uk": "Стерненко" },
+      "tags": ["sternenko"]
+    },
+    "TEN_OF_HEARTS": {
+      "image": "cards/TEN_OF_HEARTS.svg",
+      "title": { "uk": "Притула" },
+      "tags": ["prytula"]
+    },
+    "JACK_OF_HEARTS": {
+      "image": "cards/JACK_OF_HEARTS.svg",
+      "title": { "uk": "MC Петя" },
+      "tags": ["petya"]
+    },
+    "QUEEN_OF_HEARTS": {
+      "image": "cards/QUEEN_OF_HEARTS.svg",
+      "title": { "uk": "Леся Нікітюк" },
+      "tags": ["nikitiuk"]
+    },
+    "KING_OF_HEARTS": {
+      "image": "cards/KING_OF_HEARTS.svg",
+      "title": { "uk": "Гороховський" },
+      "tags": ["horokhovskyi"]
+    },
+    "ACE_OF_HEARTS": { "image": "cards/ACE_OF_HEARTS.svg", "title": { "uk": "Усик" }, "tags": ["usyk"] },
+    "SIX_OF_SPADES": { "image": "cards/SIX_OF_SPADES.svg", "title": { "uk": "Лачен" }, "tags": ["lachen"] },
+    "SEVEN_OF_SPADES": {
+      "image": "cards/SEVEN_OF_SPADES.svg",
+      "title": { "uk": "Раміна" },
+      "tags": ["ramina"]
+    },
+    "EIGHT_OF_SPADES": {
+      "image": "cards/EIGHT_OF_SPADES.svg",
+      "title": { "uk": "Дурнєв" },
+      "tags": ["durnev"]
+    },
+    "NINE_OF_SPADES": {
+      "image": "cards/NINE_OF_SPADES.svg",
+      "title": { "uk": "Стерненко" },
+      "tags": ["sternenko"]
+    },
+    "TEN_OF_SPADES": {
+      "image": "cards/TEN_OF_SPADES.svg",
+      "title": { "uk": "Притула" },
+      "tags": ["prytula"]
+    },
+    "JACK_OF_SPADES": {
+      "image": "cards/JACK_OF_SPADES.svg",
+      "title": { "uk": "MC Петя" },
+      "tags": ["petya"]
+    },
+    "QUEEN_OF_SPADES": {
+      "image": "cards/QUEEN_OF_SPADES.svg",
+      "title": { "uk": "Леся Нікітюк" },
+      "tags": ["nikitiuk"]
+    },
+    "KING_OF_SPADES": {
+      "image": "cards/KING_OF_SPADES.svg",
+      "title": { "uk": "Гороховський" },
+      "tags": ["horokhovskyi"]
+    },
+    "ACE_OF_SPADES": { "image": "cards/ACE_OF_SPADES.svg", "title": { "uk": "Усик" }, "tags": ["usyk"] }
+  },
+  "sounds": {
+    "lose_money": "sounds/lose_money.wav",
+    "beatbox": "sounds/beatbox.wav",
+    "applause": "sounds/applause.wav",
+    "whoosh": "sounds/whoosh.wav"
+  },
+  "animations": {
+    "money_rain": { "kind": "css", "className": "fx-money-rain", "durationMs": 1200 },
+    "coins": { "kind": "css", "className": "fx-coins", "durationMs": 1000 }
+  },
+  "rules": [
+    {
+      "id": "fund-duo-clubs",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_CLUBS", "NINE_OF_CLUBS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_CLUBS", "NINE_OF_CLUBS"] }]
+    },
+    {
+      "id": "fund-duo-diamonds",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_DIAMONDS", "NINE_OF_DIAMONDS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_DIAMONDS", "NINE_OF_DIAMONDS"] }]
+    },
+    {
+      "id": "fund-duo-hearts",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_HEARTS", "NINE_OF_HEARTS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_HEARTS", "NINE_OF_HEARTS"] }]
+    },
+    {
+      "id": "fund-duo-spades",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_SPADES", "NINE_OF_SPADES"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_SPADES", "NINE_OF_SPADES"] }]
+    },
+    {
+      "id": "horokhovskyi-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "horokhovskyi" } },
+      "do": [
+        { "sound": "lose_money" },
+        { "anim": "money_rain", "target": "beaten" },
+        { "say": { "uk": "Мінус гроші" }, "pitch": 0.8 }
+      ],
+      "cooldownMs": 4000
+    },
+    {
+      "id": "petya-beats",
+      "on": "card_beaten",
+      "if": { "card": { "tag": "petya" } },
+      "do": [
+        { "sound": "beatbox" },
+        { "anim": "pulse", "target": "defence" },
+        { "say": { "uk": "Йоу" }, "rate": 1.2 }
+      ],
+      "cooldownMs": 4000
+    },
+    {
+      "id": "durnev-played",
+      "on": "card_played",
+      "if": { "side": "opponent", "card": { "tag": "durnev" } },
+      "do": [{ "bubble": { "uk": "Дурнєв дивиться на тебе" }, "target": "you" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "prytula-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "prytula" } },
+      "do": [
+        { "bubble": { "uk": "Збір закрито за дві години" }, "target": "played" },
+        { "anim": "coins", "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "sternenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "sternenko" } },
+      "do": [{ "sound": "whoosh" }, { "bubble": { "uk": "Дрони вже летять" }, "target": "played" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "ramina-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "ramina" } },
+      "do": [{ "bubble": { "uk": "Це мій контент" }, "target": "played" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "lachen-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "lachen" } },
+      "do": [{ "bubble": { "uk": "Лачен пише…" }, "target": "beaten" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "usyk-beats",
+      "on": "card_beaten",
+      "if": { "card": { "tag": "usyk" } },
+      "do": [{ "say": { "uk": "I'm feel, I'm very feel" }, "rate": 0.9 }, { "haptic": "success" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "nikitiuk-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "nikitiuk" } },
+      "do": [{ "bubble": { "uk": "Хто зверху?" }, "target": "played" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "won",
+      "on": "duel_finished",
+      "if": { "outcome": "WON" },
+      "do": [
+        { "sound": "applause" },
+        { "say": { "uk": "Контент вдався. Підписуйтесь" } },
+        { "haptic": "success" }
+      ]
+    },
+    {
+      "id": "lost",
+      "on": "duel_finished",
+      "if": { "outcome": "LOST" },
+      "do": [{ "bubble": { "uk": "Оголошую збір на реванш" }, "target": "table" }]
+    }
+  ]
+}
