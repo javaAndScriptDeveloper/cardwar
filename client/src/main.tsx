@@ -7,6 +7,7 @@ import { linkConfigFromEnv } from './telegram/links';
 import { resolveTelegram, type TelegramHost } from './telegram/webapp';
 import { audio, THEME } from './audio';
 import { equip, PackLoader } from './content/loader';
+import { trackStreams, watchBrowser } from './state/connection';
 import { loadSettings, settings } from './state/settings';
 import { App } from './ui/App';
 import { DuelScreen, type StreamOpener } from './ui/DuelScreen';
@@ -35,12 +36,15 @@ const api = new ApiClient(
 // A named-app link hands the invite over as start_param; the bot's Join button and the dev shim use ?invite=.
 const invite = telegram.startParam ?? new URLSearchParams(window.location.search).get('invite') ?? undefined;
 const links = linkConfigFromEnv(window.location.origin);
-const openStream: StreamOpener = (duelId, options) =>
+// The no-connection banner listens to the browser, every API request and every duel stream.
+watchBrowser(window, navigator.onLine);
+const openStream: StreamOpener = trackStreams((duelId, options) =>
     openDuelStream(duelId, {
         ...options,
         fetchImpl: (input, init) => fetch(input, init),
         headers: () => api.authHeaders(),
-    });
+    }),
+);
 
 const root = document.getElementById('app');
 if (root) {

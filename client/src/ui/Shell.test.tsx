@@ -12,6 +12,7 @@ import type {
 } from '../api/types';
 import { t } from '../i18n';
 import { navigate } from '../router';
+import { reportRequest, resetConnection } from '../state/connection';
 import { loadout } from '../state/loadout';
 import { DEFAULT_SETTINGS, settings } from '../state/settings';
 import { wallet } from '../state/wallet';
@@ -102,6 +103,7 @@ function renderShell(
             links={links}
             pollMs={5}
             challengePollMs={10}
+            offlineGraceMs={0}
             table={(duelId, exit) => (
                 <div>
                     <p>table {duelId}</p>
@@ -135,6 +137,25 @@ describe('Shell', () => {
         wallet.value = undefined;
         loadout.value = undefined;
         settings.value = DEFAULT_SETTINGS;
+        resetConnection();
+    });
+
+    describe('connection', () => {
+        it('shows the no-connection banner on every screen, the duel included, until a request gets through', async () => {
+            renderShell(fakeApi());
+            await screen.findByTestId('balance');
+            expect(screen.queryByTestId('offline-banner')).toBeNull();
+
+            act(() => reportRequest(false));
+            expect(await screen.findByTestId('offline-banner')).toBeTruthy();
+
+            await act(() => navigate({ name: 'duel', duelId: 'd1' }));
+            await screen.findByText('table d1');
+            expect(screen.getByTestId('offline-banner')).toBeTruthy();
+
+            act(() => reportRequest(true));
+            await waitFor(() => expect(screen.queryByTestId('offline-banner')).toBeNull());
+        });
     });
 
     describe('coins', () => {

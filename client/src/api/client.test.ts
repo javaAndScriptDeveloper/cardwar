@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { serverOffset } from '../state/clock';
+import { offline } from '../state/connection';
 import { ApiClient, ApiError } from './client';
 
 function respond(status: number, body?: unknown, contentType = 'application/json') {
@@ -71,6 +72,20 @@ describe('ApiClient', () => {
         const api = new ApiClient(fetchMock, () => 't');
 
         await expect(api.activeDuels()).rejects.toMatchObject({ status: 0 });
+    });
+
+    it('marks the app offline on no answer, and online again on any answer, an error status included', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+            .mockResolvedValueOnce(respond(503, { title: 'Unavailable' }));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await expect(api.activeDuels()).rejects.toMatchObject({ status: 0 });
+        expect(offline.value).toBe(true);
+
+        await expect(api.activeDuels()).rejects.toMatchObject({ status: 503 });
+        expect(offline.value).toBe(false);
     });
 
     it("reads the caller's pending invite, and none on 204", async () => {

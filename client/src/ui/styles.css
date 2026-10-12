@@ -841,6 +841,22 @@ button:disabled {
     box-shadow: 0 4px 14px rgb(0 0 0 / 30%);
 }
 
+/* Above every screen and sheet, the duel included; it only says so and never takes a tap. */
+.offline-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    margin: 0;
+    padding: 6px 16px;
+    background: var(--danger);
+    color: #fff;
+    font-size: var(--font-s);
+    text-align: center;
+    pointer-events: none;
+}
+
 /* Coins (MVP 2): the amount with its glyph, the lobby chip, the bonus card, the stake picker, pot and result. */
 .coins {
     display: inline-flex;

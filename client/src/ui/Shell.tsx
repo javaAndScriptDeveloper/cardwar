@@ -13,6 +13,7 @@ import { describeError } from './errors';
 import { Friends } from './friends/Friends';
 import { BottomNav } from './kit';
 import { Lobby } from './lobby/Lobby';
+import { OfflineBanner } from './OfflineBanner';
 import { Searching } from './lobby/Searching';
 import { StakePicker } from './lobby/StakePicker';
 import { Waiting } from './lobby/Waiting';
@@ -59,6 +60,8 @@ interface Props {
     pollMs?: number;
     /** How often incoming challenges are re-read while the lobby or friends screen is open. */
     challengePollMs?: number;
+    /** How long the app must be offline before the banner says so; tests set 0. */
+    offlineGraceMs?: number;
 }
 
 /** Turns an invite failure into a sentence; the status codes are the backend's documented invite answers. */
@@ -94,6 +97,7 @@ export function Shell({
     table,
     pollMs = 2000,
     challengePollMs = 10_000,
+    offlineGraceMs,
 }: Props) {
     const route = useRoute();
     const launch = useLaunch(api, invite);
@@ -345,11 +349,22 @@ export function Shell({
         }
     };
 
+    const banner = <OfflineBanner {...(offlineGraceMs !== undefined && { graceMs: offlineGraceMs })} />;
     if (launch.phase === 'loading' || (!launchHandled && launch.phase !== 'lobby')) {
-        return <p class="notice">{t('app.loading')}</p>;
+        return (
+            <>
+                {banner}
+                <p class="notice">{t('app.loading')}</p>
+            </>
+        );
     }
     if (route.name === 'duel') {
-        return table(route.duelId, () => navigate({ name: 'lobby' }));
+        return (
+            <>
+                {banner}
+                {table(route.duelId, () => navigate({ name: 'lobby' }))}
+            </>
+        );
     }
 
     const screen = (() => {
@@ -436,6 +451,7 @@ export function Shell({
 
     return (
         <>
+            {banner}
             {screen}
             <StakePicker
                 open={pickingStake !== undefined}

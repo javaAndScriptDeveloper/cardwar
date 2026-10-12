@@ -19,6 +19,7 @@ import type {
     WalletView,
 } from './types';
 import { serverOffset } from '../state/clock';
+import { reportRequest } from '../state/connection';
 
 export const API_BASE = '/api/v1';
 
@@ -227,8 +228,11 @@ export class ApiClient {
         try {
             response = await this.fetchImpl(`${API_BASE}${path}`, init);
         } catch {
+            reportRequest(false);
             throw new ApiError(0, { detail: 'Network unavailable' });
         }
+        // Any answer, an error status included, means the server is reachable.
+        reportRequest(true);
         this.measureClock(response);
         if (!response.ok) {
             throw new ApiError(response.status, await problemOf(response));
