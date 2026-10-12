@@ -51,6 +51,11 @@ public class DuelInviteService {
      * the code. The stake is only checked here; it is taken from both players when somebody accepts.
      */
     public InviteView create(PlayerId caller, long stake) {
+        return create(caller, stake, null);
+    }
+
+    /** A challenge when {@code invitee} is set: only that player may accept or decline it. */
+    public InviteView create(PlayerId caller, long stake, UUID invitee) {
         if (!STAKES.contains(stake)) {
             throw new BadRequestException("Stakes are 0, 100, 500, 1000 or 5000 coins", "INVALID_STAKE");
         }
@@ -58,9 +63,9 @@ public class DuelInviteService {
             throw new BadRequestException("Not enough coins for this stake", WalletService.INSUFFICIENT_COINS);
         }
         boolean reused = invites.findPending(caller.value())
-                .filter(pending -> pending.stake() == stake)
+                .filter(pending -> pending.stake() == stake && java.util.Objects.equals(pending.invitee(), invitee))
                 .isPresent();
-        StoredInvite invite = invites.create(caller.value(), stake);
+        StoredInvite invite = invites.create(caller.value(), stake, invitee);
         log.info("Invite {} issued", invite.inviteId());
         metrics.invite(reused ? InviteEvent.REUSED : InviteEvent.CREATED);
         return view(invite);
@@ -74,6 +79,9 @@ public class DuelInviteService {
         StoredInvite invite = require(inviteId);
         if (invite.creator().equals(caller.value())) {
             throw new BadRequestException("You cannot accept your own invite");
+        }
+        if (invite.invitee() != null && !invite.invitee().equals(caller.value())) {
+            throw new ForbiddenException("This challenge is for somebody else");
         }
         if (invite.status() != StoredInvite.Status.PENDING) {
             throw new ConflictException("This invite has already been accepted");
@@ -121,6 +129,27 @@ public class DuelInviteService {
 
     private static InviteView view(StoredInvite invite) {
         return new InviteView(
-                invite.inviteId(), invite.status().name(), invite.duelId(), invite.expiresAt(), invite.stake());
+                invite.inviteId(),
+                invite.status().name(),
+                invite.duelId(),
+                invite.expiresAt(),
+                invite.stake(),
+                invite.invitee());
+    }
+
+    /** The invitee turns a challenge down; the challenger's poll then reads DECLINED. */
+    public void decline(PlayerId caller, String inviteId) {
+        StoredInvite invite = require(inviteId);
+        if (!caller.value().equals(invite.invitee())) {
+            throw new ForbiddenException("Only the challenged player can decline");
+        }
+        if (!invites.decline(invite.inviteId())) {
+            throw new ConflictException("This challenge is no longer open");
+        }
+        log.info("Invite {} declined", invite.inviteId());
+    }
+
+    public java.util.List<StoredInvite> incoming(PlayerId caller) {
+        return invites.findIncoming(caller.value());
     }
 }

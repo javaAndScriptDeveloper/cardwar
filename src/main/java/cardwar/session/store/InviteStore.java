@@ -15,7 +15,18 @@ public interface InviteStore {
      * A new invite, or the creator's existing one while it is still pending at the same stake: a player has one open
      * invite. A pending invite at another stake is withdrawn and replaced.
      */
-    StoredInvite create(UUID creator, long stake);
+    StoredInvite create(UUID creator, long stake, UUID invitee);
+
+    /** An open invite anyone with the link may accept. */
+    default StoredInvite create(UUID creator, long stake) {
+        return create(creator, stake, null);
+    }
+
+    /** Challenges addressed to this player that are still pending. */
+    java.util.List<StoredInvite> findIncoming(UUID invitee);
+
+    /** Turns a pending invite into a declined one; false when it was not pending. */
+    boolean decline(UUID inviteId);
 
     Optional<StoredInvite> find(UUID inviteId);
 

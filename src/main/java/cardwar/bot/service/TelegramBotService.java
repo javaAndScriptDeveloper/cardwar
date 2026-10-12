@@ -112,6 +112,16 @@ public class TelegramBotService {
         metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
     }
 
+    /** Tells a friend about a challenge, with a button straight into it. Best effort; never throws. */
+    public void notifyChallenge(long chatId, String from, long stake, String inviteId) {
+        String text = stake > 0
+                ? from + " викликає тебе на дуель на " + stake + " монет."
+                : from + " викликає тебе на дружню дуель.";
+        boolean sent =
+                api.sendMessage(chatId, text, "Прийняти виклик", properties.miniAppUrl() + "?invite=" + inviteId);
+        metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
+    }
+
     /** Telegram waits for this answer before charging: only an invoice we signed, at its own price, goes through. */
     private void answerCheckout(JsonNode query) {
         StarsService payments = stars.getIfAvailable();

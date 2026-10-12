@@ -33,12 +33,14 @@ public class RedisInviteStore implements InviteStore {
             local current = redis.call('GET', KEYS[1])
             if current and redis.call('HGET', ARGV[5] .. current, 'status') == 'PENDING' then
                 local stake = redis.call('HGET', ARGV[5] .. current, 'stake') or '0'
-                if stake == ARGV[6] then
+                local invitee = redis.call('HGET', ARGV[5] .. current, 'invitee') or ''
+                if stake == ARGV[6] and invitee == ARGV[7] then
                     return current
                 end
                 redis.call('DEL', ARGV[5] .. current)
             end
-            redis.call('HSET', KEYS[2], 'creator', ARGV[1], 'status', 'PENDING', 'expiresAt', ARGV[2], 'stake', ARGV[6])
+            redis.call('HSET', KEYS[2], 'creator', ARGV[1], 'status', 'PENDING', 'expiresAt', ARGV[2], 'stake', ARGV[6],
+                'invitee', ARGV[7])
             redis.call('PEXPIRE', KEYS[2], ARGV[3])
             redis.call('SET', KEYS[1], ARGV[4], 'PX', ARGV[3])
             return ARGV[4]
@@ -56,6 +58,14 @@ public class RedisInviteStore implements InviteStore {
                 return 1
             end
             return 0
+            """,
+            Long.class);
+
+    private static final RedisScript<Long> DECLINE = new DefaultRedisScript<>(
+            """
+            if redis.call('HGET', KEYS[1], 'status') ~= 'PENDING' then return 0 end
+            redis.call('HSET', KEYS[1], 'status', 'DECLINED')
+            return 1
             """,
             Long.class);
 
@@ -78,7 +88,7 @@ public class RedisInviteStore implements InviteStore {
     }
 
     @Override
-    public StoredInvite create(UUID creator, long stake) {
+    public StoredInvite create(UUID creator, long stake, UUID invitee) {
         var inviteId = UUID.randomUUID();
         Instant expiresAt = Instant.now().plus(ttl);
         String stored = redis.execute(
@@ -89,12 +99,18 @@ public class RedisInviteStore implements InviteStore {
                 Long.toString(ttl.toMillis()),
                 inviteId.toString(),
                 KEY_PREFIX,
-                Long.toString(stake));
+                Long.toString(stake),
+                invitee == null ? "" : invitee.toString());
         if (inviteId.toString().equals(stored)) {
-            return new StoredInvite(inviteId, creator, StoredInvite.Status.PENDING, null, null, expiresAt, stake);
+            if (invitee != null) {
+                redis.opsForSet().add(incomingKey(invitee), inviteId.toString());
+                redis.expire(incomingKey(invitee), ttl);
+            }
+            return new StoredInvite(
+                    inviteId, creator, StoredInvite.Status.PENDING, null, null, expiresAt, stake, invitee);
         }
         // An existing invite can expire between the script and this read; a fresh one is then the right answer.
-        return find(UUID.fromString(stored)).orElseGet(() -> create(creator, stake));
+        return find(UUID.fromString(stored)).orElseGet(() -> create(creator, stake, invitee));
     }
 
     @Override
@@ -124,7 +140,8 @@ public class RedisInviteStore implements InviteStore {
                 uuidOrNull(fields.get("acceptor")),
                 uuidOrNull(fields.get("duelId")),
                 Instant.parse((String) fields.get("expiresAt")),
-                fields.get("stake") == null ? 0 : Long.parseLong((String) fields.get("stake"))));
+                fields.get("stake") == null ? 0 : Long.parseLong((String) fields.get("stake")),
+                uuidOrNull(fields.get("invitee"))));
     }
 
     @Override
@@ -136,8 +153,37 @@ public class RedisInviteStore implements InviteStore {
         return result == 1L ? ClaimResult.CLAIMED : ClaimResult.ALREADY_ACCEPTED;
     }
 
+    @Override
+    public java.util.List<StoredInvite> findIncoming(UUID invitee) {
+        var members = redis.opsForSet().members(incomingKey(invitee));
+        if (members == null) {
+            return java.util.List.of();
+        }
+        var pending = new java.util.ArrayList<StoredInvite>();
+        for (String member : members) {
+            Optional<StoredInvite> invite = find(UUID.fromString(member));
+            if (invite.isPresent() && invite.get().status() == StoredInvite.Status.PENDING) {
+                pending.add(invite.get());
+            } else {
+                redis.opsForSet().remove(incomingKey(invitee), member);
+            }
+        }
+        pending.sort(java.util.Comparator.comparing(StoredInvite::expiresAt).reversed());
+        return pending;
+    }
+
+    @Override
+    public boolean decline(UUID inviteId) {
+        Long result = redis.execute(DECLINE, List.of(key(inviteId)));
+        return result != null && result == 1L;
+    }
+
+    private static String incomingKey(UUID invitee) {
+        return "cardwar:player:" + invitee + ":incoming";
+    }
+
     private static UUID uuidOrNull(Object value) {
-        return value == null ? null : UUID.fromString((String) value);
+        return value == null || ((String) value).isEmpty() ? null : UUID.fromString((String) value);
     }
 
     private static String pointerKey(UUID player) {

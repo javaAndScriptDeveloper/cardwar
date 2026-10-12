@@ -53,6 +53,13 @@ public class DuelInviteController {
         return invites.status(actor(caller), id);
     }
 
+    @PostMapping("/{id}/decline")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Decline a challenge addressed to the caller")
+    public void decline(@AuthenticationPrincipal PlayerIdentity caller, @PathVariable String id) {
+        invites.decline(actor(caller), id);
+    }
+
     @PostMapping("/{id}/accept")
     @Operation(summary = "Accept an invite and start the duel; returns the acceptor's view")
     public DuelView accept(@AuthenticationPrincipal PlayerIdentity caller, @PathVariable String id) {

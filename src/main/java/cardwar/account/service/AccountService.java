@@ -142,6 +142,12 @@ public class AccountService {
         return found.map(player -> new PlayerIdentity(player.getId(), player.getUsername()));
     }
 
+    /** The Telegram user id behind a Telegram account, which is also its private chat id with the bot. */
+    @Transactional(readOnly = true)
+    public java.util.Optional<Long> telegramUserIdOf(UUID playerId) {
+        return players.findById(playerId).map(Player::getTelegramUserId);
+    }
+
     @Transactional(readOnly = true)
     public PlayerSummary summary(UUID playerId) {
         return players.findById(playerId)
