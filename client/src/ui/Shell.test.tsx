@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import type { DailyBonusView, DuelView, InviteView, WalletView } from '../api/types';
+import type { DailyBonusView, DuelView, InviteView, MatchView, WalletView } from '../api/types';
 import { t } from '../i18n';
 import { navigate } from '../router';
 import { wallet } from '../state/wallet';
@@ -22,7 +22,24 @@ function fakeApi() {
         wallet: vi.fn().mockResolvedValue(walletView(500)),
         claimDailyBonus: vi.fn(),
         transactions: vi.fn().mockResolvedValue([]),
+        enterMatchmaking: vi.fn(),
+        matchmakingStatus: vi.fn().mockResolvedValue(undefined),
+        leaveMatchmaking: vi.fn().mockResolvedValue(undefined),
     };
+}
+
+const match = (status: MatchView['status'], stake = 0, duelId?: string): MatchView => ({
+    status,
+    stake,
+    since: new Date(Date.now() - 7000).toISOString(),
+    ...(duelId !== undefined && { duelId }),
+});
+
+/** Quick match opens the same stake picker; the search starts once a stake is chosen. */
+async function quickMatchWithStake(stake: number) {
+    fireEvent.click(await screen.findByTestId('quick-match'));
+    await screen.findByTestId('stake-picker');
+    fireEvent.click(screen.getByTestId(`stake-${stake}`));
 }
 
 function walletView(balance: number, bonus: Partial<DailyBonusView> = {}): WalletView {
@@ -189,6 +206,157 @@ describe('Shell', () => {
             await waitFor(() =>
                 expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('600'),
             );
+        });
+    });
+
+    describe('quick match', () => {
+        it('offers every table in the stake picker, unaffordable ones disabled', async () => {
+            renderShell(fakeApi());
+            await waitFor(() => expect(screen.getByTestId('balance')).toBeTruthy());
+
+            fireEvent.click(await screen.findByTestId('quick-match'));
+            await screen.findByTestId('stake-picker');
+
+            const option = (n: number) => screen.getByTestId(`stake-${n}`) as HTMLButtonElement;
+            expect([0, 100, 500, 1000, 5000].map((n) => option(n).disabled)).toEqual([
+                false,
+                false,
+                false,
+                true,
+                true,
+            ]);
+        });
+
+        it('searches at the chosen stake and goes to the duel once matched', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('WAITING', 100));
+            api.matchmakingStatus
+                .mockResolvedValueOnce(undefined)
+                .mockResolvedValueOnce(match('WAITING', 100))
+                .mockResolvedValue(match('MATCHED', 100, 'd-qm'));
+
+            renderShell(api);
+            await waitFor(() => expect(screen.getByTestId('balance')).toBeTruthy());
+            await quickMatchWithStake(100);
+
+            await screen.findByTestId('searching-screen');
+            expect(api.enterMatchmaking).toHaveBeenCalledWith(100);
+            expect(screen.getByTestId('search-stake').getAttribute('data-stake')).toBe('100');
+            expect(api.createInvite).not.toHaveBeenCalled();
+            await waitFor(() => expect(screen.getByText('table d-qm')).toBeTruthy());
+        });
+
+        it('goes straight to the duel when somebody was already waiting', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('MATCHED', 0, 'd-fast'));
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+
+            await waitFor(() => expect(screen.getByText('table d-fast')).toBeTruthy());
+        });
+
+        it('shows the seconds spent searching', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('WAITING'));
+            api.matchmakingStatus.mockResolvedValueOnce(undefined).mockResolvedValue(match('WAITING'));
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+
+            const elapsed = await screen.findByTestId('search-elapsed');
+            expect(Number(elapsed.getAttribute('data-seconds'))).toBeGreaterThanOrEqual(7);
+        });
+
+        it.each([
+            ['expired', () => Promise.resolve(match('EXPIRED'))],
+            ['gone', () => Promise.resolve(undefined)],
+        ])('returns to the lobby with a hint to invite a friend when the entry is %s', async (_, status) => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('WAITING'));
+            api.matchmakingStatus.mockImplementation(status);
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+
+            await waitFor(() =>
+                expect(screen.getByRole('alert').textContent).toBe(t('lobby.errors.searchExpired')),
+            );
+            expect(screen.getByTestId('invite')).toBeTruthy();
+        });
+
+        it('cancelling leaves the queue, returns to the lobby and stops polling', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('WAITING'));
+            api.matchmakingStatus.mockResolvedValueOnce(undefined).mockResolvedValue(match('WAITING'));
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+            fireEvent.click(await screen.findByTestId('cancel-search'));
+
+            await waitFor(() => expect(screen.getByTestId('quick-match')).toBeTruthy());
+            expect(api.leaveMatchmaking).toHaveBeenCalledTimes(1);
+            const calls = api.matchmakingStatus.mock.calls.length;
+            await new Promise((resolve) => setTimeout(resolve, 30));
+            expect(api.matchmakingStatus.mock.calls.length).toBe(calls);
+        });
+
+        it('a match that landed while cancelling still opens the duel', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockResolvedValue(match('WAITING'));
+            api.matchmakingStatus.mockResolvedValueOnce(undefined).mockResolvedValue(match('WAITING'));
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+            api.activeDuels.mockResolvedValue([{ duelId: 'd-race' }]);
+            fireEvent.click(await screen.findByTestId('cancel-search'));
+
+            await waitFor(() => expect(screen.getByText('table d-race')).toBeTruthy());
+        });
+
+        it('explains a rejected stake', async () => {
+            const api = fakeApi();
+            api.enterMatchmaking.mockRejectedValue(new ApiError(400, { reason: 'INSUFFICIENT_COINS' }));
+
+            renderShell(api);
+            await quickMatchWithStake(0);
+
+            await waitFor(() =>
+                expect(screen.getByRole('alert').textContent).toBe(t('reason.INSUFFICIENT_COINS')),
+            );
+        });
+
+        it('reopening the app resumes a search in progress', async () => {
+            const api = fakeApi();
+            api.matchmakingStatus.mockResolvedValue(match('WAITING', 500));
+            api.pendingInvite.mockResolvedValue(pending('inv-own'));
+
+            renderShell(api);
+
+            await waitFor(() =>
+                expect(screen.getByTestId('search-stake').getAttribute('data-stake')).toBe('500'),
+            );
+            expect(api.enterMatchmaking).not.toHaveBeenCalled();
+        });
+
+        it('reopening the app after being matched opens that duel', async () => {
+            const api = fakeApi();
+            api.matchmakingStatus.mockResolvedValue(match('MATCHED', 0, 'd-matched'));
+
+            renderShell(api);
+
+            await waitFor(() => expect(screen.getByText('table d-matched')).toBeTruthy());
+        });
+
+        it('an active duel and a launch invite both win over a search in progress', async () => {
+            const api = fakeApi();
+            api.matchmakingStatus.mockResolvedValue(match('WAITING'));
+            api.acceptInvite.mockResolvedValue(duelView('d-friend'));
+
+            renderShell(api, { invite: 'inv-friend' });
+
+            await waitFor(() => expect(screen.getByText('table d-friend')).toBeTruthy());
+            expect(api.matchmakingStatus).not.toHaveBeenCalled();
         });
     });
 

@@ -332,8 +332,21 @@ button:disabled {
     font-weight: 600;
 }
 
-.panel.soon {
-    opacity: 0.75;
+.searching-spinner {
+    align-self: center;
+    width: 56px;
+    height: 56px;
+    margin: var(--space-4) 0;
+    border: 4px solid var(--accent);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .searching-spinner {
+        animation: none;
+    }
 }
 
 .empty-state {

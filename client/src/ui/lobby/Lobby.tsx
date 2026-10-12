@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks';
 import type { WalletView } from '../../api/types';
 import type { SignedInPlayer } from '../../auth/session';
 import { t } from '../../i18n';
-import { Avatar, Badge, Button, CoinAmount } from '../kit';
+import { Avatar, Button, CoinAmount } from '../kit';
 import { DailyBonus } from './DailyBonus';
 import { JoinByCode } from './JoinByCode';
 
@@ -15,6 +15,8 @@ interface Props {
     creating: boolean;
     /** Opens the stake picker; the invite itself is created once a stake is chosen. */
     onInvite: () => void;
+    /** Opens the stake picker for a quick match with whoever is waiting at that table. */
+    onQuickMatch: () => void;
     onJoin: (inviteId: string) => Promise<void>;
     onClaimBonus: () => Promise<void>;
     onBonusDue: () => void;
@@ -27,6 +29,7 @@ export function Lobby({
     wallet,
     creating,
     onInvite,
+    onQuickMatch,
     onJoin,
     onClaimBonus,
     onBonusDue,
@@ -77,11 +80,16 @@ export function Lobby({
                 {t('lobby.invite')}
             </Button>
             {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
-            <div class="panel soon" data-testid="quick-match">
-                <div class="row">
-                    <span class="title">{t('lobby.quickMatch')}</span>
-                    <Badge tone="accent">{t('lobby.soon')}</Badge>
-                </div>
+            <div class="panel quick-match">
+                <Button
+                    variant="primary"
+                    size="lg"
+                    disabled={busy || creating}
+                    onClick={onQuickMatch}
+                    data-testid="quick-match"
+                >
+                    {t('lobby.quickMatch')}
+                </Button>
                 <span class="notice">{t('lobby.quickMatchHint')}</span>
             </div>
             <JoinByCode busy={busy} onJoin={(code) => run(() => onJoin(code))()} />

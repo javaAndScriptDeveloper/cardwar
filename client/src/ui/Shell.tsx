@@ -12,6 +12,7 @@ import { describeError } from './errors';
 import { Friends } from './friends/Friends';
 import { BottomNav } from './kit';
 import { Lobby } from './lobby/Lobby';
+import { Searching } from './lobby/Searching';
 import { StakePicker } from './lobby/StakePicker';
 import { Waiting } from './lobby/Waiting';
 import { Profile } from './profile/Profile';
@@ -30,6 +31,9 @@ export type ShellApi = Pick<
     | 'wallet'
     | 'claimDailyBonus'
     | 'transactions'
+    | 'enterMatchmaking'
+    | 'matchmakingStatus'
+    | 'leaveMatchmaking'
 >;
 
 interface Props {
@@ -72,13 +76,17 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     const launch = useLaunch(api, invite);
     // The invite being waited on survives tab changes; a reload recovers it through useLaunch.
     const [waitingFor, setWaitingFor] = useState<{ inviteId: string; stake: number }>();
-    const [pickingStake, setPickingStake] = useState(false);
+    // Quick-match search in progress; like the invite, a reload recovers it through useLaunch.
+    const [searching, setSearching] = useState<{ stake: number; since: string }>();
+    /** What the open stake picker is for: an invite to a friend or a quick match with anyone. */
+    const [pickingStake, setPickingStake] = useState<'invite' | 'match'>();
     const [creating, setCreating] = useState(false);
     const [lobbyError, setLobbyError] = useState<string>();
     const [launchHandled, setLaunchHandled] = useState(false);
 
     const startDuel = useCallback((duelId: string) => {
         setWaitingFor(undefined);
+        setSearching(undefined);
         setLobbyError(undefined);
         navigate({ name: 'duel', duelId });
     }, []);
@@ -109,6 +117,9 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                 break;
             case 'waiting':
                 setWaitingFor({ inviteId: launch.inviteId, stake: launch.stake });
+                break;
+            case 'searching':
+                setSearching({ stake: launch.stake, since: launch.since });
                 break;
             case 'lobby':
                 if (launch.error) {
@@ -154,14 +165,14 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     };
     const bonusDue = useCallback(() => void refreshWallet(api), [api]);
 
-    const openStakePicker = () => {
-        setPickingStake(true);
+    const openStakePicker = (purpose: 'invite' | 'match') => {
+        setPickingStake(purpose);
         navigate({ name: 'lobby' });
         void refreshWallet(api);
     };
 
     const createInvite = async (stake: number) => {
-        setPickingStake(false);
+        setPickingStake(undefined);
         setCreating(true);
         try {
             const created = await api.createInvite(stake);
@@ -184,6 +195,45 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
         navigate({ name: 'lobby' });
     };
 
+    const findMatch = async (stake: number) => {
+        setPickingStake(undefined);
+        setCreating(true);
+        try {
+            const entry = await api.enterMatchmaking(stake);
+            setLobbyError(undefined);
+            if (entry.status === 'MATCHED' && entry.duelId) {
+                startDuel(entry.duelId);
+                return;
+            }
+            setSearching({ stake: entry.stake, since: entry.since });
+        } catch (error) {
+            setLobbyError(
+                (error instanceof ApiError && reasonMessage(error.reason)) ||
+                    t('lobby.errors.quickMatch', { error: describeError(error) }),
+            );
+        } finally {
+            setCreating(false);
+        }
+        navigate({ name: 'lobby' });
+    };
+
+    const searchExpired = useCallback(() => {
+        setSearching(undefined);
+        setLobbyError(t('lobby.errors.searchExpired'));
+    }, []);
+
+    // The server may have paired us a moment before the leave landed; the opponent would then sit at a table
+    // nobody comes to, so look for that duel once more after leaving.
+    const cancelSearch = async () => {
+        setSearching(undefined);
+        await api.leaveMatchmaking().catch(() => undefined);
+        const active = await api.activeDuels().catch(() => []);
+        const duel = active[0];
+        if (duel) {
+            startDuel(duel.duelId);
+        }
+    };
+
     if (launch.phase === 'loading' || (!launchHandled && launch.phase !== 'lobby')) {
         return <p class="notice">{t('app.loading')}</p>;
     }
@@ -194,6 +244,19 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     const screen = (() => {
         switch (route.name) {
             case 'lobby':
+                if (searching) {
+                    return (
+                        <Searching
+                            stake={searching.stake}
+                            since={searching.since}
+                            api={api}
+                            pollMs={pollMs}
+                            onMatched={startDuel}
+                            onExpired={searchExpired}
+                            onCancel={() => void cancelSearch()}
+                        />
+                    );
+                }
                 return waitingFor ? (
                     <Waiting
                         inviteId={waitingFor.inviteId}
@@ -215,14 +278,15 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                         error={lobbyError}
                         wallet={wallet.value}
                         creating={creating}
-                        onInvite={openStakePicker}
+                        onInvite={() => openStakePicker('invite')}
+                        onQuickMatch={() => openStakePicker('match')}
                         onJoin={join}
                         onClaimBonus={claimBonus}
                         onBonusDue={bonusDue}
                     />
                 );
             case 'friends':
-                return <Friends onInvite={openStakePicker} />;
+                return <Friends onInvite={() => openStakePicker('invite')} />;
             case 'shop':
                 return <Shop />;
             case 'profile':
@@ -242,10 +306,10 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
         <>
             {screen}
             <StakePicker
-                open={pickingStake}
+                open={pickingStake !== undefined}
                 balance={wallet.value?.balance}
-                onPick={(stake) => void createInvite(stake)}
-                onClose={() => setPickingStake(false)}
+                onPick={(stake) => void (pickingStake === 'match' ? findMatch(stake) : createInvite(stake))}
+                onClose={() => setPickingStake(undefined)}
             />
             {TOP_LEVEL.has(route.name) && (
                 <BottomNav
