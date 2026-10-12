@@ -259,6 +259,14 @@ button:disabled {
     color: var(--hint);
 }
 
+/* The Telegram @handle: secondary to the name, so it shares the title line in the hint colour. */
+.list-row-handle {
+    margin-left: 6px;
+    font-weight: 400;
+    font-size: var(--font-s);
+    color: var(--hint);
+}
+
 .bottom-nav {
     position: fixed;
     left: 0;

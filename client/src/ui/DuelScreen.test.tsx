@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { t } from '../i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import type { DuelEvent } from '../api/types';
+import type { DuelEvent, DuelSummary, DuelView } from '../api/types';
 import { loadout } from '../state/loadout';
 import { equipped } from '../content/loader';
 import { CARD_IDS } from '../content/schema';
@@ -13,12 +13,14 @@ import { DuelScreen, type StreamOpener } from './DuelScreen';
 
 type StreamCallbacks = Parameters<StreamOpener>[1];
 
-function setup() {
+function setup(options: { first?: DuelView; active?: Partial<DuelSummary>[]; photoUrl?: string } = {}) {
     const api = {
-        duel: vi.fn().mockResolvedValue(view()),
+        duel: vi.fn().mockResolvedValue(options.first ?? view()),
         move: vi.fn(),
         history: vi.fn().mockResolvedValue([]),
-        activeDuels: vi.fn().mockResolvedValue([{ duelId: 'duel-1', opponentUsername: 'bob' }]),
+        activeDuels: vi
+            .fn()
+            .mockResolvedValue(options.active ?? [{ duelId: 'duel-1', opponentUsername: 'bob' }]),
         emote: vi.fn().mockResolvedValue(undefined),
     };
     let stream: StreamCallbacks | undefined;
@@ -31,7 +33,11 @@ function setup() {
     const utils = render(
         <DuelScreen
             duelId="duel-1"
-            player={{ playerId: 'me', username: 'alice' }}
+            player={{
+                playerId: 'me',
+                username: 'alice',
+                ...(options.photoUrl !== undefined && { photoUrl: options.photoUrl }),
+            }}
             api={api}
             telegram={resolveTelegram({})}
             openStream={openStream}
@@ -57,6 +63,47 @@ describe('DuelScreen', () => {
         await waitFor(() => expect(screen.getByText('bob')).toBeTruthy());
         expect(screen.getByRole('status').getAttribute('data-state')).toBe('your-attack');
         expect(openStream).toHaveBeenCalledWith('duel-1', expect.anything());
+    });
+
+    it("shows the opponent's Telegram name and photo from the view", async () => {
+        const { api } = setup({
+            first: view({
+                opponentProfile: {
+                    username: 'tg_7',
+                    displayName: 'Оля К',
+                    handle: 'olya',
+                    photoUrl: 'https://t.me/i/userpic/320/olya.svg',
+                },
+            }),
+            // An older server's summary has no display name: it must not undo the view's profile.
+            active: [{ duelId: 'duel-1', opponentUsername: 'tg_7' }],
+        });
+
+        await waitFor(() => expect(screen.getByText('Оля К')).toBeTruthy());
+        await waitFor(() => expect(api.activeDuels).toHaveBeenCalled());
+        await Promise.resolve();
+        expect(screen.getByText('Оля К')).toBeTruthy();
+        expect(screen.getByTestId('opponent-avatar').getAttribute('src')).toBe(
+            'https://t.me/i/userpic/320/olya.svg',
+        );
+    });
+
+    it('shows the display name and photo from the active-duel summary until the view has a profile', async () => {
+        setup({
+            active: [
+                {
+                    duelId: 'duel-1',
+                    opponentUsername: 'tg_7',
+                    opponentDisplayName: 'Оля',
+                    opponentPhotoUrl: 'https://t.me/i/userpic/320/olya.svg',
+                },
+            ],
+        });
+
+        await waitFor(() => expect(screen.getByText('Оля')).toBeTruthy());
+        expect(screen.getByTestId('opponent-avatar').getAttribute('src')).toBe(
+            'https://t.me/i/userpic/320/olya.svg',
+        );
     });
 
     it('re-fetches the duel on every nudge and ignores stale answers', async () => {
@@ -185,7 +232,13 @@ describe('DuelScreen', () => {
         api.duel.mockRejectedValueOnce(new ApiError(404));
         api.history.mockResolvedValueOnce([
             { duelId: 'other', result: 'WON' },
-            { duelId: 'duel-1', result: 'LOST', endReason: 'OPPONENT_OUT_OF_CARDS', opponentUsername: 'bob' },
+            {
+                duelId: 'duel-1',
+                result: 'LOST',
+                endReason: 'OPPONENT_OUT_OF_CARDS',
+                opponentUsername: 'tg_7',
+                opponentDisplayName: 'bob',
+            },
         ]);
         nudge();
 

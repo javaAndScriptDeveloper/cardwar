@@ -15,9 +15,13 @@ const friend = (playerId: string, overrides: Partial<FriendView> = {}): FriendVi
     ...overrides,
 });
 
-const challenge = (inviteId: string, stake = 100): ChallengeView => ({
+const challenge = (
+    inviteId: string,
+    stake = 100,
+    from: Partial<ChallengeView['from']> = {},
+): ChallengeView => ({
     inviteId,
-    from: { playerId: 'p9', username: 'olya', displayName: 'Оля' },
+    from: { playerId: 'p9', username: 'olya', displayName: 'Оля', ...from },
     stake,
     expiresAt: '2099-01-01T00:00:00Z',
 });
@@ -55,6 +59,32 @@ describe('Friends', () => {
 
         fireEvent.click(screen.getByTestId('challenge-p2'));
         expect(props.onChallenge).toHaveBeenCalledWith(expect.objectContaining({ playerId: 'p2' }));
+    });
+
+    it("shows a friend's Telegram photo and @handle", async () => {
+        setup({
+            friends: [
+                friend('p1', { handle: 'olya', photoUrl: 'https://t.me/i/userpic/320/olya.svg' }),
+                friend('p2'),
+            ],
+        });
+
+        const rows = await screen.findAllByTestId('friend-row');
+        const first = rows[0] as HTMLElement;
+        expect(within(first).getByTestId('friend-handle').textContent).toBe('@olya');
+        expect(first.querySelector('img.avatar')?.getAttribute('src')).toBe(
+            'https://t.me/i/userpic/320/olya.svg',
+        );
+        expect(within(rows[1] as HTMLElement).queryByTestId('friend-handle')).toBeNull();
+    });
+
+    it("shows the challenger's photo", async () => {
+        setup({ challenges: [challenge('i1', 0, { photoUrl: 'https://t.me/i/userpic/320/olya.svg' })] });
+
+        const row = await screen.findByTestId('challenge-row');
+        expect(row.querySelector('img.avatar')?.getAttribute('src')).toBe(
+            'https://t.me/i/userpic/320/olya.svg',
+        );
     });
 
     it('explains itself and offers an invite when there is nobody yet', async () => {

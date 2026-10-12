@@ -114,8 +114,14 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                 <ListRow
                     key={entry.duelId}
                     data-testid="history-row"
-                    leading={<Avatar name={entry.opponentUsername} size={36} />}
-                    title={t('profile.vs', { name: entry.opponentUsername })}
+                    leading={
+                        <Avatar
+                            name={entry.opponentDisplayName ?? entry.opponentUsername}
+                            photoUrl={entry.opponentPhotoUrl}
+                            size={36}
+                        />
+                    }
+                    title={t('profile.vs', { name: entry.opponentDisplayName ?? entry.opponentUsername })}
                     subtitle={t('profile.moves', {
                         n: entry.moveCount,
                         moves: plural(entry.moveCount, forms('profile.movesForms')),

@@ -89,7 +89,11 @@ export function Friends({
                             data-stake={challenge.stake}
                         >
                             <span class="list-row-leading">
-                                <Avatar name={challenge.from.displayName} size={36} />
+                                <Avatar
+                                    name={challenge.from.displayName}
+                                    photoUrl={challenge.from.photoUrl}
+                                    size={36}
+                                />
                             </span>
                             <span class="list-row-text">
                                 <span class="list-row-title">{challenge.from.displayName}</span>
@@ -146,10 +150,17 @@ export function Friends({
                         data-player={friend.playerId}
                     >
                         <span class="list-row-leading">
-                            <Avatar name={friend.displayName} size={36} />
+                            <Avatar name={friend.displayName} photoUrl={friend.photoUrl} size={36} />
                         </span>
                         <span class="list-row-text">
-                            <span class="list-row-title">{friend.displayName}</span>
+                            <span class="list-row-title">
+                                {friend.displayName}
+                                {friend.handle && (
+                                    <span class="list-row-handle" data-testid="friend-handle">
+                                        {t('friends.handle', { handle: friend.handle })}
+                                    </span>
+                                )}
+                            </span>
                             <span class="list-row-subtitle">
                                 <span
                                     class="record"

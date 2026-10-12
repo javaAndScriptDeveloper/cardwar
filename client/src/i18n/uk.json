@@ -178,6 +178,7 @@
     "accept": "Прийняти",
     "decline": "Відхилити",
     "challenge": "Викликати",
+    "handle": "@{handle}",
     "record": "{won}:{lost}",
     "recordHint": "Перемоги : поразки",
     "lastPlayed": "грали {date}",

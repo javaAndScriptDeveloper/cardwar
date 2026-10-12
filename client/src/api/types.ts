@@ -42,6 +42,16 @@ export interface DuelView {
     strikes?: { you: number; opponent: number };
     /** The opponent's card back and avatar frame; absent from servers without the shop. */
     opponentCosmetics?: CosmeticsView;
+    /** Who the opponent is: only on a full read (not a move's response), absent from older servers. */
+    opponentProfile?: PlayerProfile;
+}
+
+/** How another player is shown. `handle` (Telegram @username) and `photoUrl` only when they have them. */
+export interface PlayerProfile {
+    username: string;
+    displayName: string;
+    handle?: string;
+    photoUrl?: string;
 }
 
 export type MatchStatus = 'WAITING' | 'MATCHED' | 'EXPIRED';
@@ -78,6 +88,8 @@ export interface FriendView {
     playerId: string;
     username: string;
     displayName: string;
+    handle?: string;
+    photoUrl?: string;
     played: number;
     won: number;
     lost: number;
@@ -87,7 +99,7 @@ export interface FriendView {
 /** A challenge waiting for the caller. */
 export interface ChallengeView {
     inviteId: string;
-    from: { playerId: string; username: string; displayName: string };
+    from: { playerId: string; username: string; displayName: string; handle?: string; photoUrl?: string };
     stake: number;
     expiresAt: string;
 }
@@ -96,6 +108,10 @@ export interface DuelSummary {
     duelId: string;
     opponentId: string;
     opponentUsername: string;
+    /** Absent from older servers; fall back to the username. */
+    opponentDisplayName?: string;
+    opponentHandle?: string;
+    opponentPhotoUrl?: string;
     attacker: string;
     phase: DuelPhase;
     version: number;
@@ -108,6 +124,10 @@ export interface DuelHistoryEntry {
     duelId: string;
     opponentId: string;
     opponentUsername: string;
+    /** Absent from older servers; fall back to the username. */
+    opponentDisplayName?: string;
+    opponentHandle?: string;
+    opponentPhotoUrl?: string;
     result: DuelResult;
     endReason: string;
     startedAt: string;
@@ -153,6 +173,8 @@ export interface PlayerSummary {
     id: string;
     username: string;
     displayName: string;
+    handle?: string;
+    photoUrl?: string;
 }
 
 export interface MeView {

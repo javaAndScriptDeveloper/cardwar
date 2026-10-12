@@ -29,6 +29,31 @@ const tx = (amount: number, kind: CoinTransactionView['kind']): CoinTransactionV
 });
 
 describe('Profile', () => {
+    it('names history opponents by display name and shows their photo', async () => {
+        render(
+            <Profile
+                player={player}
+                api={{
+                    history: vi.fn().mockResolvedValue([
+                        entry({
+                            opponentUsername: 'tg_7',
+                            opponentDisplayName: 'Оля',
+                            opponentPhotoUrl: 'https://t.me/i/userpic/320/olya.svg',
+                        }),
+                    ]),
+                    transactions: noTransactions(),
+                }}
+                onOpenSettings={() => {}}
+            />,
+        );
+
+        const row = await screen.findByTestId('history-row');
+        expect(row.textContent).toContain(t('profile.vs', { name: 'Оля' }));
+        expect(row.querySelector('img.avatar')?.getAttribute('src')).toBe(
+            'https://t.me/i/userpic/320/olya.svg',
+        );
+    });
+
     it('shows the signed coin delta on staked history rows only', async () => {
         const api = {
             history: vi

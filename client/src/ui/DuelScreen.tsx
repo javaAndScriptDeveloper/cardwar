@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { DuelEvent, DuelView, MoveRequest } from '../api/types';
+import type { DuelEvent, DuelSummary, DuelView, MoveRequest } from '../api/types';
 import { audio } from '../audio';
 import type { SignedInPlayer } from '../auth/session';
 import type { LayoutDirective } from '../content/layout';
@@ -20,7 +20,7 @@ import { describeError } from './errors';
 import { emoteCode, emoteGlyph } from './cosmetics';
 import { CoinAmount } from './kit';
 import type { ClockWarning } from './MoveTimer';
-import { Table } from './Table';
+import { type Participant, Table } from './Table';
 
 export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels' | 'emote'>;
 export type StreamOpener = (
@@ -67,6 +67,13 @@ function coinsOf(view: DuelView, result: Result): number | undefined {
     return result.result === 'WON' ? view.stake : result.result === 'LOST' ? -view.stake : 0;
 }
 
+/** The opponent as a summary or history row names them: display name first, the username from older servers. */
+function participantOf(
+    row: Pick<DuelSummary, 'opponentUsername' | 'opponentDisplayName' | 'opponentPhotoUrl'>,
+): Participant {
+    return { name: row.opponentDisplayName ?? row.opponentUsername, photoUrl: row.opponentPhotoUrl };
+}
+
 function explain(result: Result, opponentName: string): string {
     // Three missed moves end the duel without anyone running out of cards; the usual sentence would be wrong.
     if (result.reason === 'FORFEIT' && result.result !== 'DRAW') {
@@ -84,7 +91,10 @@ function explain(result: Result, opponentName: string): string {
  */
 export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }: Props) {
     const [state, setState] = useState<State>({ kind: 'loading' });
-    const [opponentName, setOpponentName] = useState(t('duel.opponent'));
+    const [opponent, setOpponent] = useState<Participant>({ name: t('duel.opponent') });
+    const opponentName = opponent.name;
+    // The full view's profile is the freshest; a summary or history row only fills in until one arrives.
+    const profileFromView = useRef(false);
     const version = useRef(-1);
     const previousView = useRef<DuelView>(undefined);
     const mounted = useRef(true);
@@ -150,7 +160,9 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                     return;
                 }
                 if (entry) {
-                    setOpponentName(entry.opponentUsername);
+                    if (!profileFromView.current) {
+                        setOpponent(participantOf(entry));
+                    }
                     setState({
                         kind: 'over',
                         result: { result: entry.result, reason: entry.endReason },
@@ -185,6 +197,15 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 return;
             }
             version.current = view.version;
+            if (view.opponentProfile) {
+                profileFromView.current = true;
+                const profile = view.opponentProfile;
+                setOpponent((current) =>
+                    current.name === profile.displayName && current.photoUrl === profile.photoUrl
+                        ? current
+                        : { name: profile.displayName, photoUrl: profile.photoUrl },
+                );
+            }
             const events = contentEvents(previousView.current, view);
             previousView.current = view;
             // Sounds and haptics need no element, so they fire here; animations wait for the render (see below).
@@ -279,8 +300,8 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
         api.activeDuels()
             .then((active) => {
                 const mine = active.find((summary) => summary.duelId === duelId);
-                if (mine) {
-                    setOpponentName(mine.opponentUsername);
+                if (mine && !profileFromView.current) {
+                    setOpponent(participantOf(mine));
                 }
             })
             .catch(() => {});
@@ -484,7 +505,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                     <Table
                         view={state.view}
                         you={{ name: t('duel.you'), photoUrl: player.photoUrl }}
-                        opponent={{ name: opponentName }}
+                        opponent={opponent}
                         selectedTarget={selectedTarget}
                         busy={busy}
                         swipe={settings.value.swipe}
