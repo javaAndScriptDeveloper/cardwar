@@ -68,3 +68,25 @@ include the bonus.
 #### Scenario: Long streak
 - **WHEN** a player on a streak of nine wins a 500-coin duel
 - **THEN** the bonus is 250 coins (50%, the cap)
+
+### Requirement: Daily missions
+Every Kyiv day SHALL offer the same three missions to everybody: `PLAY_3` (finish 3 duels, 60 coins), `WIN_2` (win 2,
+120 coins) and `STAKED_WIN_1` (win one duel with a stake of at least 100, 150 coins). Progress SHALL be recorded for
+both players when a duel's result is recorded, in that transaction, never past the target; a draw counts as played,
+not won. `GET /api/v1/me/missions` SHALL list the three in that order as `{code, target, progress, reward, claimed}`,
+with zero progress on a day without duels. `POST /api/v1/me/missions/{code}/claim` SHALL pay the reward once as a
+`MISSION_REWARD` ledger row under `mission:<day>:<code>` and answer the wallet view; an incomplete mission is 400
+`MISSION_INCOMPLETE`, a second claim 409 `ALREADY_CLAIMED`, an unknown code 404. A new Kyiv day SHALL start every
+mission over.
+
+#### Scenario: Progress from a day's duels
+- **WHEN** a player wins a friendly duel, draws one and wins a 100-coin one on the same Kyiv day
+- **THEN** `PLAY_3` reads 3 of 3, `WIN_2` 2 of 2 and `STAKED_WIN_1` 1 of 1
+
+#### Scenario: Claim twice
+- **WHEN** a player claims a completed mission twice
+- **THEN** the first claim credits the reward and the second responds 409 `ALREADY_CLAIMED`, with one ledger row
+
+#### Scenario: Claim too early
+- **WHEN** a player claims a mission whose progress is below the target
+- **THEN** the API responds 400 `MISSION_INCOMPLETE` and nothing is credited
