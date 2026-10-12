@@ -83,6 +83,7 @@ describe('Settings', () => {
             const shopApi = (memesOwned: boolean) => ({
                 shop: vi.fn().mockResolvedValue({
                     items: [deckItem('classic', true), deckItem('memes-demo', memesOwned)],
+                    drops: [],
                     coinPacks: [],
                 }),
                 equipItem: vi.fn().mockResolvedValue({

@@ -983,6 +983,50 @@ button:disabled {
     line-height: 1;
 }
 
+/* A phrase emote shows its words under the glyph, in the shop and in the tray. */
+.emote-phrase {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.emote-phrase .emote-text {
+    font-size: var(--font-s);
+    font-weight: 600;
+    line-height: 1.1;
+}
+
+/* This week's drop sits above the catalogue, with the time left on sale. */
+.drops {
+    display: grid;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-l);
+    background: linear-gradient(135deg, rgb(245 197 66 / 18%), transparent 60%), var(--surface-2);
+}
+
+.drops h2 {
+    margin: 0;
+    font-size: var(--font-m);
+}
+
+.drop-countdown {
+    font-size: var(--font-s);
+    font-variant-numeric: tabular-nums;
+    opacity: 0.8;
+}
+
+.shop-item.locked {
+    opacity: 0.85;
+}
+
+.shop-item .lock {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
 .deck-row {
     display: flex;
     align-items: center;
@@ -1027,6 +1071,59 @@ button.link {
         linear-gradient(#2f6fd6, #0f3f8f);
 }
 
+/* A drone silhouette over a dawn sky. */
+.back-bayraktar {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 24'%3E%3Cpath fill='%23111827' d='M2 11h36v2H2zM18 4h4v16h-4zM10 18h20v2H10zM19 2l2-2 2 2z'/%3E%3C/svg%3E")
+            center 42% / 78% no-repeat,
+        linear-gradient(180deg, #f6c177 0, #e0776b 45%, #3b2d5c 100%);
+}
+
+/* A loaf on a rushnyk: wheat tones with a red-and-white embroidered band. */
+.back-palianytsia {
+    background:
+        radial-gradient(
+            ellipse 34% 20% at 50% 46%,
+            #fff1c9 0 18%,
+            #e2a24a 19% 60%,
+            #a85f1d 61% 100%,
+            transparent 101%
+        ),
+        repeating-linear-gradient(90deg, #b91c1c 0 4px, #fff7e6 4px 8px) 0 100% / 100% 10% no-repeat,
+        linear-gradient(#fdf3dc, #f3d9a4);
+}
+
+/* Rails and a locomotive stripe in the railway's blue, red and white. */
+.back-ukrzaliznytsia {
+    background:
+        repeating-linear-gradient(180deg, transparent 0 9px, rgb(255 255 255 / 55%) 9px 11px) 0 0 / 100% 100%,
+        linear-gradient(
+            90deg,
+            transparent 0 34%,
+            #e5e7eb 34% 40%,
+            transparent 40% 60%,
+            #e5e7eb 60% 66%,
+            transparent 66%
+        ),
+        linear-gradient(180deg, #0f2a5f 0 62%, #d62828 62% 74%, #0f2a5f 74%);
+}
+
+/* Cotton puffs over a warm glow in the dark. */
+.back-bavovna {
+    background:
+        radial-gradient(circle at 30% 30%, #fff 0 9%, transparent 10%),
+        radial-gradient(circle at 55% 22%, #fff 0 11%, transparent 12%),
+        radial-gradient(circle at 70% 42%, #f8fafc 0 10%, transparent 11%),
+        radial-gradient(circle at 42% 50%, #fff 0 13%, transparent 14%),
+        radial-gradient(
+            circle at 50% 70%,
+            rgb(251 191 36 / 85%) 0 6%,
+            rgb(249 115 22 / 45%) 7% 22%,
+            transparent 40%
+        ),
+        linear-gradient(#1f2937, #0b0f1a);
+}
+
 /* Tables: the felt and its shop swatch share one background per style. */
 .table-swatch {
     display: block;
@@ -1056,6 +1153,35 @@ button.link {
         radial-gradient(circle at 50% 40%, #b3253a, #6b0f23);
 }
 
+/* Khreshchatyk in a blackout: near-black, a few lit windows in a grid, a candle glow from below. */
+.table-swatch.table-blackout,
+.felt.table-blackout {
+    background:
+        radial-gradient(circle at 30% 20%, rgb(253 224 71 / 85%) 0 1px, transparent 2px) 0 0 / 34px 22px,
+        radial-gradient(circle at 75% 60%, rgb(253 224 71 / 55%) 0 1px, transparent 2px) 9px 7px / 52px 31px,
+        radial-gradient(ellipse at 50% 110%, rgb(251 146 60 / 28%), transparent 55%),
+        linear-gradient(#111318, #05060a);
+}
+
+/* Bukovel: snow with a line of firs. */
+.table-swatch.table-bukovel,
+.felt.table-bukovel {
+    background:
+        conic-gradient(from 150deg at 50% 0, #14532d 0 60deg, transparent 60deg) 0 62% / 26px 30px repeat-x,
+        conic-gradient(from 150deg at 50% 0, #166534 0 60deg, transparent 60deg) 13px 70% / 26px 30px repeat-x,
+        linear-gradient(180deg, #dbeafe 0, #eff6ff 55%, #f8fafc 100%);
+}
+
+/* The Cabinet: a burgundy carpet with a gold-threaded border. */
+.table-swatch.table-kabmin,
+.felt.table-kabmin {
+    background:
+        linear-gradient(#f5c542, #f5c542) 0 0 / 100% 3px no-repeat,
+        linear-gradient(#f5c542, #f5c542) 0 100% / 100% 3px no-repeat,
+        repeating-linear-gradient(45deg, rgb(245 197 66 / 10%) 0 2px, transparent 2px 14px),
+        radial-gradient(circle at 50% 40%, #7f1d1d, #450a0a);
+}
+
 /* Avatar frames: a ring drawn behind the avatar. */
 .avatar-frame {
     display: inline-flex;
@@ -1074,6 +1200,26 @@ button.link {
 
 .frame-blue-yellow {
     background: linear-gradient(#0057b7 50%, #ffd500 50%);
+}
+
+/* A gold ring with three blue notches: the trident's prongs, read around the circle. */
+.frame-tryzub-gold {
+    background:
+        repeating-conic-gradient(from -8deg, #0057b7 0 16deg, transparent 16deg 120deg),
+        conic-gradient(from 30deg, #fff3b0, var(--gold), #b8891a, var(--gold), #fff3b0);
+}
+
+/* Cross-stitch: red and black squares on linen. */
+.frame-vyshyvanka {
+    background: repeating-conic-gradient(#b91c1c 0 25%, #fff7ed 25% 50%, #111827 50% 75%, #fff7ed 75% 100%) 0
+        0 / 8px 8px;
+}
+
+/* Crimson and black under a gold edge. */
+.frame-kozak {
+    background:
+        conic-gradient(from 0deg, #991b1b 0 25%, #111827 25% 50%, #991b1b 50% 75%, #111827 75% 100%), #f5c542;
+    box-shadow: inset 0 0 0 1px #f5c542;
 }
 
 .frame-sample {
@@ -1107,10 +1253,29 @@ button.link {
 
 .emote-options {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: var(--space-2);
     padding: var(--space-1);
     border-radius: 999px;
     background: var(--surface-2);
+}
+
+/* A phrase emote in the tray is a pill: the glyph with its words beside it. */
+.emote-options button.phrase {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    width: auto;
+    padding: 0 var(--space-3);
+    border-radius: 999px;
+    font-size: 1.1rem;
+}
+
+.emote-options button.phrase .emote-text {
+    font-size: var(--font-s);
+    font-weight: 600;
+    white-space: nowrap;
 }
 
 .emote-bubble {
@@ -1129,6 +1294,26 @@ button.link {
 
 .emote-bubble.from-you {
     bottom: 120px;
+}
+
+/* A phrase floats as a speech bubble: the glyph big, the words on a pill under it. */
+.emote-bubble.phrase {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    max-width: 70vw;
+}
+
+.emote-bubble .emote-text {
+    padding: var(--space-1) var(--space-3);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: var(--shadow);
+    font-size: var(--font-m);
+    font-weight: 700;
+    line-height: 1.2;
 }
 
 @keyframes emote-float {

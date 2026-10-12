@@ -32,11 +32,44 @@ const catalog = (): ShopView => ({
         item('emote-like', { type: 'EMOTE', price: 100, owned: true }),
         item('emote-fire', { type: 'EMOTE', price: 150 }),
     ],
+    drops: [],
     coinPacks: [
         { id: 'coins-1000', coins: 1000, stars: 50 },
         { id: 'coins-5500', coins: 5500, stars: 250 },
     ],
 });
+
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
+
+/** A catalogue with an earned deck, a drop on sale for two days and three hours, and a drop out of its week. */
+const catalogWithUnlocks = (): ShopView => {
+    const bavovna = item('back-bavovna', {
+        price: 500,
+        unlock: { kind: 'DROP', value: 0, met: true },
+        availableUntil: new Date(Date.now() + 2 * DAY + 3 * HOUR + 30 * 60_000).toISOString(),
+    });
+    const base = catalog();
+    return {
+        ...base,
+        items: [
+            ...base.items,
+            item('deck-blogery', {
+                type: 'DECK',
+                price: 0,
+                unlock: { kind: 'WIN_STREAK', value: 3, met: false },
+            }),
+            bavovna,
+            item('table-kabmin', {
+                type: 'TABLE',
+                price: 800,
+                unlock: { kind: 'DROP', value: 1, met: false },
+            }),
+            item('emote-ty-sho', { type: 'EMOTE', price: 200, name: 'Ти шо, Кличко?' }),
+        ],
+        drops: [bavovna],
+    };
+};
 
 const walletView = (balance: number): WalletView => ({
     balance,
@@ -220,6 +253,54 @@ describe('Shop', () => {
         );
         await waitFor(() => expect(wallet.value?.balance).toBe(1200), { timeout: 3000 });
         await waitFor(() => expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('paid'));
+    });
+
+    it('shows an earned item with its requirement instead of a buy button', async () => {
+        setup({ shop: vi.fn().mockResolvedValue(catalogWithUnlocks()) });
+
+        const lock = await screen.findByTestId('lock-deck-blogery');
+        expect(lock.getAttribute('data-unlock')).toBe('WIN_STREAK:3');
+        expect(lock.textContent).toBe(t('shop.unlock.streak', { n: 3 }));
+        expect(screen.queryByTestId('buy-deck-blogery')).toBeNull();
+        expect(within(screen.getByTestId('item-deck-blogery')).queryByTestId('price')).toBeNull();
+    });
+
+    it("puts this week's drop first with a countdown, and a drop out of its week behind a lock", async () => {
+        setup({ shop: vi.fn().mockResolvedValue(catalogWithUnlocks()) });
+
+        const drops = await screen.findByTestId('drops');
+        expect(within(drops).getByTestId('item-back-bavovna')).toBeTruthy();
+        expect(drops.compareDocumentPosition(screen.getByTestId('item-deck-classic'))).toBe(
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        );
+        const countdown = within(drops).getByTestId('drop-countdown');
+        expect(countdown.getAttribute('data-days')).toBe('2');
+        expect(countdown.getAttribute('data-hours')).toBe('3');
+        expect(countdown.textContent).toBe(t('shop.drop.left', { d: 2, h: 3 }));
+        expect(within(drops).getByTestId('buy-back-bavovna')).toBeTruthy();
+
+        tab('backs');
+        // The drop is in its own section; the type tab does not repeat it.
+        expect(screen.getAllByTestId('item-back-bavovna')).toHaveLength(1);
+        tab('tables');
+        const lock = screen.getByTestId('lock-table-kabmin');
+        expect(lock.getAttribute('data-unlock')).toBe('DROP:1');
+        expect(lock.textContent).toBe(t('shop.drop.returns'));
+        expect(screen.queryByTestId('buy-table-kabmin')).toBeNull();
+        tab('emotes');
+        expect(screen.getByTestId('item-emote-ty-sho').textContent).toContain('Ти шо, Кличко?');
+    });
+
+    it('explains an earned or off-week item the server refused to sell', async () => {
+        const { api } = setup();
+        api.buyItem.mockRejectedValueOnce(new ApiError(400, { reason: 'NOT_ON_SALE' }));
+        await screen.findByTestId('item-deck-classic');
+
+        fireEvent.click(screen.getByTestId('buy-deck-memes-demo'));
+
+        const alert = await screen.findByRole('alert');
+        expect(alert.getAttribute('data-reason')).toBe('NOT_ON_SALE');
+        expect(alert.textContent).toBe(t('shop.errors.notOnSale'));
     });
 
     it('says so when Stars payments are unavailable', async () => {

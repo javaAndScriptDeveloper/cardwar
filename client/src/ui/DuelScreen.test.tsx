@@ -539,6 +539,22 @@ describe('DuelScreen cosmetics and emotes', () => {
         );
     });
 
+    it('shows a phrase emote as its glyph and its words, in the bubble and in the tray', async () => {
+        loadout.value = { deck: 'classic', cardBack: 'classic', table: 'green', emotes: ['ty-sho'] };
+        const { api, event } = setup();
+        await waitFor(() => expect(api.duel).toHaveBeenCalledTimes(1));
+
+        fireEvent.click(await screen.findByTestId('emote-tray'));
+        expect(screen.getByTestId('emote-ty-sho').textContent).toContain('Ти шо, Кличко?');
+        fireEvent.click(screen.getByTestId('emote-ty-sho'));
+        event({ type: 'EMOTE', duelId: 'duel-1', player: 'them', emote: 'ty-sho' });
+
+        const bubble = await screen.findByTestId('emote-bubble');
+        expect(bubble.getAttribute('data-emote')).toBe('ty-sho');
+        expect(bubble.getAttribute('data-emote-text')).toBe('Ти шо, Кличко?');
+        expect(bubble.textContent).toContain('Ти шо, Кличко?');
+    });
+
     it('feeds emote_received to the equipped pack', async () => {
         equipped.value = {
             id: 'demo',

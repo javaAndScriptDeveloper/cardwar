@@ -220,7 +220,20 @@ export interface DuelEvent {
 
 export type ItemType = 'DECK' | 'CARD_BACK' | 'TABLE' | 'FRAME' | 'EMOTE';
 
-/** One cosmetic: `contentRef` names the pack or built-in style it shows; the price is in coins. */
+/**
+ * What stands between the player and an item coins alone do not buy: a win streak still to reach, or a weekly
+ * drop whose week this is (`met`) or is not.
+ */
+export interface UnlockView {
+    kind: 'COINS' | 'WIN_STREAK' | 'DROP';
+    value: number;
+    met: boolean;
+}
+
+/**
+ * One cosmetic: `contentRef` names the pack or built-in style it shows; the price is in coins. `unlock` is absent
+ * for an item coins simply buy; `availableUntil` (ISO instant) is present only while a drop is on sale.
+ */
 export interface ShopItemView {
     code: string;
     type: ItemType;
@@ -229,6 +242,8 @@ export interface ShopItemView {
     price: number;
     owned: boolean;
     equipped: boolean;
+    unlock?: UnlockView;
+    availableUntil?: string;
 }
 
 /** Coins sold for Telegram Stars. */
@@ -238,8 +253,10 @@ export interface CoinPackView {
     stars: number;
 }
 
+/** The whole catalogue; `drops` repeats the items on sale this week only. */
 export interface ShopView {
     items: ShopItemView[];
+    drops: ShopItemView[];
     coinPacks: CoinPackView[];
 }
 

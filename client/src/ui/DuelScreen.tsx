@@ -19,7 +19,7 @@ import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 import { Result as ResultScreen } from './Result';
-import { emoteCode, emoteGlyph } from './cosmetics';
+import { emoteCode, emoteGlyph, emotePhrase } from './cosmetics';
 import type { ClockWarning } from './MoveTimer';
 import { type Participant, Table } from './Table';
 
@@ -651,18 +651,24 @@ export function DuelScreen({
                     {mine && mine.emotes.length > 0 && (
                         <EmoteTray emotes={mine.emotes} onThrow={(emote) => void throwEmote(emote)} />
                     )}
-                    {emotes.map((bubble) => (
-                        <div
-                            key={bubble.id}
-                            class={`emote-bubble from-${bubble.from}`}
-                            data-testid="emote-bubble"
-                            data-emote={bubble.emote}
-                            data-from={bubble.from}
-                            aria-hidden="true"
-                        >
-                            {emoteGlyph(bubble.emote)}
-                        </div>
-                    ))}
+                    {emotes.map((bubble) => {
+                        // A phrase emote floats its words along with the glyph; a plain one is just the glyph.
+                        const phrase = emotePhrase(bubble.emote);
+                        return (
+                            <div
+                                key={bubble.id}
+                                class={`emote-bubble from-${bubble.from}${phrase ? ' phrase' : ''}`}
+                                data-testid="emote-bubble"
+                                data-emote={bubble.emote}
+                                data-emote-text={phrase}
+                                data-from={bubble.from}
+                                aria-hidden="true"
+                            >
+                                {emoteGlyph(bubble.emote)}
+                                {phrase && <span class="emote-text">{phrase}</span>}
+                            </div>
+                        );
+                    })}
                     {toast && (
                         <p class="toast" role="alert" data-reason={toast.reason}>
                             {toast.text}
@@ -687,12 +693,15 @@ function EmoteTray({ emotes, onThrow }: { emotes: readonly string[]; onThrow: (e
                             type="button"
                             role="menuitem"
                             data-testid={`emote-${emote}`}
+                            class={emotePhrase(emote) ? 'phrase' : undefined}
+                            title={emotePhrase(emote)}
                             onClick={() => {
                                 setOpen(false);
                                 onThrow(emote);
                             }}
                         >
                             {emoteGlyph(emote)}
+                            {emotePhrase(emote) && <span class="emote-text">{emotePhrase(emote)}</span>}
                         </button>
                     ))}
                 </div>

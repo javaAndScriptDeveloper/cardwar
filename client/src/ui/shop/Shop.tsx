@@ -8,7 +8,7 @@ import { t } from '../../i18n';
 import { applyLoadout, refreshLoadout } from '../../state/loadout';
 import { awaitCredit, refreshWallet, wallet } from '../../state/wallet';
 import type { Telegram } from '../../telegram/webapp';
-import { BackSwatch, emoteGlyph, FrameSwatch, TableSwatch } from '../cosmetics';
+import { BackSwatch, emoteGlyph, emotePhrase, FrameSwatch, TableSwatch } from '../cosmetics';
 import { describeError } from '../errors';
 import { Badge, Button, CoinAmount, Tabs, Toast } from '../kit';
 
@@ -40,9 +40,12 @@ interface Props {
 /** A silent deck still answers a tap on its preview, with the sound a beaten card makes. */
 const SILENT_DECK_DEMO = 'beat';
 
+/** The countdown is coarse (days and hours), so a tick a minute keeps it honest without churn. */
+const COUNTDOWN_TICK_MS = 60_000;
+
 type Catalog =
     | { kind: 'loading' }
-    | { kind: 'ready'; items: ShopItemView[]; coinPacks: CoinPackView[] }
+    | { kind: 'ready'; items: ShopItemView[]; drops: ShopItemView[]; coinPacks: CoinPackView[] }
     | { kind: 'failed'; error: string };
 
 /** One sentence per refusal the shop endpoints document; anything else names the generic failure. */
@@ -55,21 +58,33 @@ function problem(error: unknown): { text: string; reason: string } {
             return { text: t('shop.errors.alreadyOwned'), reason };
         case 'NOT_OWNED':
             return { text: t('shop.errors.notOwned'), reason };
+        case 'NOT_FOR_SALE':
+            return { text: t('shop.errors.notForSale'), reason };
+        case 'NOT_ON_SALE':
+            return { text: t('shop.errors.notOnSale'), reason };
         case 'PAYMENTS_UNAVAILABLE':
             return { text: t('shop.errors.paymentsUnavailable'), reason };
     }
     return { text: t('shop.errors.generic', { error: describeError(error) }), reason: reason ?? 'generic' };
 }
 
+/** A drop on sale right now: the server put it in `drops` and gave it an end. */
+const onSale = (item: ShopItemView) => item.availableUntil !== undefined;
+
+/** An item the player cannot buy today: earned by a streak, or a drop out of its week. */
+const locked = (item: ShopItemView) => !item.owned && item.unlock !== undefined && !item.unlock.met;
+
 /**
  * Cosmetics for coins and coins for Telegram Stars. Prices and ownership come from the server on every visit; the
- * client only shows them and asks. Equipping writes the server loadout, which also moves the device's deck.
+ * client only shows them and asks. Equipping writes the server loadout, which also moves the device's deck. Which
+ * items are locked, earned or on sale this week is the server's call too: the shop only draws the badge.
  */
 export function Shop({ api, telegram, loadIndex = fetchPackIndex, sound = audio }: Props) {
     const [tab, setTab] = useState<string>('decks');
     const [catalog, setCatalog] = useState<Catalog>({ kind: 'loading' });
     const [packs, setPacks] = useState<Record<string, PackIndexEntry>>({});
     const [busy, setBusy] = useState<string>();
+    const [now, setNow] = useState(() => Date.now());
 
     const playDemo = (pack: PackIndexEntry | undefined) => {
         if (!pack?.demoSound) {
@@ -95,9 +110,16 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex, sound = audio 
         };
     }, [api, loadIndex]);
 
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), COUNTDOWN_TICK_MS);
+        return () => clearInterval(timer);
+    }, []);
+
     const replaceItems = (update: (items: ShopItemView[]) => ShopItemView[]) =>
         setCatalog((current) =>
-            current.kind === 'ready' ? { ...current, items: update(current.items) } : current,
+            current.kind === 'ready'
+                ? { ...current, items: update(current.items), drops: update(current.drops) }
+                : current,
         );
 
     const run = async (key: string, action: () => Promise<void>) => {
@@ -147,6 +169,19 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex, sound = audio 
             });
         });
 
+    const card = (item: ShopItemView) => (
+        <ItemCard
+            key={item.code}
+            item={item}
+            preview={packs[item.contentRef]?.preview}
+            onPreview={() => playDemo(packs[item.contentRef])}
+            busy={busy}
+            now={now}
+            onBuy={() => void buy(item)}
+            onEquip={() => void equip(item)}
+        />
+    );
+
     const current = wallet.value;
     return (
         <section class="lobby" data-testid="shop-screen">
@@ -192,21 +227,18 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex, sound = audio 
                     ))}
                 </div>
             )}
+            {catalog.kind === 'ready' && tab !== 'coins' && catalog.drops.length > 0 && (
+                <section class="drops" data-testid="drops">
+                    <h2>{t('shop.drop.title')}</h2>
+                    <div class="shop-grid">{catalog.drops.map(card)}</div>
+                </section>
+            )}
             {catalog.kind === 'ready' && tab !== 'coins' && (
                 <div class="shop-grid">
                     {catalog.items
-                        .filter((item) => item.type === ITEM_TABS[tab as ItemTab])
-                        .map((item) => (
-                            <ItemCard
-                                key={item.code}
-                                item={item}
-                                preview={packs[item.contentRef]?.preview}
-                                onPreview={() => playDemo(packs[item.contentRef])}
-                                busy={busy}
-                                onBuy={() => void buy(item)}
-                                onEquip={() => void equip(item)}
-                            />
-                        ))}
+                        // A drop on sale is shown once, in its own section above.
+                        .filter((item) => item.type === ITEM_TABS[tab as ItemTab] && !onSale(item))
+                        .map(card)}
                 </div>
             )}
             <Toast message={message?.text} reason={message?.reason} />
@@ -219,6 +251,7 @@ interface ItemCardProps {
     preview: string[] | undefined;
     onPreview: () => void;
     busy: string | undefined;
+    now: number;
     onBuy: () => void;
     onEquip: () => void;
 }
@@ -226,8 +259,12 @@ interface ItemCardProps {
 /** Emotes are owned, never equipped: every owned emote is in the tray at the table. */
 const EQUIPPABLE: ReadonlySet<ItemType> = new Set(['DECK', 'CARD_BACK', 'TABLE', 'FRAME']);
 
-function ItemCard({ item, preview, onPreview, busy, onBuy, onEquip }: ItemCardProps) {
+function ItemCard({ item, preview, onPreview, busy, now, onBuy, onEquip }: ItemCardProps) {
+    const isLocked = locked(item);
     const action = (() => {
+        if (isLocked && item.unlock) {
+            return <Lock item={item} />;
+        }
         if (!item.owned) {
             return (
                 <Button
@@ -261,7 +298,7 @@ function ItemCard({ item, preview, onPreview, busy, onBuy, onEquip }: ItemCardPr
 
     return (
         <div
-            class={`shop-item${item.equipped ? ' equipped' : ''}`}
+            class={`shop-item${item.equipped ? ' equipped' : ''}${isLocked ? ' locked' : ''}`}
             data-testid={`item-${item.code}`}
             data-owned={String(item.owned)}
             data-equipped={String(item.equipped)}
@@ -283,9 +320,39 @@ function ItemCard({ item, preview, onPreview, busy, onBuy, onEquip }: ItemCardPr
                 </span>
             )}
             <span class="name">{item.name}</span>
-            {!item.owned && <CoinAmount amount={item.price} data-testid="price" />}
+            {!item.owned && !isLocked && <CoinAmount amount={item.price} data-testid="price" />}
+            {item.availableUntil !== undefined && !item.owned && (
+                <Countdown until={item.availableUntil} now={now} />
+            )}
             {action}
         </div>
+    );
+}
+
+/** Why this item is not for sale today: the streak it takes, or that its drop week will come round again. */
+function Lock({ item }: { item: ShopItemView }) {
+    const unlock = item.unlock;
+    if (!unlock) {
+        return null;
+    }
+    const label =
+        unlock.kind === 'WIN_STREAK' ? t('shop.unlock.streak', { n: unlock.value }) : t('shop.drop.returns');
+    return (
+        <span class="lock" data-testid={`lock-${item.code}`} data-unlock={`${unlock.kind}:${unlock.value}`}>
+            <Badge>{label}</Badge>
+        </span>
+    );
+}
+
+/** Days and hours until the drop leaves the shop; the server set the end, the client only counts. */
+function Countdown({ until, now }: { until: string; now: number }) {
+    const left = Math.max(0, Date.parse(until) - now);
+    const days = Math.floor(left / 86_400_000);
+    const hours = Math.floor((left % 86_400_000) / 3_600_000);
+    return (
+        <span class="drop-countdown" data-testid="drop-countdown" data-days={days} data-hours={hours}>
+            {t('shop.drop.left', { d: days, h: hours })}
+        </span>
     );
 }
 
@@ -311,11 +378,18 @@ function Preview({ item, images }: { item: ShopItemView; images: string[] | unde
             return <TableSwatch table={item.contentRef} />;
         case 'FRAME':
             return <FrameSwatch frame={item.contentRef} />;
-        case 'EMOTE':
+        case 'EMOTE': {
+            const phrase = emotePhrase(item.contentRef);
             return (
-                <span class="emote-glyph" data-emote={item.contentRef} aria-hidden="true">
-                    {emoteGlyph(item.contentRef)}
+                <span
+                    class={phrase ? 'emote-phrase' : undefined}
+                    data-emote={item.contentRef}
+                    aria-hidden="true"
+                >
+                    <span class="emote-glyph">{emoteGlyph(item.contentRef)}</span>
+                    {phrase && <span class="emote-text">{phrase}</span>}
                 </span>
             );
+        }
     }
 }

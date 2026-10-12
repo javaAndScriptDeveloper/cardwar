@@ -36,7 +36,7 @@ function fakeApi() {
         enterMatchmaking: vi.fn(),
         matchmakingStatus: vi.fn().mockResolvedValue(undefined),
         leaveMatchmaking: vi.fn().mockResolvedValue(undefined),
-        shop: vi.fn().mockResolvedValue({ items: [], coinPacks: [] }),
+        shop: vi.fn().mockResolvedValue({ items: [], drops: [], coinPacks: [] }),
         buyItem: vi.fn(),
         equipItem: vi.fn(),
         starsInvoice: vi.fn(),

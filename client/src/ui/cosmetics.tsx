@@ -11,6 +11,19 @@ const EMOTE_GLYPHS: Readonly<Record<string, string>> = {
     fire: '🔥',
 };
 
+/**
+ * Phrase emotes: a glyph plus the words, shown together at the table and in the tray. The text is content keyed
+ * by the shop's ref (the server names the item the same way), not interface copy, so it lives here with the glyph.
+ */
+export const EMOTE_PHRASES: Readonly<Record<string, { glyph: string; text: string }>> = {
+    'minus-money': { glyph: '💸', text: 'Мінус гроші' },
+    chumachecha: { glyph: '🍂', text: 'Чумачеча осінь' },
+    'ty-sho': { glyph: '🥊', text: 'Ти шо, Кличко?' },
+    palianytsia: { glyph: '🍞', text: 'Скажи «паляниця»' },
+    bavovna: { glyph: '💥', text: 'Бавовна!' },
+    'dobroho-vechora': { glyph: '🌙', text: 'Доброго вечора, ми з України' },
+};
+
 const REF = /^[a-z0-9][a-z0-9-]*$/;
 
 /** A ref safe to put into a class name; anything else falls back to the default look. */
@@ -19,7 +32,12 @@ export function styleRef(ref: string | undefined, fallback: string): string {
 }
 
 export function emoteGlyph(ref: string): string {
-    return EMOTE_GLYPHS[ref] ?? '💬';
+    return EMOTE_GLYPHS[ref] ?? EMOTE_PHRASES[ref]?.glyph ?? '💬';
+}
+
+/** The words of a phrase emote; undefined for a plain glyph emote. */
+export function emotePhrase(ref: string): string | undefined {
+    return EMOTE_PHRASES[ref]?.text;
 }
 
 /** The shop item code of an emote ref; the seed names every emote item `emote-<ref>`. */
