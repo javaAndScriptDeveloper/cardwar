@@ -65,11 +65,12 @@ its issue:
   `account` (#2). `JwtService` stays the bearer filter's resolver.
 - A finished duel is deleted at once, so the player who did not make the last move reads the result from
   `GET /me/duels` (#11). No backend change.
-- The bot has no Main Mini App yet, which `startapp` links need and only BotFather can enable; the start screen
-  therefore also accepts a pasted invite code (#10). The menu button was set through the Bot API (#6).
+- The bot has no Main Mini App, which `startapp` links need and only BotFather can enable. After the first
+  two-phone test (nobody could join, and every reopen minted a new code), invite links became `?start=<id>`: the
+  bot's webhook answers with a Join button that opens `/app/?invite=<id>` (#16). A player keeps one pending invite
+  that a reloaded app resumes (#15). The menu button was set through the Bot API (#6).
 
-Owner-only steps left (no API exists for them): in BotFather enable the Main Mini App for `@cardwar_gaming_bot`
-with URL `https://cardwar-gaming.duckdns.org/app/` (makes the shared links open the app), and the two-phone check.
+Owner-only step left: the two-phone check.
 
 ## Known follow-ups that may surface
 

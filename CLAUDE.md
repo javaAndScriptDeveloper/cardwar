@@ -125,8 +125,11 @@ gh project item-list 3 --owner javaAndScriptDeveloper
   healthy), then `E2E_BASE_URL=https://cardwar-gaming.duckdns.org make e2e` and
   `BASE_URL=https://cardwar-gaming.duckdns.org scripts/smoke.sh` from your machine, in that order (the smoke test's
   login flood throttles sign-ins from your address for a minute).
-- Bot `@cardwar_gaming_bot`: menu button "Play" -> `/app/` set through the Bot API (`setChatMenuButton`). The
-  Main Mini App (needed for `?startapp=` invite links to open the app) can only be enabled in BotFather by the owner.
+- Bot `@cardwar_gaming_bot`: menu button "Play" -> `/app/` set through the Bot API (`setChatMenuButton`). Webhook
+  registered with `setWebhook` to `/api/v1/telegram/webhook` (secret derived from the token, README "Set up the bot");
+  the bot answers `/start` with a Play button and `/start <invite>` with a Join button, so invite links
+  (`t.me/cardwar_gaming_bot?start=<id>`) work without a BotFather Main Mini App. Re-run `setWebhook` only if the
+  token changes.
 - The repository is **public** (since 2026-10-12) so GitHub Actions minutes are free and unlimited; CI runs on
   every push to `main`. Never commit anything secret: secrets live only in `/opt/cardwar/.env` on the server and
   in the owner's local `.env`, both gitignored. Treat a red CI as a real signal again; check `gh run list`.
