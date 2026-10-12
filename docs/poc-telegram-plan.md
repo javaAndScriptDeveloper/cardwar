@@ -1,5 +1,8 @@
 # PoC plan — Telegram Mini App demo
 
+> Superseded for new work by `docs/superpowers/specs/2026-10-12-mvp-design.md` (the MVP umbrella design); kept as
+> the record of the PoC phase.
+
 Local mirror of the GitHub milestone `PoC: Telegram Mini App demo`
 (project: https://github.com/users/javaAndScriptDeveloper/projects/3). GitHub is authoritative for status;
 this file records the shape of the plan and the decisions behind it so the repo is self-contained.

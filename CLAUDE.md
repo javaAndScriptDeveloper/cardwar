@@ -74,8 +74,14 @@ what was tried and what is needed.
   context; keep rare). Entity no-arg constructors are protected; use `cardwar.catalog.domain.CatalogFixtures`.
 - Coverage gate 85% instructions (`build.gradle.kts`). Keep it green; raise, never lower.
 - Javadoc/comments explain **why**, briefly. No commented-out code, no TODOs without an issue number.
-- Client (once it exists): TypeScript strict, ESLint + Prettier, Vitest; folders `src/api`, `src/auth`,
-  `src/game`, `src/ui`, `src/telegram`. Game logic stays on the server; client selectors only enable controls.
+- Client: TypeScript strict, ESLint + Prettier, Vitest; folders `src/api`, `src/auth`, `src/game`, `src/ui`,
+  `src/telegram`, `src/i18n`, `src/router`, `src/state`, `src/motion`, `src/audio` (`src/content` arrives with
+  MVP 4). UI copy is Ukrainian and goes through `t(key)` from `src/i18n/uk.json`; the catalog test fails on unused
+  or missing keys, so add a key and its `t()` call together. Tests and the Playwright E2E read the `data-testid` /
+  `data-*` contract (status `data-state`, cards `data-card`, pairs `data-attack`/`data-defence`, toasts
+  `data-reason`, results `data-result`; see `docs/superpowers/plans/2026-10-12-mvp0-app-shell.md` Task 1) and
+  never visible text. Game logic stays on the server; client selectors only enable controls. Motion, audio and
+  layout effects are cosmetic and never produce a move.
 
 ## Commands
 

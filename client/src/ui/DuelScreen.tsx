@@ -38,6 +38,8 @@ type State =
 
 /** Delay before re-trying a re-fetch that failed (429 or no network). */
 const RETRY_MS = 1500;
+/** How many times the history is read for a finished duel before the duel is declared gone. */
+const HISTORY_ATTEMPTS = 4;
 
 function explain(result: Result, opponentName: string): string {
     return t(`duel.explain.${result.result}`, { name: opponentName });
@@ -59,17 +61,34 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
     const tableRef = useRef<HTMLDivElement>(null);
     const closeStream = useRef<() => void>(() => {});
 
+    /**
+     * The result of a finished duel, from the history. Right after the last move the row may not be readable yet
+     * (the read can be throttled in a fast game, or the connection may blip), so a few attempts are made before
+     * declaring the duel gone.
+     */
     const finishFromHistory = useCallback(async () => {
-        try {
-            const entry = (await api.history()).find((row) => row.duelId === duelId);
-            if (entry) {
-                setOpponentName(entry.opponentUsername);
-                setState({ kind: 'over', result: { result: entry.result, reason: entry.endReason } });
-            } else {
-                setState({ kind: 'gone', message: t('duel.gone') });
+        for (let attempt = 1; ; attempt++) {
+            try {
+                const entry = (await api.history()).find((row) => row.duelId === duelId);
+                if (entry) {
+                    setOpponentName(entry.opponentUsername);
+                    setState({ kind: 'over', result: { result: entry.result, reason: entry.endReason } });
+                    return;
+                }
+                if (attempt >= HISTORY_ATTEMPTS) {
+                    setState({ kind: 'gone', message: t('duel.gone') });
+                    return;
+                }
+            } catch (error) {
+                if (attempt >= HISTORY_ATTEMPTS) {
+                    setState({
+                        kind: 'gone',
+                        message: t('duel.loadResult', { error: describeError(error) }),
+                    });
+                    return;
+                }
             }
-        } catch (error) {
-            setState({ kind: 'gone', message: t('duel.loadResult', { error: describeError(error) }) });
+            await new Promise((resolve) => setTimeout(resolve, RETRY_MS));
         }
     }, [api, duelId]);
 
@@ -262,7 +281,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             return <p class="notice">{t('duel.loading')}</p>;
         case 'gone':
             return (
-                <section class="lobby">
+                <section class="lobby" data-testid="duel-gone">
                     <p class="error" role="alert">
                         {state.message}
                     </p>

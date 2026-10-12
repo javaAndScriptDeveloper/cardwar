@@ -43,10 +43,10 @@ async function signIn(browser: Browser, username: string, path = '/app/'): Promi
 }
 
 const status = (page: Page) => page.getByRole('status');
-const statusState = async (page: Page) =>
-    (await status(page)
-        .getAttribute('data-state')
-        .catch(() => null)) ?? '';
+/** Reads the turn state without waiting: a page between screens simply has none. */
+const statusState = (page: Page) =>
+    page.evaluate(() => document.querySelector('[role="status"]')?.getAttribute('data-state') ?? '');
+const gone = (page: Page) => page.getByTestId('duel-gone');
 const handButtons = (page: Page) => page.locator('.hand button');
 const pairButtons = (page: Page) => page.locator('.pairs button');
 const result = (page: Page) => page.getByTestId('result');
@@ -132,6 +132,7 @@ test('two players play a duel to a result through the Mini App', async ({ browse
         }
         let acted = false;
         for (const page of [alice, bob]) {
+            expect(await gone(page).isVisible(), 'a player lost the duel screen').toBe(false);
             if (await result(page).isVisible()) {
                 continue;
             }

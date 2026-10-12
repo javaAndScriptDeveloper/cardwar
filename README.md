@@ -206,6 +206,18 @@ cd client && npm ci && npm run dev    # http://localhost:5173/app/ ; /api is pro
 
 Open two browser windows (one private) to play both sides. Client checks: `npm run lint && npm test && npm run build`.
 
+### Client structure
+
+The UI is Ukrainian; code and docs are English. `src/i18n` holds every string (`uk.json`, read through `t(key)`;
+a test fails on unused or missing keys). `src/router` is a hash router (`#/`, `#/friends`, `#/shop`, `#/profile`,
+`#/settings`, `#/duel/:id`) wired to Telegram's BackButton. `src/state` keeps device settings in a signal backed by
+localStorage. `src/motion` wraps the Web Animations API in named effects (glide, beat, take, shake, pulse…) that honour
+reduced-motion; `src/audio` owns one AudioContext and the default sound pack (`npm run gen:sounds` regenerates the
+placeholders). `src/game/diff.ts` turns consecutive duel views into table events, which drive animations, sounds and
+haptics now and the content rule engine later. `src/ui/kit` is the component kit on the tokens in `tokens.css`;
+screens live in `src/ui/{lobby,friends,shop,profile,settings}` under `Shell`. Tests and the Playwright run read
+`data-testid` / `data-*` attributes, never copy.
+
 ### End-to-end test
 
 `make e2e` (or `cd client && npx playwright install chromium && npm run e2e`) drives two browsers through the

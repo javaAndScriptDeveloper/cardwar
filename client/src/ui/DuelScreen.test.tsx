@@ -107,6 +107,42 @@ describe('DuelScreen', () => {
         expect(close).toHaveBeenCalled();
     });
 
+    it('retries the history when the result is not readable yet instead of giving up', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockRejectedValue(new ApiError(404));
+        api.history
+            .mockRejectedValueOnce(new ApiError(429))
+            .mockResolvedValueOnce([])
+            .mockResolvedValue([
+                {
+                    duelId: 'duel-1',
+                    result: 'WON',
+                    endReason: 'OPPONENT_OUT_OF_CARDS',
+                    opponentUsername: 'bob',
+                },
+            ]);
+        nudge();
+
+        await waitFor(() => expect(screen.getByTestId('result').getAttribute('data-result')).toBe('WON'), {
+            timeout: 5000,
+        });
+        expect(screen.queryByTestId('duel-gone')).toBeNull();
+    }, 10000);
+
+    it('gives up on the history after repeated failures and offers the lobby', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockRejectedValue(new ApiError(404));
+        api.history.mockResolvedValue([]);
+        nudge();
+
+        await waitFor(() => expect(screen.getByTestId('duel-gone')).toBeTruthy(), { timeout: 8000 });
+        expect(screen.getByRole('alert').textContent).toBe(t('duel.gone'));
+    }, 10000);
+
     it('calls a draw a draw', async () => {
         const { api, closed } = setup();
         await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
