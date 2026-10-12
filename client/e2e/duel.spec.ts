@@ -101,12 +101,14 @@ async function outcomeOf(page: Page, before: string): Promise<'moved' | 'retry' 
     return 'stuck';
 }
 
-test('two players play a duel to a result through the Mini App', async ({ browser }) => {
+test('two players play a 100-coin duel to a result through the Mini App', async ({ browser }) => {
     const suffix = `${Date.now() % 1_000_000}`;
     const alice = await signIn(browser, `e2e-a-${suffix}`);
 
+    await expect(alice.getByTestId('balance')).toHaveAttribute('data-balance', '500');
     await alice.getByTestId('invite').click();
-    await alice.getByTestId('stake-0').click();
+    await alice.getByTestId('stake-100').click();
+    await expect(alice.getByTestId('invite-stake')).toHaveAttribute('data-stake', '100');
     const code = (await alice.getByTestId('invite-code').textContent())?.trim() ?? '';
     expect(code).toMatch(/^[0-9a-f-]{36}$/);
 
@@ -166,8 +168,18 @@ test('two players play a duel to a result through the Mini App', async ({ browse
     expect(played.TAKE).toBeGreaterThan(0);
     expect(played.END_ATTACK).toBeGreaterThan(0);
 
+    // The winner takes the pot; a draw refunds both.
+    const aliceResult = (await result(alice).getAttribute('data-result')) ?? '';
+    const expectedDelta = { WON: '100', LOST: '-100', DRAW: '0' }[aliceResult] ?? '?';
+    if (aliceResult !== 'DRAW') {
+        await expect(alice.getByTestId('coin-delta')).toHaveAttribute('data-delta', expectedDelta);
+    }
     await alice.getByTestId('back-to-lobby').click();
     await expect(alice.getByTestId('invite')).toBeVisible();
+    await expect(alice.getByTestId('balance')).toHaveAttribute(
+        'data-balance',
+        String(500 + Number(expectedDelta)),
+    );
 
     /** One greedy decision for the player whose status says it is their move; null when it is not. */
     async function act(page: Page, state: string): Promise<Move | null> {

@@ -359,6 +359,22 @@ function business() {
       targets([conversion('1d'), 'accepted / created']),
       { unit: 'percentunit' },
     ),
+
+    row(g, 'Coins'),
+    timeseries(
+      g,
+      'Coins issued and burned by kind',
+      'Where do coins come from (starter, bonus, payouts) and where do they go (stakes, purchases)? A widening gap means inflation.',
+      targets([`sum by (kind, direction) (${inc('cardwar_coins_total')})`, '{{direction}} {{kind}}']),
+      { bars: true },
+    ),
+    timeseries(
+      g,
+      'Daily bonus claims by streak day',
+      'Do players come back day after day? Claims at higher streak days are returning players.',
+      targets([`sum by (day) (${inc('cardwar_bonus_claims_total')})`, 'day {{day}}']),
+      { bars: true, stacked: true },
+    ),
   ];
   return dashboard('cardwar-business', 'Cardwar — Business', p, { refresh: '5m', from: 'now-7d' });
 }

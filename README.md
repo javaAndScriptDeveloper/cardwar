@@ -100,16 +100,19 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/auth/login`          | Exchange credentials for a token (one generic `401` on failure)       |
 | `POST /api/v1/auth/telegram`       | Exchange Mini App `initData` for a token; creates the account once    |
 | `GET  /api/v1/me`                  | Own profile, progress (duels played/won, currency) and collection     |
-| `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent, WON/LOST/DRAW, reason)    |
+| `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent, WON/LOST/DRAW, reason, stake, net coins) |
+| `GET  /api/v1/wallet`              | Balance and today's bonus (available, amount, streak day, next time)  |
+| `POST /api/v1/wallet/daily-bonus`  | Claim today's bonus (`409 BONUS_ALREADY_CLAIMED` the second time)      |
+| `GET  /api/v1/wallet/transactions` | The caller's latest 50 coin movements                                  |
 | `GET  /api/v1/catalog/themes`      | Active deck themes                                                    |
 | `GET  /api/v1/catalog/themes/{code}` | One theme's rank+suit → skin mapping, with rarity and multiplier   |
 | `GET  /api/v1/collection`          | What the caller owns, and the unlock rule for everything they do not  |
 | `POST /api/v1/skins/{code}/unlock` | Run the unlock rule for a skin (`400` unmet, `409` owned, `501` purchase) |
 | `POST /api/v1/themes/{code}/unlock`| Same, for a whole theme                                               |
 | `POST /api/v1/duels`               | Challenge another player by username                                  |
-| `POST /api/v1/duels/invites`       | Create an invite to share (15 min); anyone else may accept it once    |
+| `POST /api/v1/duels/invites`       | Create an invite (optional `{stake}`: 0/100/500/1000/5000) to share for 15 min |
 | `GET  /api/v1/duels/invites/{id}`  | Invite status for its creator; names the duel once accepted           |
-| `POST /api/v1/duels/invites/{id}/accept` | Accept an invite and start the duel (`400` own, `404` expired, `409` taken) |
+| `POST /api/v1/duels/invites/{id}/accept` | Accept, escrow both stakes, start the duel (`400` own/`INSUFFICIENT_COINS`, `404`, `409`) |
 | `GET  /api/v1/duels/active`        | The caller's in-progress duels, card-free, for resuming after a restart |
 | `GET  /api/v1/duels/{id}`          | The caller's redacted view                                            |
 | `POST /api/v1/duels/{id}/moves`    | Submit a move; the engine re-validates it against the stored state    |
@@ -238,6 +241,8 @@ src/main/java/cardwar
 ├── session/        # Duel lifecycle: GameStateStore (Redis impl), authorization, redaction, SSE fan-out.
 ├── account/        # Registration, login, player progress.
 ├── monetization/   # Entitlements, unlock rules and the pluggable EntitlementGrantSource implementations.
+├── wallet/         # Coins: append-only ledger, wallet balance, daily bonus, stake escrow and settlement.
+├── metrics/        # GameMetrics: the business counters behind the Grafana business dashboard.
 ├── security/       # JWT issue/verify, PrincipalResolver/PlayerIdentity, filter chain, rate limiting.
 ├── bot/            # Telegram bot webhook: answers /start with a Play button, or a Join button for an invite.
 ├── api/            # Cross-cutting web concerns: ProblemDetail handler, the /me aggregate.

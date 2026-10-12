@@ -21,3 +21,5 @@ cardwar_moves_total
 cardwar_invites_total
 cardwar_bot_updates_total
 cardwar_sse_streams_open
+cardwar_coins_total
+cardwar_bonus_claims_total

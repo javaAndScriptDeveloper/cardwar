@@ -25,6 +25,12 @@ test('the shell navigates, remembers settings and resumes a pending invite', asy
     await expect(page.getByTestId('invite')).toBeVisible();
     await expect(page.getByTestId('nav-lobby')).toHaveAttribute('aria-current', 'page');
 
+    // The first daily bonus is 50 coins, once a day.
+    await expect(page.getByTestId('balance')).toHaveAttribute('data-balance', '500');
+    await page.getByTestId('claim-bonus').click();
+    await expect(page.getByTestId('balance')).toHaveAttribute('data-balance', '550');
+    await expect(page.getByTestId('claim-bonus')).toBeDisabled();
+
     await page.getByTestId('nav-friends').click();
     await expect(page.getByTestId('friends-screen')).toBeVisible();
     await page.getByTestId('nav-shop').click();
