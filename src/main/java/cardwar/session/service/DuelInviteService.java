@@ -10,6 +10,7 @@ import cardwar.session.dto.DuelView;
 import cardwar.session.dto.InviteView;
 import cardwar.session.store.InviteStore;
 import cardwar.session.store.StoredInvite;
+import java.util.Optional;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,10 +35,15 @@ public class DuelInviteService {
         this.duels = duels;
     }
 
+    /** Idempotent while the caller's invite is pending, so reopening the app and tapping again keeps the code. */
     public InviteView create(PlayerId caller) {
         StoredInvite invite = invites.create(caller.value());
-        log.info("Invite {} created", invite.inviteId());
+        log.info("Invite {} issued", invite.inviteId());
         return view(invite);
+    }
+
+    public Optional<InviteView> pending(PlayerId caller) {
+        return invites.findPending(caller.value()).map(DuelInviteService::view);
     }
 
     public DuelView accept(PlayerId caller, String inviteId) {
@@ -51,6 +57,8 @@ public class DuelInviteService {
             case ALREADY_ACCEPTED -> throw new ConflictException("This invite has already been accepted");
             case CLAIMED -> log.info("Invite {} accepted", invite.inviteId());
         }
+        // The acceptor is now busy; their own open invite must not drag them into a second duel.
+        invites.cancelPending(caller.value());
         return duels.start(caller, new PlayerId(invite.creator()), duelId);
     }
 

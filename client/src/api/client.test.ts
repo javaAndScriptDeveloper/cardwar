@@ -72,6 +72,18 @@ describe('ApiClient', () => {
         await expect(api.activeDuels()).rejects.toMatchObject({ status: 0 });
     });
 
+    it("reads the caller's pending invite, and none on 204", async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(respond(200, { inviteId: 'i1', status: 'PENDING' }))
+            .mockResolvedValueOnce(new Response(null, { status: 204 }));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await expect(api.pendingInvite()).resolves.toMatchObject({ inviteId: 'i1' });
+        await expect(api.pendingInvite()).resolves.toBeUndefined();
+        expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/v1/duels/invites/pending');
+    });
+
     it('covers the endpoints the screens need', async () => {
         const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
         const api = new ApiClient(fetchMock, () => 't');

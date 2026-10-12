@@ -8,6 +8,7 @@ import cardwar.session.service.DuelInviteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,6 +34,13 @@ public class DuelInviteController {
     @Operation(summary = "Create an invite to share; anyone who accepts it plays the caller")
     public InviteView create(@AuthenticationPrincipal PlayerIdentity caller) {
         return invites.create(actor(caller));
+    }
+
+    @GetMapping("/pending")
+    @Operation(summary = "The caller's invite nobody has accepted yet (200), or 204 when there is none")
+    public ResponseEntity<InviteView> pending(@AuthenticationPrincipal PlayerIdentity caller) {
+        return invites.pending(actor(caller)).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent()
+                .build());
     }
 
     @GetMapping("/{id}")

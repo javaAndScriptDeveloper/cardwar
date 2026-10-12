@@ -123,6 +123,42 @@ class DuelInviteIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void creatingAgainWhilePendingReturnsTheSameInvite() throws Exception {
+        String first = createInvite(alice);
+
+        String second = createInvite(alice);
+
+        assertThat(second).isEqualTo(first);
+    }
+
+    @Test
+    void thePendingInviteCanBeReadBackUntilItIsAccepted() throws Exception {
+        api.pendingInvite(alice).andExpect(status().isNoContent());
+        String inviteId = createInvite(alice);
+
+        api.pendingInvite(alice)
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.inviteId").value(inviteId))
+                .andExpect(jsonPath("$.status").value("PENDING"));
+
+        api.acceptInvite(bob, inviteId).andExpect(status().isOk());
+        api.pendingInvite(alice).andExpect(status().isNoContent());
+        assertThat(createInvite(alice)).isNotEqualTo(inviteId);
+    }
+
+    @Test
+    void acceptingSomeoneElsesInviteCancelsYourOwn() throws Exception {
+        String bobsOwn = createInvite(bob);
+        String alicesInvite = createInvite(alice);
+
+        api.acceptInvite(bob, alicesInvite).andExpect(status().isOk());
+
+        api.pendingInvite(bob).andExpect(status().isNoContent());
+        ApiDriver.Player carol = api.register(ApiDriver.uniqueUsername("carol"));
+        api.acceptInvite(carol, bobsOwn).andExpect(status().isNotFound());
+    }
+
+    @Test
     void invitesRequireAuthentication() throws Exception {
         mvc.perform(post("/api/v1/duels/invites")).andExpect(status().isUnauthorized());
     }

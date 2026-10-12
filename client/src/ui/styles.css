@@ -119,6 +119,15 @@ button:disabled {
     gap: 14px;
 }
 
+.how-to {
+    margin: 0;
+    padding-left: 1.2em;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.95rem;
+}
+
 button.big {
     padding: 16px;
     font-size: 1.05rem;
@@ -129,6 +138,7 @@ button.big {
     font-size: 0.85rem;
     word-break: break-all;
     user-select: all;
+    -webkit-user-select: all;
 }
 
 /* ---- The table ---------------------------------------------------------------------------------------------- */

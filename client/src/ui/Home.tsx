@@ -6,7 +6,10 @@ import { inviteLink, shareUrl, type LinkConfig } from '../telegram/links';
 import type { Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 
-type LobbyApi = Pick<ApiClient, 'activeDuels' | 'createInvite' | 'inviteStatus' | 'acceptInvite'>;
+type LobbyApi = Pick<
+    ApiClient,
+    'activeDuels' | 'pendingInvite' | 'createInvite' | 'inviteStatus' | 'acceptInvite'
+>;
 
 interface Props {
     player: SignedInPlayer;
@@ -47,7 +50,7 @@ function inviteProblem(error: unknown): string {
 export function Home({ player, api, telegram, invite, links, table, pollMs = 2000 }: Props) {
     const [screen, setScreen] = useState<Screen>({ kind: 'loading' });
     // The launch invite is accepted at most once per app session; returning to start must not re-accept it.
-    const pendingInvite = useRef(invite);
+    const launchInviteRef = useRef(invite);
 
     const join = async (inviteId: string) => {
         try {
@@ -80,13 +83,19 @@ export function Home({ player, api, telegram, invite, links, table, pollMs = 200
                 }
                 return;
             }
-            const launchInvite = pendingInvite.current;
-            pendingInvite.current = undefined;
+            const launchInvite = launchInviteRef.current;
+            launchInviteRef.current = undefined;
             if (launchInvite) {
                 await join(launchInvite);
-            } else {
-                setScreen({ kind: 'start' });
+                return;
             }
+            // Telegram reloads the Mini App whenever the player switches to a chat to send the code, so the
+            // invite being waited on has to come back from the server rather than from memory.
+            const own = await api.pendingInvite().catch(() => undefined);
+            if (cancelled) {
+                return;
+            }
+            setScreen(own ? { kind: 'waiting', inviteId: own.inviteId } : { kind: 'start' });
         })();
         return () => {
             cancelled = true;
@@ -153,6 +162,16 @@ function Start({
         <section class="lobby">
             <h1>Cardwar</h1>
             <p class="notice">Signed in as {player.username}. Two players, 36 cards, throw-in Durak.</p>
+            <ol class="how-to">
+                <li>
+                    Tap <b>Invite a friend</b> and send the invite to a friend: share the link, or copy the
+                    code.
+                </li>
+                <li>
+                    Your friend taps the link, or opens this app and pastes the code under <b>Join</b>.
+                </li>
+                <li>The duel starts for both of you as soon as they join.</li>
+            </ol>
             {error && (
                 <p class="error" role="alert">
                     {error}
@@ -185,6 +204,27 @@ function Start({
                 </button>
             </form>
         </section>
+    );
+}
+
+/** Copying a 36-character code by hand inside a Telegram webview is fiddly; one tap is not. */
+function CopyButton({ text }: { text: string }) {
+    const [state, setState] = useState<'idle' | 'copied' | 'failed'>('idle');
+    const copy = async () => {
+        try {
+            await navigator.clipboard.writeText(text);
+            setState('copied');
+        } catch {
+            setState('failed');
+        }
+    };
+    return (
+        <>
+            <button onClick={() => void copy()}>{state === 'copied' ? 'Copied' : 'Copy code'}</button>
+            {state === 'failed' && (
+                <span class="notice">Copying is blocked here: press and hold the code.</span>
+            )}
+        </>
     );
 }
 
@@ -251,10 +291,11 @@ function Waiting({
                 Share invite
             </button>
             <div class="panel">
-                <span class="notice">Or give them this code to paste:</span>
+                <span class="notice">Or give them this code to paste under Join:</span>
                 <code class="invite-code" data-testid="invite-code">
                     {inviteId}
                 </code>
+                <CopyButton text={inviteId} />
             </div>
             {problem && (
                 <p class="error" role="alert">

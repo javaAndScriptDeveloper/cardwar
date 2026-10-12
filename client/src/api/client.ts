@@ -69,6 +69,11 @@ export class ApiClient {
         return this.request('POST', '/duels/invites');
     }
 
+    /** The caller's invite nobody has accepted yet; the server answers 204 when there is none. */
+    pendingInvite(): Promise<InviteView | undefined> {
+        return this.request('GET', '/duels/invites/pending');
+    }
+
     inviteStatus(inviteId: string): Promise<InviteView> {
         return this.request('GET', `/duels/invites/${encodeURIComponent(inviteId)}`);
     }
@@ -111,6 +116,9 @@ export class ApiClient {
         }
         if (!response.ok) {
             throw new ApiError(response.status, await problemOf(response));
+        }
+        if (response.status === 204) {
+            return undefined as T;
         }
         return (await response.json()) as T;
     }

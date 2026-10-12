@@ -84,6 +84,10 @@ final class ApiDriver {
         return mvc.perform(get("/api/v1/duels/invites/{id}", inviteId).headers(bearer(caller)));
     }
 
+    ResultActions pendingInvite(Player caller) throws Exception {
+        return mvc.perform(get("/api/v1/duels/invites/pending").headers(bearer(caller)));
+    }
+
     ResultActions activeDuels(Player caller) throws Exception {
         return mvc.perform(get("/api/v1/duels/active").headers(bearer(caller)));
     }

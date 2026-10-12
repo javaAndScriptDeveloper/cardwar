@@ -11,9 +11,16 @@ import java.util.UUID;
  */
 public interface InviteStore {
 
+    /** A new invite, or the creator's existing one while it is still pending: a player has one open invite. */
     StoredInvite create(UUID creator);
 
     Optional<StoredInvite> find(UUID inviteId);
+
+    /** The creator's invite that nobody has accepted yet, if it has not expired. */
+    Optional<StoredInvite> findPending(UUID creator);
+
+    /** Withdraws the creator's pending invite, if any; an accepted one is left alone. */
+    void cancelPending(UUID creator);
 
     /**
      * Atomically turns a pending invite into an accepted one naming the acceptor and the duel. Exactly one caller

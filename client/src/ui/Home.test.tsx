@@ -11,6 +11,7 @@ const links = { botUsername: 'cardwar_gaming_bot', origin: 'https://x' };
 function fakeApi() {
     return {
         activeDuels: vi.fn().mockResolvedValue([]),
+        pendingInvite: vi.fn().mockResolvedValue(undefined),
         createInvite: vi.fn(),
         inviteStatus: vi.fn(),
         acceptInvite: vi.fn(),
@@ -124,6 +125,47 @@ describe('Home', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'Invite a friend' }));
 
         await waitFor(() => expect(screen.getByRole('alert').textContent).toMatch(/expired/i));
+    });
+
+    it('reopening the app goes back to the invite it was waiting on', async () => {
+        const api = fakeApi();
+        api.pendingInvite.mockResolvedValue(pending('inv-open'));
+        api.inviteStatus.mockResolvedValue(pending('inv-open'));
+
+        renderHome(api);
+
+        await waitFor(() => expect(screen.getByTestId('invite-code').textContent).toBe('inv-open'));
+        expect(api.createInvite).not.toHaveBeenCalled();
+    });
+
+    it("a launch invite wins over the player's own pending one", async () => {
+        const api = fakeApi();
+        api.pendingInvite.mockResolvedValue(pending('inv-own'));
+        api.acceptInvite.mockResolvedValue(duelView('d-friend'));
+
+        renderHome(api, { invite: 'inv-friend' });
+
+        await waitFor(() => expect(screen.getByText('table d-friend')).toBeTruthy());
+    });
+
+    it('copies the invite code', async () => {
+        const api = fakeApi();
+        api.pendingInvite.mockResolvedValue(pending('inv-copy'));
+        api.inviteStatus.mockResolvedValue(pending('inv-copy'));
+        const writeText = vi.fn().mockResolvedValue(undefined);
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+
+        renderHome(api);
+        fireEvent.click(await screen.findByRole('button', { name: 'Copy code' }));
+
+        expect(writeText).toHaveBeenCalledWith('inv-copy');
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy());
+    });
+
+    it('explains how to start on the start screen', async () => {
+        renderHome(fakeApi());
+
+        expect(await screen.findByText(/send the invite to a friend/i)).toBeTruthy();
     });
 
     it('joins with a pasted code', async () => {
