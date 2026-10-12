@@ -507,7 +507,7 @@ button:disabled {
 
 .card {
     display: block;
-    width: 64px;
+    width: 52px;
     aspect-ratio: 5 / 7;
     border-radius: 6px;
     user-select: none;
@@ -718,14 +718,14 @@ button:disabled {
     padding: 0;
     background: none;
     border-radius: 8px;
-    width: 64px;
-    height: 108px;
+    width: 52px;
+    height: 90px;
 }
 
 .pair .defence {
     position: absolute;
-    left: 14px;
-    top: 18px;
+    left: 12px;
+    top: 16px;
     transform: rotate(8deg);
     box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
 }
@@ -758,36 +758,38 @@ button:disabled {
 
 .hand {
     display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding: 12px 2px 10px;
-    scroll-snap-type: x proximity;
-    /* Horizontal scrolling of the hand stays native; vertical drags reach the swipe handler. */
-    touch-action: pan-x;
+    justify-content: center;
+    padding: 14px 8px 10px;
+    /* The whole hand always fits: no scrolling, so every drag is the swipe handler's. */
+    touch-action: none;
 }
 
+/*
+ * Durak Online's fan: each slot is at most a card wide and shrinks as the hand grows, while the card inside keeps
+ * its width and overflows under its right neighbour. A full hand of any size stays on screen with every card's
+ * index corner showing; the last card keeps its full width.
+ */
 .hand-card {
-    flex: none;
+    flex: 0 1 var(--hand-card-width);
+    min-width: 0;
     padding: 0;
     background: none;
     border-radius: 8px;
-    transition:
-        transform 120ms,
-        opacity 120ms;
-    scroll-snap-align: start;
+    transition: transform 120ms;
+}
+
+.hand-card:last-child {
+    flex-shrink: 0;
 }
 
 .hand-card .card {
-    width: 100%;
+    width: var(--hand-card-width);
+    max-width: none;
+    box-shadow: -1px 2px 6px rgb(0 0 0 / 30%);
 }
 
 .hand-card.usable {
-    opacity: 1;
     transform: translateY(-10px);
-}
-
-.hand-card .card {
-    box-shadow: 0 2px 6px rgb(0 0 0 / 30%);
 }
 
 .result {

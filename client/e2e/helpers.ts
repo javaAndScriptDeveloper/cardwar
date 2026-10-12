@@ -107,6 +107,29 @@ export async function fingerprint(page: Page): Promise<string> {
     return `${await statusState(page)}|${(await attrs(handButtons(page), 'data-card')).join(',')}|${pairs.join(',')}`;
 }
 
+/**
+ * The whole hand is on screen: nothing scrolled away and every card's left edge (its index corner) inside the
+ * viewport, however many cards the player holds.
+ */
+export async function expectHandFits(page: Page): Promise<void> {
+    const fit = await page.evaluate(() => {
+        const hand = document.querySelector('.hand');
+        const cards = [...document.querySelectorAll('.hand-card')].map((card) =>
+            card.getBoundingClientRect(),
+        );
+        return {
+            count: cards.length,
+            scrolls: hand ? hand.scrollWidth > hand.clientWidth + 1 : false,
+            offscreen: cards.filter((box) => box.left < 0 || box.right > window.innerWidth + 1).length,
+        };
+    });
+    expect(fit, `a hand of ${fit.count} cards does not fit`).toEqual({
+        count: fit.count,
+        scrolls: false,
+        offscreen: 0,
+    });
+}
+
 export type Move = 'ATTACK' | 'DEFEND' | 'TAKE' | 'END_ATTACK';
 
 /**
@@ -209,9 +232,18 @@ export async function playToResult(
 
     const deadline = Date.now() + deadlineMs;
     let moves = 0;
+    /** The largest hand checked so far, so the fit is checked as hands grow rather than on every move. */
+    let largestChecked = 0;
     while (moves < maxMoves && Date.now() < deadline) {
         if ((await result(players[0]).isVisible()) && (await result(players[1]).isVisible())) {
             break;
+        }
+        for (const page of players) {
+            const held = await handButtons(page).count();
+            if (held > largestChecked && held >= 8) {
+                largestChecked = held;
+                await expectHandFits(page);
+            }
         }
         let acted = false;
         for (const page of players) {
