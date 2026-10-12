@@ -1,6 +1,6 @@
 import { signal } from '@preact/signals';
 import { validatePack } from './schema';
-import type { PackManifest } from './types';
+import type { PackIndexEntry, PackManifest } from './types';
 
 /** The pack whose faces, sounds and rules this device uses; undefined means the built-in classic look. */
 export const equipped = signal<PackManifest | undefined>(undefined);
@@ -47,6 +47,17 @@ export class PackLoader {
         }
         return json as PackManifest;
     }
+}
+
+/** The installed packs, as `npm run packs:check` listed them at build time. */
+export async function fetchPackIndex(
+    fetchImpl: typeof fetch = (input, init) => fetch(input, init),
+): Promise<PackIndexEntry[]> {
+    const response = await fetchImpl(`${import.meta.env.BASE_URL}packs/index.json`);
+    if (!response.ok) {
+        throw new Error(`pack index: HTTP ${response.status}`);
+    }
+    return (await response.json()) as PackIndexEntry[];
 }
 
 interface EquipDeps {

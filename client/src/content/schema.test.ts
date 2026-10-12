@@ -11,6 +11,7 @@ import {
     LAYOUTS,
     TARGETS,
     TRIGGERS,
+    packIndexEntry,
     validatePack,
 } from './schema';
 
@@ -239,5 +240,24 @@ describe('packs.schema.json', () => {
         expect(defs['cardId']?.enum).toEqual([...CARD_IDS]);
         expect(Object.keys(defs['condition']?.properties ?? {})).toEqual([...CONDITIONS]);
         expect(EFFECTS.every((effect) => defs[`${effect}Effect`])).toBe(true);
+    });
+});
+
+describe('packIndexEntry', () => {
+    it('names the pack and previews three faces by path from the app base', () => {
+        expect(packIndexEntry(deck() as never)).toEqual({
+            id: 'test-deck',
+            name: { uk: 'Тестова колода' },
+            preview: [
+                'packs/test-deck/cards/ACE_OF_HEARTS.svg',
+                'packs/test-deck/cards/KING_OF_SPADES.svg',
+                'packs/test-deck/cards/QUEEN_OF_DIAMONDS.svg',
+            ],
+        });
+    });
+
+    it('resolves faces that climb out of the pack folder', () => {
+        const cards = { ACE_OF_HEARTS: { image: '../../cards/classic/ace_of_hearts.svg' } };
+        expect(packIndexEntry(deck({ cards }) as never).preview).toEqual(['cards/classic/ace_of_hearts.svg']);
     });
 });

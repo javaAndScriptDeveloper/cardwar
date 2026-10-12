@@ -332,6 +332,41 @@ button:disabled {
     font-weight: 600;
 }
 
+.decks h2 {
+    margin: 0;
+    font-size: var(--font-l);
+}
+
+.decks [role='radiogroup'] {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.deck-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    border: 2px solid transparent;
+    border-radius: var(--radius-m);
+    background: var(--surface-2);
+    color: var(--text);
+    text-align: left;
+}
+
+.deck-option.selected {
+    border-color: var(--accent);
+}
+
+.deck-preview {
+    display: flex;
+}
+
+.deck-preview .card + .card {
+    margin-left: -18px;
+}
+
 .searching-spinner {
     align-self: center;
     width: 56px;

@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { assetUrl, equip, equipped, PackLoader } from './loader';
+import { assetUrl, equip, equipped, fetchPackIndex, PackLoader } from './loader';
 
 const base = import.meta.env.BASE_URL;
 const shipped = (id: string) =>
@@ -127,5 +127,19 @@ describe('equip', () => {
         await first;
 
         expect(equipped.value?.id).toBe('classic');
+    });
+});
+
+describe('fetchPackIndex', () => {
+    it('reads the index the build wrote', async () => {
+        const index = [{ id: 'classic', name: { uk: 'Класична' }, preview: [] }];
+        const fetchImpl = vi.fn(async () => new Response(JSON.stringify(index)));
+
+        await expect(fetchPackIndex(fetchImpl)).resolves.toEqual(index);
+        expect(fetchImpl).toHaveBeenCalledWith(`${base}packs/index.json`);
+    });
+
+    it('fails on an HTTP error', async () => {
+        await expect(fetchPackIndex(async () => new Response('', { status: 500 }))).rejects.toThrow('500');
     });
 });

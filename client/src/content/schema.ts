@@ -3,6 +3,7 @@
  * erasable TypeScript, so `scripts/packs-check.mjs` runs it directly under Node; the browser loader runs the same
  * code. `packs.schema.json` documents the same shape for editors, and a test keeps the two vocabularies equal.
  */
+import type { PackIndexEntry, PackManifest } from './types';
 
 export const TRIGGERS = [
     'duel_started',
@@ -394,4 +395,32 @@ export function validatePack(json: unknown, options: ValidateOptions): Validatio
         }
     }
     return { errors, warnings };
+}
+
+/** The faces the deck picker shows for a pack. */
+const PREVIEW = ['ACE_OF_HEARTS', 'KING_OF_SPADES', 'QUEEN_OF_DIAMONDS'];
+
+/** Joins pack-relative paths under `packs/<id>/` and resolves `..`, giving a path relative to the app base. */
+function fromBase(packId: string, path: string): string {
+    const out: string[] = [];
+    for (const part of `packs/${packId}/${path}`.split('/')) {
+        if (part === '..') {
+            out.pop();
+        } else if (part !== '.' && part !== '') {
+            out.push(part);
+        }
+    }
+    return out.join('/');
+}
+
+/** One line of `/app/packs/index.json` (see PackIndexEntry), for a pack that already validated. */
+export function packIndexEntry(pack: PackManifest): PackIndexEntry {
+    return {
+        id: pack.id,
+        name: pack.name,
+        preview: PREVIEW.flatMap((id) => {
+            const image = pack.cards[id]?.image;
+            return image ? [fromBase(pack.id, image)] : [];
+        }),
+    };
 }

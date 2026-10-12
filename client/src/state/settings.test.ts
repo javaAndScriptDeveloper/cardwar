@@ -46,6 +46,27 @@ describe('settings', () => {
         expect(settings.value.sound).toBe(false);
     });
 
+    it('defaults to the classic deck and remembers the one picked', () => {
+        expect(DEFAULT_SETTINGS.deck).toBe('classic');
+        const store = new Map<string, string>();
+        const storage = {
+            getItem: (key: string) => store.get(key) ?? null,
+            setItem: (key: string, value: string) => void store.set(key, value),
+        };
+        loadSettings(storage);
+        updateSettings({ deck: 'memes-demo' });
+
+        loadSettings(storage);
+
+        expect(settings.value.deck).toBe('memes-demo');
+    });
+
+    it.each([42, '', 'Bad Deck', '../x'])('ignores a stored deck of %j', (deck) => {
+        loadSettings({ getItem: () => JSON.stringify({ deck }), setItem: vi.fn() });
+
+        expect(settings.value.deck).toBe('classic');
+    });
+
     it('survives storage that is absent', () => {
         expect(() => loadSettings(undefined)).not.toThrow();
         expect(settings.value).toEqual(DEFAULT_SETTINGS);

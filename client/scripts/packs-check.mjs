@@ -3,21 +3,23 @@
  * Validates every content pack under public/packs/<id>/pack.json with the same validator the app uses
  * (src/content/schema.ts, run directly by Node's type stripping), strictly: unknown vocabulary is an error here,
  * because a shipped pack must only use what this client understands. Also checks that every referenced file exists
- * inside public/. Runs first in `npm run build`.
+ * inside public/. Then writes public/packs/index.json, the list the deck picker shows. Runs first in `npm run build`.
  *
  *   npm run packs:check
  */
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validatePack } from '../src/content/schema.ts';
+import { packIndexEntry, validatePack } from '../src/content/schema.ts';
 
 const PUBLIC = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'public');
 const PACKS = join(PUBLIC, 'packs');
 
+// Classic first: it is the default and the first choice in the picker.
 const ids = readdirSync(PACKS)
     .filter((name) => statSync(join(PACKS, name)).isDirectory())
-    .sort();
+    .sort((a, b) => (a === 'classic' ? -1 : b === 'classic' ? 1 : a.localeCompare(b)));
+const index = [];
 let failed = 0;
 for (const id of ids) {
     const folder = join(PACKS, id);
@@ -46,6 +48,7 @@ for (const id of ids) {
             console.error(`    ${error}`);
         }
     } else {
+        index.push(packIndexEntry(manifest));
         console.log(`✓ ${id}`);
     }
 }
@@ -56,3 +59,5 @@ if (ids.length === 0) {
 if (failed > 0) {
     process.exit(1);
 }
+writeFileSync(join(PACKS, 'index.json'), `${JSON.stringify(index, null, 2)}\n`);
+console.log(`Wrote packs/index.json (${index.length} packs)`);

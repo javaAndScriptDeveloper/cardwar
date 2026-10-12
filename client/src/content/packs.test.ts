@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CARD_IDS, EFFECTS, validatePack } from './schema';
+import { CARD_IDS, EFFECTS, packIndexEntry, validatePack } from './schema';
 import type { PackManifest } from './types';
 
 // Vitest runs from client/; the shipped packs are the static files the app serves.
@@ -10,6 +10,19 @@ const packsDir = join(publicDir, 'packs');
 const read = (id: string) =>
     JSON.parse(readFileSync(join(packsDir, id, 'pack.json'), 'utf8')) as PackManifest;
 const shipped = readdirSync(packsDir).filter((name) => statSync(join(packsDir, name)).isDirectory());
+
+describe('packs/index.json', () => {
+    it('lists every shipped pack, classic first, with previews that exist', () => {
+        const index = JSON.parse(readFileSync(join(packsDir, 'index.json'), 'utf8')) as unknown[];
+        const ids = ['classic', ...shipped.filter((id) => id !== 'classic').sort()];
+
+        expect(index).toEqual(ids.map((id) => packIndexEntry(read(id))));
+        for (const entry of index as { preview: string[] }[]) {
+            expect(entry.preview).toHaveLength(3);
+            entry.preview.forEach((path) => expect(existsSync(join(publicDir, path)), path).toBe(true));
+        }
+    });
+});
 
 describe('shipped packs', () => {
     it.each(shipped)('%s validates strictly with every file present', (id) => {

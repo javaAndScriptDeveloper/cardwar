@@ -1,3 +1,4 @@
+import { computed, effect } from '@preact/signals';
 import { render } from 'preact';
 import { ApiClient } from './api/client';
 import { openDuelStream } from './api/events';
@@ -5,7 +6,8 @@ import { Session } from './auth/session';
 import { linkConfigFromEnv } from './telegram/links';
 import { resolveTelegram, type TelegramHost } from './telegram/webapp';
 import { audio } from './audio';
-import { loadSettings } from './state/settings';
+import { equip, PackLoader } from './content/loader';
+import { loadSettings, settings } from './state/settings';
 import { App } from './ui/App';
 import { DuelScreen, type StreamOpener } from './ui/DuelScreen';
 import { Shell } from './ui/Shell';
@@ -17,6 +19,12 @@ document.documentElement.dataset['scheme'] = telegram.colorScheme;
 loadSettings();
 // Browsers allow audio only after a gesture; the first tap anywhere unlocks it.
 audio.installUnlock(document);
+// The equipped deck loads lazily, and again only when the player picks another one.
+const packs = new PackLoader();
+const deck = computed(() => settings.value.deck);
+effect(() => {
+    void equip(deck.value, { loader: packs, audio });
+});
 
 const session = new Session();
 const api = new ApiClient(

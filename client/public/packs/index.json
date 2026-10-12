@@ -1,0 +1,24 @@
+[
+  {
+    "id": "classic",
+    "name": {
+      "uk": "Класична"
+    },
+    "preview": [
+      "cards/classic/ace_of_hearts.svg",
+      "cards/classic/king_of_spades.svg",
+      "cards/classic/queen_of_diamonds.svg"
+    ]
+  },
+  {
+    "id": "memes-demo",
+    "name": {
+      "uk": "Мемна колода (демо)"
+    },
+    "preview": [
+      "packs/memes-demo/cards/ACE_OF_HEARTS.svg",
+      "packs/memes-demo/cards/KING_OF_SPADES.svg",
+      "packs/memes-demo/cards/QUEEN_OF_DIAMONDS.svg"
+    ]
+  }
+]

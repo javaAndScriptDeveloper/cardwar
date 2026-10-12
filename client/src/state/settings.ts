@@ -6,7 +6,12 @@ export interface Settings {
     haptics: boolean;
     swipe: boolean;
     reducedMotion: boolean;
+    /** Id of the equipped content pack (a folder under /app/packs/). Local until the shop's loadout exists. */
+    deck: string;
 }
+
+/** The on/off preferences, i.e. every setting but the deck. */
+export type Toggle = { [K in keyof Settings]: Settings[K] extends boolean ? K : never }[keyof Settings];
 
 export const DEFAULT_SETTINGS: Settings = {
     sound: true,
@@ -14,7 +19,10 @@ export const DEFAULT_SETTINGS: Settings = {
     haptics: true,
     swipe: true,
     reducedMotion: false,
+    deck: 'classic',
 };
+
+const PACK_ID = /^[a-z0-9][a-z0-9-]*$/;
 
 const KEY = 'cardwar.settings.v1';
 
@@ -40,9 +48,12 @@ export function loadSettings(backing: Backing | undefined = safeLocalStorage()):
         const next = { ...DEFAULT_SETTINGS };
         for (const key of Object.keys(DEFAULT_SETTINGS) as (keyof Settings)[]) {
             const value = parsed[key];
-            if (typeof value === 'boolean') {
+            if (key !== 'deck' && typeof value === 'boolean') {
                 next[key] = value;
             }
+        }
+        if (typeof parsed.deck === 'string' && PACK_ID.test(parsed.deck)) {
+            next.deck = parsed.deck;
         }
         settings.value = next;
     } catch {
