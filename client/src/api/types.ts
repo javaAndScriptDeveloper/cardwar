@@ -61,7 +61,7 @@ export interface AuthResponse {
     expiresAt: string;
 }
 
-export type InviteStatus = 'PENDING' | 'ACCEPTED';
+export type InviteStatus = 'PENDING' | 'ACCEPTED' | 'DECLINED';
 
 export interface InviteView {
     inviteId: string;
@@ -69,6 +69,27 @@ export interface InviteView {
     duelId?: string;
     expiresAt: string;
     stake: number;
+    /** Set on a challenge: the only player who may accept (or decline) it. */
+    invitee?: string;
+}
+
+/** Somebody the caller has played, and the record between them. */
+export interface FriendView {
+    playerId: string;
+    username: string;
+    displayName: string;
+    played: number;
+    won: number;
+    lost: number;
+    lastPlayedAt: string;
+}
+
+/** A challenge waiting for the caller. */
+export interface ChallengeView {
+    inviteId: string;
+    from: { playerId: string; username: string; displayName: string };
+    stake: number;
+    expiresAt: string;
 }
 
 export interface DuelSummary {

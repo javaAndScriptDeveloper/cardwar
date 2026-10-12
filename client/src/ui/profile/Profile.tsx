@@ -56,6 +56,9 @@ export function Profile({ player, api, onOpenSettings }: Props) {
 
     const entries = history.kind === 'ready' ? history.entries : [];
     const wins = entries.filter((entry) => entry.result === 'WON').length;
+    const winRate = entries.length > 0 ? Math.round((100 * wins) / entries.length) : undefined;
+    // Gross winnings: what staked wins brought in, not the net after losses (the ledger below shows that).
+    const coinsWon = entries.reduce((sum, entry) => sum + Math.max(0, entry.coinDelta), 0);
 
     return (
         <section class="lobby" data-testid="profile-screen">
@@ -78,6 +81,18 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                         {wins}
                     </span>
                     <span class="notice">{t('profile.wins')}</span>
+                </div>
+                <div class="stat">
+                    <span class="value" data-testid="stat-winrate" data-value={winRate}>
+                        {winRate === undefined ? '—' : `${winRate}%`}
+                    </span>
+                    <span class="notice">{t('profile.winRate')}</span>
+                </div>
+                <div class="stat">
+                    <span class="value">
+                        <CoinAmount amount={coinsWon} data-testid="stat-coins-won" />
+                    </span>
+                    <span class="notice">{t('profile.coinsWon')}</span>
                 </div>
             </div>
             <ListRow

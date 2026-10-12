@@ -18,7 +18,14 @@ const ITEMS: { name: NavItem; key: string; icon: string }[] = [
     { name: 'profile', key: 'nav.profile', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0' },
 ];
 
-export function BottomNav({ active, onSelect }: { active: NavItem; onSelect: (name: NavItem) => void }) {
+interface Props {
+    active: NavItem;
+    onSelect: (name: NavItem) => void;
+    /** Incoming challenges, shown as a count on the friends tab; nothing at zero. */
+    friendsBadge?: number;
+}
+
+export function BottomNav({ active, onSelect, friendsBadge = 0 }: Props) {
     return (
         <nav class="bottom-nav">
             {ITEMS.map((item) => (
@@ -39,6 +46,16 @@ export function BottomNav({ active, onSelect }: { active: NavItem; onSelect: (na
                         />
                     </svg>
                     <span>{t(item.key)}</span>
+                    {item.name === 'friends' && friendsBadge > 0 && (
+                        <span
+                            class="nav-badge"
+                            data-testid="challenges-badge"
+                            data-count={friendsBadge}
+                            aria-label={t('nav.challengesBadge', { n: friendsBadge })}
+                        >
+                            {friendsBadge}
+                        </span>
+                    )}
                 </button>
             ))}
         </nav>

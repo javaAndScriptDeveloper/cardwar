@@ -20,6 +20,7 @@ import { Profile } from './profile/Profile';
 import { Settings } from './settings/Settings';
 import { Shop } from './shop/Shop';
 import { useLaunch } from './useLaunch';
+import type { ChallengeView, FriendView } from '../api/types';
 
 export type ShellApi = Pick<
     ApiClient,
@@ -40,6 +41,10 @@ export type ShellApi = Pick<
     | 'equipItem'
     | 'starsInvoice'
     | 'loadout'
+    | 'friends'
+    | 'challenge'
+    | 'challenges'
+    | 'declineInvite'
 >;
 
 interface Props {
@@ -51,6 +56,8 @@ interface Props {
     links: LinkConfig;
     table: (duelId: string, exit: () => void) => ComponentChildren;
     pollMs?: number;
+    /** How often incoming challenges are re-read while the lobby or friends screen is open. */
+    challengePollMs?: number;
 }
 
 /** Turns an invite failure into a sentence; the status codes are the backend's documented invite answers. */
@@ -77,15 +84,27 @@ function inviteProblem(error: unknown): string {
  * The signed-in app: a hash-routed set of screens under a bottom navigation, with the duel taking the whole
  * screen. Navigation lives here; each screen owns only its own content.
  */
-export function Shell({ player, api, telegram, invite, links, table, pollMs = 2000 }: Props) {
+export function Shell({
+    player,
+    api,
+    telegram,
+    invite,
+    links,
+    table,
+    pollMs = 2000,
+    challengePollMs = 10_000,
+}: Props) {
     const route = useRoute();
     const launch = useLaunch(api, invite);
     // The invite being waited on survives tab changes; a reload recovers it through useLaunch.
-    const [waitingFor, setWaitingFor] = useState<{ inviteId: string; stake: number }>();
+    // `challengee` names the friend a challenge went to; a plain invite has none and can be shared instead.
+    const [waitingFor, setWaitingFor] = useState<{ inviteId: string; stake: number; challengee?: string }>();
     // Quick-match search in progress; like the invite, a reload recovers it through useLaunch.
     const [searching, setSearching] = useState<{ stake: number; since: string }>();
-    /** What the open stake picker is for: an invite to a friend or a quick match with anyone. */
-    const [pickingStake, setPickingStake] = useState<'invite' | 'match'>();
+    /** What the open stake picker is for: an invite by link, a quick match with anyone, or a challenge to a friend. */
+    const [pickingStake, setPickingStake] = useState<'invite' | 'match' | 'challenge'>();
+    const [challengeTarget, setChallengeTarget] = useState<FriendView>();
+    const [challenges, setChallenges] = useState<ChallengeView[]>([]);
     const [creating, setCreating] = useState(false);
     const [lobbyError, setLobbyError] = useState<string>();
     const [launchHandled, setLaunchHandled] = useState(false);
@@ -122,7 +141,12 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                 void join(launch.inviteId);
                 break;
             case 'waiting':
-                setWaitingFor({ inviteId: launch.inviteId, stake: launch.stake });
+                setWaitingFor({
+                    inviteId: launch.inviteId,
+                    stake: launch.stake,
+                    // After a reload the friend's name is not known, only that the invite was a challenge.
+                    ...(launch.invitee !== undefined && { challengee: t('duel.opponent') }),
+                });
                 break;
             case 'searching':
                 setSearching({ stake: launch.stake, since: launch.since });
@@ -177,6 +201,34 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
     };
     const bonusDue = useCallback(() => void refreshWallet(api), [api]);
 
+    // Challenges addressed to this player, polled only where they are shown (the lobby badge and the friends inbox).
+    const watchChallenges = route.name === 'lobby' || route.name === 'friends';
+    const reloadChallenges = useCallback(async () => {
+        try {
+            setChallenges(await api.challenges());
+        } catch {
+            // Keep the last list; the next poll tries again.
+        }
+    }, [api]);
+    useEffect(() => {
+        if (!watchChallenges) {
+            return;
+        }
+        void reloadChallenges();
+        const timer = setInterval(() => void reloadChallenges(), challengePollMs);
+        return () => clearInterval(timer);
+    }, [watchChallenges, reloadChallenges, challengePollMs]);
+
+    const declineChallenge = async (inviteId: string) => {
+        setChallenges((current) => current.filter((challenge) => challenge.inviteId !== inviteId));
+        try {
+            await api.declineInvite(inviteId);
+        } catch (error) {
+            setLobbyError(t('lobby.errors.decline', { error: describeError(error) }));
+        }
+        await reloadChallenges();
+    };
+
     const openStakePicker = (purpose: 'invite' | 'match') => {
         setPickingStake(purpose);
         navigate({ name: 'lobby' });
@@ -200,6 +252,32 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
             setLobbyError(
                 (error instanceof ApiError && reasonMessage(error.reason)) ||
                     t('lobby.errors.createInvite', { error: describeError(error) }),
+            );
+        } finally {
+            setCreating(false);
+        }
+        navigate({ name: 'lobby' });
+    };
+
+    const challengeFriend = async (stake: number) => {
+        const friend = challengeTarget;
+        setPickingStake(undefined);
+        if (!friend) {
+            return;
+        }
+        setCreating(true);
+        try {
+            const created = await api.challenge(friend.playerId, stake);
+            setLobbyError(undefined);
+            setWaitingFor({
+                inviteId: created.inviteId,
+                stake: created.stake ?? stake,
+                challengee: friend.displayName,
+            });
+        } catch (error) {
+            setLobbyError(
+                (error instanceof ApiError && reasonMessage(error.reason)) ||
+                    t('lobby.errors.challenge', { error: describeError(error) }),
             );
         } finally {
             setCreating(false);
@@ -276,6 +354,7 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                         api={api}
                         pollMs={pollMs}
                         link={inviteLink(waitingFor.inviteId, links)}
+                        challengee={waitingFor.challengee}
                         onShare={(link) => telegram.openTelegramLink(shareUrl(link, t('waiting.shareText')))}
                         onAccepted={startDuel}
                         onExpired={() => {
@@ -298,7 +377,20 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                     />
                 );
             case 'friends':
-                return <Friends onInvite={() => openStakePicker('invite')} />;
+                return (
+                    <Friends
+                        api={api}
+                        challenges={challenges}
+                        onChallenge={(friend) => {
+                            setChallengeTarget(friend);
+                            setPickingStake('challenge');
+                            void refreshWallet(api);
+                        }}
+                        onAccept={join}
+                        onDecline={declineChallenge}
+                        onInvite={() => openStakePicker('invite')}
+                    />
+                );
             case 'shop':
                 return <Shop api={api} telegram={telegram} />;
             case 'profile':
@@ -326,13 +418,20 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
             <StakePicker
                 open={pickingStake !== undefined}
                 balance={wallet.value?.balance}
-                onPick={(stake) => void (pickingStake === 'match' ? findMatch(stake) : createInvite(stake))}
+                onPick={(stake) =>
+                    void (pickingStake === 'match'
+                        ? findMatch(stake)
+                        : pickingStake === 'challenge'
+                          ? challengeFriend(stake)
+                          : createInvite(stake))
+                }
                 onClose={() => setPickingStake(undefined)}
             />
             {TOP_LEVEL.has(route.name) && (
                 <BottomNav
                     active={route.name as 'lobby' | 'friends' | 'shop' | 'profile'}
                     onSelect={(name) => navigate({ name })}
+                    friendsBadge={challenges.length}
                 />
             )}
         </>

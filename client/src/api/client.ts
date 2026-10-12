@@ -1,9 +1,11 @@
 import type {
     AuthResponse,
+    ChallengeView,
     CoinTransactionView,
     DuelHistoryEntry,
     DuelSummary,
     DuelView,
+    FriendView,
     InviteView,
     InvoiceView,
     LoadoutView,
@@ -105,6 +107,26 @@ export class ApiClient {
 
     leaveMatchmaking(): Promise<void> {
         return this.request('DELETE', '/matchmaking');
+    }
+
+    /** Everybody the caller has finished a duel against, most recent first, at most 50. */
+    friends(): Promise<FriendView[]> {
+        return this.request('GET', '/friends');
+    }
+
+    /** An invite only this friend may accept; 400 INVALID_STAKE, INSUFFICIENT_COINS or NOT_A_FRIEND. */
+    challenge(playerId: string, stake: number): Promise<InviteView> {
+        return this.request('POST', `/friends/${encodeURIComponent(playerId)}/challenge`, { stake });
+    }
+
+    /** Open challenges addressed to the caller. */
+    challenges(): Promise<ChallengeView[]> {
+        return this.request('GET', '/challenges');
+    }
+
+    /** Turns down a challenge addressed to the caller (403 for anybody else); the challenger then reads DECLINED. */
+    declineInvite(inviteId: string): Promise<void> {
+        return this.request('POST', `/duels/invites/${encodeURIComponent(inviteId)}/decline`);
     }
 
     /** Every cosmetic with the caller's ownership and equipped state, and the coin packs. */

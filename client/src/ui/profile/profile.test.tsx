@@ -87,6 +87,43 @@ describe('Profile', () => {
         expect(screen.getByText(t('profile.moves', { n: 5, moves: 'ходів' }))).toBeTruthy();
     });
 
+    it('sums up games, wins, the win rate and the coins won', async () => {
+        const api = {
+            history: vi
+                .fn()
+                .mockResolvedValue([
+                    entry({ duelId: 'a', stake: 100, coinDelta: 100 }),
+                    entry({ duelId: 'b', result: 'LOST', stake: 500, coinDelta: -500 }),
+                    entry({ duelId: 'c', stake: 1000, coinDelta: 1000 }),
+                    entry({ duelId: 'd', result: 'DRAW' }),
+                    entry({ duelId: 'e', result: 'LOST' }),
+                    entry({ duelId: 'f', result: 'LOST' }),
+                ]),
+            transactions: noTransactions(),
+        };
+
+        render(<Profile player={player} api={api} onOpenSettings={() => {}} />);
+
+        await waitFor(() => expect(screen.getByTestId('stat-games').textContent).toBe('6'));
+        expect(screen.getByTestId('stat-wins').textContent).toBe('2');
+        expect(screen.getByTestId('stat-winrate').getAttribute('data-value')).toBe('33');
+        expect(screen.getByTestId('stat-winrate').textContent).toBe('33%');
+        expect(screen.getByTestId('stat-coins-won').getAttribute('data-amount')).toBe('1100');
+    });
+
+    it('shows no win rate before the first game', async () => {
+        render(
+            <Profile
+                player={player}
+                api={{ history: vi.fn().mockResolvedValue([]), transactions: noTransactions() }}
+                onOpenSettings={() => {}}
+            />,
+        );
+
+        await screen.findByText(t('profile.noHistory'));
+        expect(screen.getByTestId('stat-winrate').textContent).toBe('—');
+    });
+
     it('explains an empty history', async () => {
         render(
             <Profile

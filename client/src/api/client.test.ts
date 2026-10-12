@@ -160,6 +160,33 @@ describe('ApiClient', () => {
         expect(bodies[5]).toBe('{"code":"emote-like"}');
     });
 
+    it('reaches the friends and challenge endpoints', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockImplementation(() => Promise.resolve(respond(200, [])))
+            .mockResolvedValueOnce(respond(200, []))
+            .mockResolvedValueOnce(respond(200, { inviteId: 'i1', invitee: 'p2' }))
+            .mockResolvedValueOnce(respond(200, []))
+            .mockResolvedValueOnce(new Response(null, { status: 204 }));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.friends();
+        await expect(api.challenge('p2', 100)).resolves.toMatchObject({ invitee: 'p2' });
+        await api.challenges();
+        await expect(api.declineInvite('i9')).resolves.toBeUndefined();
+
+        const calls = fetchMock.mock.calls.map(
+            ([url, init]) => `${(init as RequestInit).method ?? 'GET'} ${url}`,
+        );
+        expect(calls).toEqual([
+            'GET /api/v1/friends',
+            'POST /api/v1/friends/p2/challenge',
+            'GET /api/v1/challenges',
+            'POST /api/v1/duels/invites/i9/decline',
+        ]);
+        expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBe('{"stake":100}');
+    });
+
     it('sends the stake when creating an invite with one, and no body without', async () => {
         const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
         const api = new ApiClient(fetchMock, () => 't');

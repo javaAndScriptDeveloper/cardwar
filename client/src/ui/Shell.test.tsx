@@ -1,7 +1,15 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import type { DailyBonusView, DuelView, InviteView, MatchView, WalletView } from '../api/types';
+import type {
+    ChallengeView,
+    DailyBonusView,
+    DuelView,
+    FriendView,
+    InviteView,
+    MatchView,
+    WalletView,
+} from '../api/types';
 import { t } from '../i18n';
 import { navigate } from '../router';
 import { loadout } from '../state/loadout';
@@ -31,6 +39,10 @@ function fakeApi() {
         buyItem: vi.fn(),
         equipItem: vi.fn(),
         starsInvoice: vi.fn(),
+        friends: vi.fn().mockResolvedValue([]),
+        challenge: vi.fn(),
+        challenges: vi.fn().mockResolvedValue([]),
+        declineInvite: vi.fn().mockResolvedValue(undefined),
         loadout: vi.fn().mockResolvedValue({
             deck: 'classic',
             cardBack: 'classic',
@@ -88,6 +100,7 @@ function renderShell(
             invite={options.invite}
             links={links}
             pollMs={5}
+            challengePollMs={10}
             table={(duelId, exit) => (
                 <div>
                     <p>table {duelId}</p>
@@ -97,6 +110,23 @@ function renderShell(
         />,
     );
 }
+
+const friendView = (playerId: string, displayName: string): FriendView => ({
+    playerId,
+    username: playerId,
+    displayName,
+    played: 1,
+    won: 1,
+    lost: 0,
+    lastPlayedAt: '2026-10-12T10:00:00Z',
+});
+
+const incoming = (inviteId: string, stake = 0): ChallengeView => ({
+    inviteId,
+    from: { playerId: 'p9', username: 'olya', displayName: 'Оля' },
+    stake,
+    expiresAt: '2099-01-01T00:00:00Z',
+});
 
 describe('Shell', () => {
     beforeEach(() => {
@@ -532,6 +562,114 @@ describe('Shell', () => {
 
         await waitFor(() => expect(settings.value.deck).toBe('memes-demo'));
         expect(loadout.value?.cardBack).toBe('trident');
+    });
+
+    describe('friends and challenges', () => {
+        it('challenges a friend at a stake and waits for them, without a share link', async () => {
+            const api = fakeApi();
+            api.friends.mockResolvedValue([friendView('p2', 'Богдан')]);
+            api.challenge.mockResolvedValue({ ...pending('inv-c', 100), invitee: 'p2' });
+            api.inviteStatus.mockResolvedValue({ ...pending('inv-c', 100), invitee: 'p2' });
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('challenge-p2'));
+            await screen.findByTestId('stake-picker');
+            fireEvent.click(screen.getByTestId('stake-100'));
+
+            await waitFor(() => expect(api.challenge).toHaveBeenCalledWith('p2', 100));
+            expect((await screen.findByTestId('invite-stake')).getAttribute('data-stake')).toBe('100');
+            expect(screen.getByTestId('waiting-screen').getAttribute('data-challenge')).toBe('true');
+            expect(screen.getByTestId('waiting-screen').textContent).toContain('Богдан');
+            expect(screen.queryByTestId('share-invite')).toBeNull();
+        });
+
+        it('tells the challenger the friend declined, and goes back to the lobby', async () => {
+            const api = fakeApi();
+            api.friends.mockResolvedValue([friendView('p2', 'Богдан')]);
+            api.challenge.mockResolvedValue({ ...pending('inv-d'), invitee: 'p2' });
+            api.inviteStatus.mockResolvedValue({ ...pending('inv-d'), invitee: 'p2', status: 'DECLINED' });
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('challenge-p2'));
+            fireEvent.click(await screen.findByTestId('stake-0'));
+
+            const declined = await screen.findByTestId('invite-declined');
+            expect(declined.textContent).toBe(t('waiting.declined', { name: 'Богдан' }));
+            const calls = api.inviteStatus.mock.calls.length;
+            await new Promise((resolve) => setTimeout(resolve, 30));
+            expect(api.inviteStatus.mock.calls.length).toBe(calls);
+            fireEvent.click(screen.getByTestId('cancel-invite'));
+            expect(await screen.findByTestId('invite')).toBeTruthy();
+        });
+
+        it('explains a refused challenge', async () => {
+            const api = fakeApi();
+            api.friends.mockResolvedValue([friendView('p2', 'Богдан')]);
+            api.challenge.mockRejectedValue(new ApiError(400, { reason: 'NOT_A_FRIEND' }));
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('challenge-p2'));
+            fireEvent.click(await screen.findByTestId('stake-0'));
+
+            await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(t('reason.NOT_A_FRIEND')));
+        });
+
+        it('badges the nav with incoming challenges, polled while in the lobby', async () => {
+            const api = fakeApi();
+            api.challenges
+                .mockResolvedValueOnce([])
+                .mockResolvedValue([incoming('inv-1'), incoming('inv-2')]);
+
+            renderShell(api);
+
+            const badge = await screen.findByTestId('challenges-badge');
+            expect(badge.getAttribute('data-count')).toBe('2');
+            expect(api.challenges.mock.calls.length).toBeGreaterThan(1);
+        });
+
+        it('stops polling challenges at the table', async () => {
+            const api = fakeApi();
+            renderShell(api);
+            await waitFor(() => expect(api.challenges).toHaveBeenCalled());
+
+            await act(() => navigate({ name: 'duel', duelId: 'd1' }));
+            await screen.findByText('table d1');
+            // Effect cleanups run after paint, so give the interval's teardown a moment before counting.
+            await new Promise((resolve) => setTimeout(resolve, 30));
+            const calls = api.challenges.mock.calls.length;
+            await new Promise((resolve) => setTimeout(resolve, 50));
+
+            expect(api.challenges.mock.calls.length).toBe(calls);
+        });
+
+        it('accepts a challenge from the inbox and opens the duel', async () => {
+            const api = fakeApi();
+            api.challenges.mockResolvedValue([incoming('inv-1', 100)]);
+            api.acceptInvite.mockResolvedValue(duelView('d-ch'));
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('accept-inv-1'));
+
+            await waitFor(() => expect(screen.getByText('table d-ch')).toBeTruthy());
+            expect(api.acceptInvite).toHaveBeenCalledWith('inv-1');
+        });
+
+        it('declines a challenge, which leaves the inbox and the badge', async () => {
+            const api = fakeApi();
+            api.challenges.mockResolvedValueOnce([incoming('inv-1')]).mockResolvedValue([]);
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('nav-friends'));
+            fireEvent.click(await screen.findByTestId('decline-inv-1'));
+
+            await waitFor(() => expect(screen.queryByTestId('challenge-row')).toBeNull());
+            expect(api.declineInvite).toHaveBeenCalledWith('inv-1');
+            expect(screen.queryByTestId('challenges-badge')).toBeNull();
+        });
     });
 
     it('switches tabs through the bottom navigation and hides it in settings', async () => {
