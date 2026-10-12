@@ -27,10 +27,12 @@ describe('Session', () => {
                 WebApp: {
                     initData: 'signed',
                     initDataUnsafe: {},
+                    colorScheme: 'light',
                     ready: vi.fn(),
                     expand: vi.fn(),
                     openTelegramLink: vi.fn(),
                     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
+                    BackButton: { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() },
                 },
             },
         });
