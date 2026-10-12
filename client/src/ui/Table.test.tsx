@@ -83,6 +83,19 @@ describe('Table', () => {
         expect(props.onTableCard).toHaveBeenCalledWith(c('SEVEN', 'CLUBS'));
     });
 
+    it('exposes machine-readable state for tests', () => {
+        renderTable({ view: defending });
+        expect(screen.getByRole('status').getAttribute('data-state')).toBe('defend');
+        const pairs = document.querySelectorAll('.pair');
+        expect(pairs[0]?.getAttribute('data-attack')).toBe('SEVEN_OF_SPADES');
+        expect(pairs[0]?.getAttribute('data-defence')).toBe('EIGHT_OF_SPADES');
+        expect(pairs[1]?.getAttribute('data-defence')).toBeNull();
+        expect(screen.getByTestId('trump').getAttribute('data-card')).toBe('TEN_OF_HEARTS');
+        expect(document.querySelector('.hand-card')?.getAttribute('data-card')).toBe('SIX_OF_CLUBS');
+        expect(screen.getByTestId('take')).toBeTruthy();
+        expect(screen.getByTestId('end-attack')).toBeTruthy();
+    });
+
     it('highlights the selected defence target', () => {
         renderTable({ view: defending, selectedTarget: c('SEVEN', 'CLUBS') });
         expect(screen.getByRole('button', { name: 'Seven of Clubs' }).getAttribute('aria-pressed')).toBe(

@@ -160,11 +160,12 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
 
     const [selectedTarget, setSelectedTarget] = useState<Card>();
     const [busy, setBusy] = useState(false);
-    const [toast, setToast] = useState<string>();
+    const [toast, setToast] = useState<{ text: string; reason: string }>();
     const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-    const say = (message: string) => {
-        setToast(message);
+    /** `reason` is the machine-readable cause (engine code, 'network', 'throttled', ...) exposed as data-reason. */
+    const say = (message: string, reason: string) => {
+        setToast({ text: message, reason });
         clearTimeout(toastTimer.current);
         toastTimer.current = setTimeout(() => setToast(undefined), 3000);
     };
@@ -189,15 +190,18 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                 await refresh();
             } else if (error instanceof ApiError && error.status === 0) {
                 // The move may or may not have reached the server before the connection dropped; re-read to find out.
-                say('Connection lost. Check the table and try again.');
+                say('Connection lost. Check the table and try again.', 'network');
                 await refresh();
             } else {
                 telegram.haptic('error');
-                say(
-                    error instanceof ApiError
-                        ? (reasonMessage(error.reason) ?? describeError(error))
-                        : describeError(error),
-                );
+                if (error instanceof ApiError) {
+                    say(
+                        reasonMessage(error.reason) ?? describeError(error),
+                        error.reason ?? (error.status === 429 ? 'throttled' : 'generic'),
+                    );
+                } else {
+                    say(describeError(error), 'generic');
+                }
             }
         } finally {
             setBusy(false);
@@ -220,7 +224,7 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                       return candidates.length === 1 ? candidates[0] : undefined;
                   })());
         if (!target) {
-            say('Tap the card you want to beat first.');
+            say('Tap the card you want to beat first.', 'pick-target');
             return;
         }
         void play({ type: 'DEFEND', attackCard: target, card });
@@ -247,15 +251,21 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                     <p class="error" role="alert">
                         {state.message}
                     </p>
-                    <button onClick={exit}>Back to start</button>
+                    <button data-testid="back-to-lobby" onClick={exit}>
+                        Back to start
+                    </button>
                 </section>
             );
         case 'over':
             return (
-                <section class={`result ${state.result.result.toLowerCase()}`}>
+                <section
+                    class={`result ${state.result.result.toLowerCase()}`}
+                    data-testid="result"
+                    data-result={state.result.result}
+                >
                     <h1>{HEADINGS[state.result.result]}</h1>
                     <p>{explain(state.result, opponentName)}</p>
-                    <button class="primary big" onClick={exit}>
+                    <button class="primary big" data-testid="back-to-lobby" onClick={exit}>
                         Back to start
                     </button>
                 </section>
@@ -274,8 +284,8 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                         onEndAttack={() => void play({ type: 'END_ATTACK' })}
                     />
                     {toast && (
-                        <p class="toast" role="alert">
-                            {toast}
+                        <p class="toast" role="alert" data-reason={toast.reason}>
+                            {toast.text}
                         </p>
                     )}
                 </>

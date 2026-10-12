@@ -2,11 +2,12 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 
 /**
  * Two players play a whole duel through the Mini App in two browser contexts, using the dev shim for sign-in. Every
- * decision is made from what the page shows (status line, card labels, the trump card), never from the API.
+ * decision is made from what the page exposes in data-* attributes (status state, card ids, results), never from
+ * visible copy and never from the API, so the UI language can change without touching this file.
  */
 
 const PASSWORD = 'correct-horse-battery';
-const RANKS = ['Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King', 'Ace'];
+const RANKS = ['SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'JACK', 'QUEEN', 'KING', 'ACE'];
 const MAX_MOVES = 600;
 /** Waiting for the other side's view to catch up does not count as a move, so the loop is bounded by time too. */
 const PLAY_DEADLINE_MS = 3 * 60_000;
@@ -14,13 +15,13 @@ const PLAY_DEADLINE_MS = 3 * 60_000;
 interface Card {
     rank: number;
     suit: string;
-    label: string;
+    id: string;
 }
 
-/** "Seven of Spades" -> a comparable card. */
-function parse(label: string): Card {
-    const [rank = '', , suit = ''] = label.split(' ');
-    return { rank: RANKS.indexOf(rank), suit, label };
+/** "SEVEN_OF_SPADES" -> a comparable card. */
+function parse(id: string): Card {
+    const [rank = '', , suit = ''] = id.split('_');
+    return { rank: RANKS.indexOf(rank), suit, id };
 }
 
 /** Same relation as DurakRules.beats, applied to what the page shows. */
@@ -35,20 +36,34 @@ async function signIn(browser: Browser, username: string, path = '/app/'): Promi
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(path);
-    await page.getByLabel('Username').fill(username);
-    await page.getByLabel('Password').fill(PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await page.getByTestId('dev-username').fill(username);
+    await page.getByTestId('dev-password').fill(PASSWORD);
+    await page.getByTestId('dev-sign-in').click();
     return page;
 }
 
 const status = (page: Page) => page.getByRole('status');
+const statusState = async (page: Page) =>
+    (await status(page)
+        .getAttribute('data-state')
+        .catch(() => null)) ?? '';
 const handButtons = (page: Page) => page.locator('.hand button');
-const result = (page: Page) => page.getByRole('heading', { name: /^(You won|You lost|Draw)$/ });
+const pairButtons = (page: Page) => page.locator('.pairs button');
+const result = (page: Page) => page.getByTestId('result');
+const cardOf = (page: Page, id: string) => page.locator(`.hand button[data-card="${id}"]`);
+const pairOf = (page: Page, id: string) => page.locator(`.pairs button[data-attack="${id}"]`);
 
-async function labels(locator: Locator): Promise<string[]> {
+async function attrs(locator: Locator, name: string): Promise<string[]> {
     return (
-        await locator.evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-label') ?? ''))
+        await locator.evaluateAll((nodes, attr) => nodes.map((node) => node.getAttribute(attr) ?? ''), name)
     ).filter(Boolean);
+}
+
+/** Open attacks: pairs without a defence. */
+async function openAttacks(page: Page): Promise<string[]> {
+    return page
+        .locator('.pairs button:not([data-defence])')
+        .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('data-attack') ?? ''));
 }
 
 /** A snapshot of what one player sees, used to notice that a move took effect. */
@@ -56,11 +71,10 @@ async function fingerprint(page: Page): Promise<string> {
     if (await result(page).isVisible()) {
         return 'over';
     }
-    const text =
-        (await status(page)
-            .textContent()
-            .catch(() => '')) ?? '';
-    return `${text}|${(await labels(handButtons(page))).join(',')}|${(await labels(page.locator('.pairs button'))).join(',')}`;
+    const pairs = await pairButtons(page).evaluateAll((nodes) =>
+        nodes.map((node) => `${node.getAttribute('data-attack')}/${node.getAttribute('data-defence') ?? ''}`),
+    );
+    return `${await statusState(page)}|${(await attrs(handButtons(page), 'data-card')).join(',')}|${pairs.join(',')}`;
 }
 
 type Move = 'ATTACK' | 'DEFEND' | 'TAKE' | 'END_ATTACK';
@@ -78,7 +92,7 @@ async function outcomeOf(page: Page, before: string): Promise<'moved' | 'retry' 
         const alert = page.getByRole('alert');
         if (
             (await alert.isVisible()) &&
-            /Connection lost|slow down/.test((await alert.textContent()) ?? '')
+            /^(network|throttled)$/.test((await alert.getAttribute('data-reason')) ?? '')
         ) {
             return 'retry';
         }
@@ -91,7 +105,7 @@ test('two players play a duel to a result through the Mini App', async ({ browse
     const suffix = `${Date.now() % 1_000_000}`;
     const alice = await signIn(browser, `e2e-a-${suffix}`);
 
-    await alice.getByRole('button', { name: 'Invite a friend' }).click();
+    await alice.getByTestId('invite').click();
     const code = (await alice.getByTestId('invite-code').textContent())?.trim() ?? '';
     expect(code).toMatch(/^[0-9a-f-]{36}$/);
 
@@ -101,10 +115,10 @@ test('two players play a duel to a result through the Mini App', async ({ browse
     await expect(status(alice)).toBeVisible();
 
     // The defender taps a card while it is not their move: the engine refuses, the toast says so, nothing changes.
-    const defender = (await status(alice).textContent())?.startsWith('Waiting') ? alice : bob;
+    const defender = (await statusState(alice)) === 'waiting-attack' ? alice : bob;
     const before = await fingerprint(defender);
     await handButtons(defender).first().click();
-    await expect(defender.getByRole('alert')).toHaveText('Not your turn.');
+    await expect(defender.getByRole('alert')).toHaveAttribute('data-reason', 'NOT_YOUR_TURN');
     expect(await fingerprint(defender)).toBe(before);
 
     const played: Record<Move, number> = { ATTACK: 0, DEFEND: 0, TAKE: 0, END_ATTACK: 0 };
@@ -121,11 +135,7 @@ test('two players play a duel to a result through the Mini App', async ({ browse
             if (await result(page).isVisible()) {
                 continue;
             }
-            const text =
-                (await status(page)
-                    .textContent()
-                    .catch(() => null)) ?? '';
-            const move = await act(page, text);
+            const move = await act(page, await statusState(page));
             if (move) {
                 played[move]++;
                 moves++;
@@ -141,61 +151,63 @@ test('two players play a duel to a result through the Mini App', async ({ browse
 
     await expect(result(alice)).toBeVisible();
     await expect(result(bob)).toBeVisible();
-    const outcomes = [await result(alice).textContent(), await result(bob).textContent()].sort();
+    const outcomes = [
+        await result(alice).getAttribute('data-result'),
+        await result(bob).getAttribute('data-result'),
+    ].sort();
     expect([
-        ['Draw', 'Draw'],
-        ['You lost', 'You won'],
+        ['DRAW', 'DRAW'],
+        ['LOST', 'WON'],
     ]).toContainEqual(outcomes);
     expect(played.ATTACK).toBeGreaterThan(0);
     expect(played.DEFEND).toBeGreaterThan(0);
     expect(played.TAKE).toBeGreaterThan(0);
     expect(played.END_ATTACK).toBeGreaterThan(0);
 
-    await alice.getByRole('button', { name: 'Back to start' }).click();
-    await expect(alice.getByRole('button', { name: 'Invite a friend' })).toBeVisible();
+    await alice.getByTestId('back-to-lobby').click();
+    await expect(alice.getByTestId('invite')).toBeVisible();
 
     /** One greedy decision for the player whose status says it is their move; null when it is not. */
-    async function act(page: Page, text: string): Promise<Move | null> {
+    async function act(page: Page, state: string): Promise<Move | null> {
         const before = await fingerprint(page);
         let move: Move | null = null;
 
-        if (text === 'Your attack') {
-            const cards = (await labels(handButtons(page))).map(parse).sort((a, b) => a.rank - b.rank);
-            await page.getByRole('button', { name: cards[0]?.label ?? '', exact: true }).click();
+        if (state === 'your-attack') {
+            const cards = (await attrs(handButtons(page), 'data-card'))
+                .map(parse)
+                .sort((a, b) => a.rank - b.rank);
+            await cardOf(page, cards[0]?.id ?? '').click();
             move = 'ATTACK';
-        } else if (text === 'Throw in or end the attack') {
+        } else if (state === 'throw-in') {
             const throwIn = page.locator('.hand button[data-playable="true"]').first();
             if (await throwIn.count()) {
                 await throwIn.click();
                 move = 'ATTACK';
             } else {
-                await page.getByRole('button', { name: 'End attack' }).click();
+                await page.getByTestId('end-attack').click();
                 move = 'END_ATTACK';
             }
-        } else if (text === 'Defend') {
+        } else if (state === 'defend') {
             if (!forcedTake) {
                 forcedTake = true;
-                await page.getByRole('button', { name: 'Take' }).click();
+                await page.getByTestId('take').click();
                 move = 'TAKE';
             } else {
-                const trumpAlt = (await page.locator('.deck .trump').getAttribute('alt')) ?? '';
-                const trump = parse(trumpAlt).suit;
-                const open = (await labels(page.locator('.pairs button'))).filter(
-                    (label) => !label.includes('beaten by'),
-                );
+                const trump = parse((await page.getByTestId('trump').getAttribute('data-card')) ?? '').suit;
+                const open = await openAttacks(page);
                 const target = parse(open[0] ?? '');
-                const defence = (await labels(handButtons(page)))
+                const defence = (await attrs(handButtons(page), 'data-card'))
                     .map(parse)
                     .filter((card) => beats(target, card, trump))
                     .sort((a, b) => a.rank - b.rank)[0];
                 if (defence) {
                     if (open.length > 1) {
-                        await page.getByRole('button', { name: target.label, exact: true }).click();
+                        await pairOf(page, target.id).click();
                     }
-                    await page.getByRole('button', { name: defence.label, exact: true }).click();
+                    await cardOf(page, defence.id).click();
                     move = 'DEFEND';
                 } else {
-                    await page.getByRole('button', { name: 'Take' }).click();
+                    await page.getByTestId('take').click();
                     move = 'TAKE';
                 }
             }

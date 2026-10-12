@@ -1,6 +1,6 @@
 import type { DuelView } from '../api/types';
-import { type Card, cardName, sameCard } from '../game/cards';
-import { canEndAttack, canTake, playable, status } from '../game/selectors';
+import { type Card, cardId, cardName, sameCard } from '../game/cards';
+import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { CardBack, CardImage } from './CardImage';
 
 export interface TableProps {
@@ -53,7 +53,12 @@ export function Table({
                     <span class="count" data-testid="talon-count">
                         {view.talonCount}
                     </span>
-                    <CardImage card={view.trumpCard} class="card small trump" />
+                    <CardImage
+                        card={view.trumpCard}
+                        class="card small trump"
+                        data-testid="trump"
+                        data-card={cardId(view.trumpCard)}
+                    />
                     <span class="hint">Trump</span>
                 </div>
                 <div class="pairs">
@@ -69,6 +74,8 @@ export function Table({
                                 class={`pair${selected ? ' selected' : ''}`}
                                 aria-label={label}
                                 aria-pressed={selected}
+                                data-attack={cardId(pair.attack)}
+                                data-defence={pair.defence ? cardId(pair.defence) : undefined}
                                 disabled={busy}
                                 onClick={() => onTableCard(pair.attack)}
                             >
@@ -81,15 +88,20 @@ export function Table({
                 {view.discardCount > 0 && <span class="hint discard">Discarded: {view.discardCount}</span>}
             </div>
 
-            <p class="status" role="status">
+            <p class="status" role="status" data-state={statusState(view)}>
                 {status(view, opponentName)}
             </p>
 
             <div class="actions">
-                <button disabled={busy || !canTake(view)} onClick={onTake}>
+                <button data-testid="take" disabled={busy || !canTake(view)} onClick={onTake}>
                     Take
                 </button>
-                <button class="primary" disabled={busy || !canEndAttack(view)} onClick={onEndAttack}>
+                <button
+                    class="primary"
+                    data-testid="end-attack"
+                    disabled={busy || !canEndAttack(view)}
+                    onClick={onEndAttack}
+                >
                     End attack
                 </button>
             </div>
@@ -100,6 +112,7 @@ export function Table({
                         key={cardName(card)}
                         class={`hand-card${isUsable(card) ? ' usable' : ''}`}
                         aria-label={cardName(card)}
+                        data-card={cardId(card)}
                         data-playable={String(isUsable(card))}
                         disabled={busy}
                         onClick={() => onHandCard(card)}

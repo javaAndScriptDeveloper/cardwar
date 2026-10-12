@@ -8,9 +8,24 @@ export function cardImageUrl(card: Card): string {
     return `${import.meta.env.BASE_URL}cards/classic/${card.rank.toLowerCase()}_of_${card.suit.toLowerCase()}.svg`;
 }
 
-export function CardImage({ card, class: className }: { card: Card; class?: string }) {
+export function CardImage({
+    card,
+    class: className,
+    ...rest
+}: {
+    card: Card;
+    class?: string;
+    'data-testid'?: string;
+    'data-card'?: string;
+}) {
     return (
-        <img class={className ?? 'card'} src={cardImageUrl(card)} alt={cardName(card)} draggable={false} />
+        <img
+            class={className ?? 'card'}
+            src={cardImageUrl(card)}
+            alt={cardName(card)}
+            draggable={false}
+            {...rest}
+        />
     );
 }
 

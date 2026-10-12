@@ -177,7 +177,7 @@ function Start({
                     {error}
                 </p>
             )}
-            <button class="primary big" disabled={busy} onClick={run(onInvite)}>
+            <button class="primary big" data-testid="invite" disabled={busy} onClick={run(onInvite)}>
                 Invite a friend
             </button>
             <form
@@ -193,13 +193,14 @@ function Start({
                     Invite code
                     <input
                         name="invite-code"
+                        data-testid="join-code"
                         value={code}
                         onInput={(e) => setCode(e.currentTarget.value)}
                         placeholder="Paste a code from a friend"
                         autoComplete="off"
                     />
                 </label>
-                <button type="submit" disabled={busy || !code.trim()}>
+                <button type="submit" data-testid="join" disabled={busy || !code.trim()}>
                     Join
                 </button>
             </form>
@@ -220,7 +221,9 @@ function CopyButton({ text }: { text: string }) {
     };
     return (
         <>
-            <button onClick={() => void copy()}>{state === 'copied' ? 'Copied' : 'Copy code'}</button>
+            <button data-testid="copy-code" onClick={() => void copy()}>
+                {state === 'copied' ? 'Copied' : 'Copy code'}
+            </button>
             {state === 'failed' && (
                 <span class="notice">Copying is blocked here: press and hold the code.</span>
             )}
@@ -287,7 +290,7 @@ function Waiting({
         <section class="lobby">
             <h1>Waiting for a friend</h1>
             <p class="notice">Send the invite. The duel starts as soon as your friend opens it.</p>
-            <button class="primary big" onClick={() => onShare(link)}>
+            <button class="primary big" data-testid="share-invite" onClick={() => onShare(link)}>
                 Share invite
             </button>
             <div class="panel">

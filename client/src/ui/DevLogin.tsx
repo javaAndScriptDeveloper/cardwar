@@ -32,6 +32,7 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
                 Username
                 <input
                     name="username"
+                    data-testid="dev-username"
                     autoComplete="username"
                     value={username}
                     onInput={(e) => setUsername(e.currentTarget.value)}
@@ -43,6 +44,7 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
                 Password
                 <input
                     name="password"
+                    data-testid="dev-password"
                     type="password"
                     autoComplete="current-password"
                     value={password}
@@ -56,7 +58,7 @@ export function DevLogin({ onSubmit }: { onSubmit: (username: string, password: 
                     {error}
                 </p>
             )}
-            <button type="submit" class="primary" disabled={busy}>
+            <button type="submit" class="primary" data-testid="dev-sign-in" disabled={busy}>
                 Sign in
             </button>
         </form>

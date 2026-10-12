@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { cardId } from './cards';
 import { c, view } from './fixtures/views';
 import {
     beats,
@@ -9,6 +10,7 @@ import {
     playable,
     role,
     status,
+    statusState,
     undefendedAttacks,
 } from './selectors';
 
@@ -106,5 +108,44 @@ describe('playable', () => {
         const v = view({ phase: 'FINISHED', outcome: { draw: true, reason: 'DRAW' } });
         expect(canAttackWith(v, c('SIX', 'CLUBS'))).toBe(false);
         expect(status(v, 'Bob')).toBe('Duel over');
+    });
+});
+
+describe('statusState', () => {
+    it("names the attacker's fresh turn", () => {
+        expect(statusState(view())).toBe('your-attack');
+    });
+
+    it("names the defender's open attack", () => {
+        expect(
+            statusState(
+                view({ attacker: 'them', phase: 'DEFEND', table: [{ attack: c('SIX', 'DIAMONDS') }] }),
+            ),
+        ).toBe('defend');
+    });
+
+    it('names the rest of the states', () => {
+        expect(statusState(view({ phase: 'DEFEND', table: [{ attack: c('SIX', 'DIAMONDS') }] }))).toBe(
+            'defending',
+        );
+        expect(
+            statusState(view({ table: [{ attack: c('SIX', 'DIAMONDS'), defence: c('SEVEN', 'DIAMONDS') }] })),
+        ).toBe('throw-in');
+        expect(statusState(view({ attacker: 'them' }))).toBe('waiting-attack');
+        expect(
+            statusState(
+                view({
+                    attacker: 'them',
+                    table: [{ attack: c('SIX', 'DIAMONDS'), defence: c('SEVEN', 'DIAMONDS') }],
+                }),
+            ),
+        ).toBe('waiting');
+        expect(statusState(view({ phase: 'FINISHED' }))).toBe('over');
+    });
+});
+
+describe('cardId', () => {
+    it('is RANK_OF_SUIT', () => {
+        expect(cardId({ rank: 'SEVEN', suit: 'SPADES' })).toBe('SEVEN_OF_SPADES');
     });
 });

@@ -96,19 +96,42 @@ export function playable(view: DuelView): Card[] {
 }
 
 /** The one-line "whose move" text under the table. */
-export function status(view: DuelView, opponentName: string): string {
+export type StatusState =
+    'your-attack' | 'throw-in' | 'defending' | 'defend' | 'waiting-attack' | 'waiting' | 'over';
+
+/** The machine-readable turn state; `status` turns it into a sentence. Tests and E2E read this, never the text. */
+export function statusState(view: DuelView): StatusState {
     if (!live(view)) {
-        return 'Duel over';
+        return 'over';
     }
     const undefended = undefendedAttacks(view).length;
     if (role(view) === 'attacker') {
         if (view.table.length === 0) {
-            return 'Your attack';
+            return 'your-attack';
         }
-        return undefended > 0 ? `${opponentName} is defending` : 'Throw in or end the attack';
+        return undefended > 0 ? 'defending' : 'throw-in';
     }
     if (view.table.length === 0) {
-        return `Waiting for ${opponentName} to attack`;
+        return 'waiting-attack';
     }
-    return undefended > 0 ? 'Defend' : `Waiting for ${opponentName}`;
+    return undefended > 0 ? 'defend' : 'waiting';
+}
+
+export function status(view: DuelView, opponentName: string): string {
+    switch (statusState(view)) {
+        case 'over':
+            return 'Duel over';
+        case 'your-attack':
+            return 'Your attack';
+        case 'defending':
+            return `${opponentName} is defending`;
+        case 'throw-in':
+            return 'Throw in or end the attack';
+        case 'waiting-attack':
+            return `Waiting for ${opponentName} to attack`;
+        case 'defend':
+            return 'Defend';
+        case 'waiting':
+            return `Waiting for ${opponentName}`;
+    }
 }
