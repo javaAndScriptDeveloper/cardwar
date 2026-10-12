@@ -48,6 +48,8 @@ describe('message catalog', () => {
         ),
         ...['clubs', 'diamonds', 'hearts', 'spades'].map((s) => `card.suit.${s}`),
         ...['play', 'friends', 'shop', 'profile'].map((n) => `nav.${n}`),
+        ...['decks', 'backs', 'tables', 'frames', 'emotes'].map((id) => `shop.tabs.${id}`),
+        ...['sound', 'music', 'haptics', 'swipe', 'reducedMotion'].map((key) => `settings.${key}`),
     ];
     dynamic.forEach((key) => used.add(key));
 

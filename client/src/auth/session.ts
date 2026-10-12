@@ -7,6 +7,9 @@ type AuthApi = Pick<ApiClient, 'telegramSignIn' | 'passwordLogin' | 'register'>;
 export interface SignedInPlayer {
     playerId: string;
     username: string;
+    /** What to call the player on screen; the Telegram name when known, else the username. */
+    displayName?: string;
+    photoUrl?: string;
 }
 
 /**

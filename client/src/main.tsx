@@ -4,13 +4,19 @@ import { openDuelStream } from './api/events';
 import { Session } from './auth/session';
 import { linkConfigFromEnv } from './telegram/links';
 import { resolveTelegram, type TelegramHost } from './telegram/webapp';
+import { audio } from './audio';
+import { loadSettings } from './state/settings';
 import { App } from './ui/App';
 import { DuelScreen, type StreamOpener } from './ui/DuelScreen';
-import { Home } from './ui/Home';
+import { Shell } from './ui/Shell';
 import './ui/styles.css';
 
 const telegram = resolveTelegram(window as unknown as TelegramHost);
 telegram.ready();
+document.documentElement.dataset['scheme'] = telegram.colorScheme;
+loadSettings();
+// Browsers allow audio only after a gesture; the first tap anywhere unlocks it.
+audio.installUnlock(document);
 
 const session = new Session();
 const api = new ApiClient(
@@ -35,8 +41,14 @@ if (root) {
             api={api}
             session={session}
             home={(player) => (
-                <Home
-                    player={player}
+                <Shell
+                    player={{
+                        ...player,
+                        displayName: telegram.user
+                            ? [telegram.user.firstName, telegram.user.lastName].filter(Boolean).join(' ')
+                            : player.username,
+                        ...(telegram.user?.photoUrl !== undefined && { photoUrl: telegram.user.photoUrl }),
+                    }}
                     api={api}
                     telegram={telegram}
                     invite={invite}
