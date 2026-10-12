@@ -4,10 +4,12 @@ import { resolveTelegram } from './webapp';
 const telegramWebApp = (initData: string, startParam?: string) => ({
     initData,
     initDataUnsafe: startParam === undefined ? {} : { start_param: startParam },
+    colorScheme: 'light' as const,
     ready: vi.fn(),
     expand: vi.fn(),
     openTelegramLink: vi.fn(),
     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
+    BackButton: { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() },
 });
 
 describe('resolveTelegram', () => {
@@ -56,5 +58,33 @@ describe('resolveTelegram', () => {
         const open = vi.fn();
         resolveTelegram({ open }).openTelegramLink('https://t.me/share/url?url=x');
         expect(open).toHaveBeenCalledWith('https://t.me/share/url?url=x', '_blank');
+    });
+
+    it('exposes the user, the colour scheme and drives the BackButton inside Telegram', () => {
+        const webApp = {
+            ...telegramWebApp('x=1'),
+            initDataUnsafe: { user: { id: 7, first_name: 'Оля', photo_url: 'https://p/x.jpg' } },
+            colorScheme: 'dark' as const,
+        };
+        const telegram = resolveTelegram({ Telegram: { WebApp: webApp } });
+
+        expect(telegram.user).toEqual({ id: 7, firstName: 'Оля', photoUrl: 'https://p/x.jpg' });
+        expect(telegram.colorScheme).toBe('dark');
+
+        const handler = vi.fn();
+        telegram.backButton(true, handler);
+        expect(webApp.BackButton.show).toHaveBeenCalled();
+        expect(webApp.BackButton.onClick).toHaveBeenCalledWith(handler);
+        telegram.backButton(false);
+        expect(webApp.BackButton.hide).toHaveBeenCalled();
+        expect(webApp.BackButton.offClick).toHaveBeenCalledWith(handler);
+    });
+
+    it('has no user and a no-op BackButton outside Telegram', () => {
+        const telegram = resolveTelegram({});
+
+        expect(telegram.user).toBeUndefined();
+        expect(telegram.colorScheme).toBe('light');
+        expect(() => telegram.backButton(true, () => {})).not.toThrow();
     });
 });
