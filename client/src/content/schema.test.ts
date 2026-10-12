@@ -256,6 +256,14 @@ describe('packIndexEntry', () => {
         });
     });
 
+    it("offers the first of the pack's sounds as its demo, and none for a silent pack", () => {
+        const sounds = { fanfare: 'sounds/fanfare.wav', boo: 'sounds/boo.wav' };
+        expect(packIndexEntry(deck({ sounds }) as never).demoSound).toBe(
+            'packs/test-deck/sounds/fanfare.wav',
+        );
+        expect(packIndexEntry(deck() as never).demoSound).toBeUndefined();
+    });
+
     it('resolves faces that climb out of the pack folder', () => {
         const cards = { ACE_OF_HEARTS: { image: '../../cards/classic/ace_of_hearts.svg' } };
         expect(packIndexEntry(deck({ cards }) as never).preview).toEqual(['cards/classic/ace_of_hearts.svg']);

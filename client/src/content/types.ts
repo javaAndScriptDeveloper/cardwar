@@ -86,4 +86,6 @@ export interface PackIndexEntry {
     name: Localized;
     /** A few face URLs relative to the app base, for the deck picker. */
     preview: string[];
+    /** The sound the shop plays when the deck's preview is tapped, relative to the app base; absent if silent. */
+    demoSound?: string;
 }

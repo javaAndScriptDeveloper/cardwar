@@ -1149,3 +1149,10 @@ button.link {
 .trump-suit.suit-diamonds {
     color: #d32f2f;
 }
+
+/* A deck preview is a button: tapping it plays the deck's demo sound. */
+.shop-preview.playable {
+    padding: 0;
+    background: none;
+    border-radius: var(--radius-s);
+}

@@ -19,6 +19,7 @@
       "packs/memes-demo/cards/ACE_OF_HEARTS.svg",
       "packs/memes-demo/cards/KING_OF_SPADES.svg",
       "packs/memes-demo/cards/QUEEN_OF_DIAMONDS.svg"
-    ]
+    ],
+    "demoSound": "packs/memes-demo/sounds/lose_money.wav"
   }
 ]

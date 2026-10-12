@@ -415,6 +415,8 @@ function fromBase(packId: string, path: string): string {
 
 /** One line of `/app/packs/index.json` (see PackIndexEntry), for a pack that already validated. */
 export function packIndexEntry(pack: PackManifest): PackIndexEntry {
+    // The first sound the author listed is the one they would show off; JSON keeps key order.
+    const demo = Object.values(pack.sounds ?? {})[0];
     return {
         id: pack.id,
         name: pack.name,
@@ -422,5 +424,6 @@ export function packIndexEntry(pack: PackManifest): PackIndexEntry {
             const image = pack.cards[id]?.image;
             return image ? [fromBase(pack.id, image)] : [];
         }),
+        ...(demo ? { demoSound: fromBase(pack.id, demo) } : {}),
     };
 }

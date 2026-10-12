@@ -53,14 +53,20 @@ const loadoutView = (overrides: Partial<LoadoutView> = {}): LoadoutView => ({
 
 const index: PackIndexEntry[] = [
     { id: 'classic', name: { uk: 'Класична' }, preview: ['cards/classic/ace_of_hearts.svg'] },
-    { id: 'memes-demo', name: { uk: 'Мемна' }, preview: ['packs/memes-demo/cards/ACE_OF_HEARTS.svg'] },
+    {
+        id: 'memes-demo',
+        name: { uk: 'Мемна' },
+        preview: ['packs/memes-demo/cards/ACE_OF_HEARTS.svg'],
+        demoSound: 'packs/memes-demo/sounds/fanfare.wav',
+    },
 ];
 
 function setup(overrides: Partial<ReturnType<typeof fakeApi>> = {}) {
     const api = { ...fakeApi(), ...overrides };
     const telegram = { openInvoice: vi.fn() };
-    render(<Shop api={api} telegram={telegram} loadIndex={() => Promise.resolve(index)} />);
-    return { api, telegram };
+    const sound = { register: vi.fn(), play: vi.fn() };
+    render(<Shop api={api} telegram={telegram} loadIndex={() => Promise.resolve(index)} sound={sound} />);
+    return { api, telegram, sound };
 }
 
 function fakeApi() {
@@ -99,6 +105,23 @@ describe('Shop', () => {
         expect(within(memes).getByTestId('price').getAttribute('data-amount')).toBe('1000');
         expect(screen.getByTestId('buy-deck-memes-demo')).toBeTruthy();
         expect(screen.queryByTestId('item-back-trident')).toBeNull();
+    });
+
+    it("plays a deck's demo sound when its preview is tapped, and the default beat for a silent deck", async () => {
+        const { sound } = setup();
+
+        fireEvent.click(await screen.findByTestId('preview-deck-memes-demo'));
+        await waitFor(() =>
+            expect(sound.register).toHaveBeenCalledWith(
+                'demo:memes-demo',
+                `${import.meta.env.BASE_URL}packs/memes-demo/sounds/fanfare.wav`,
+                'voice',
+            ),
+        );
+        expect(sound.play).toHaveBeenLastCalledWith('demo:memes-demo');
+
+        fireEvent.click(screen.getByTestId('preview-deck-classic'));
+        expect(sound.play).toHaveBeenLastCalledWith('beat');
     });
 
     it('previews backs, tables and frames as swatches and emotes as glyphs', async () => {

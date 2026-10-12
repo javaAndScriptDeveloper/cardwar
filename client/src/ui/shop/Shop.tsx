@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../../api/client';
 import type { CoinPackView, ItemType, ShopItemView } from '../../api/types';
+import { audio, type AudioManager } from '../../audio';
 import { fetchPackIndex } from '../../content/loader';
 import type { PackIndexEntry } from '../../content/types';
 import { t } from '../../i18n';
@@ -32,7 +33,12 @@ interface Props {
     telegram: Pick<Telegram, 'openInvoice'>;
     /** The installed packs, for deck previews; injectable for tests. */
     loadIndex?: () => Promise<PackIndexEntry[]>;
+    /** Plays a deck's demo sound; injectable for tests. */
+    sound?: Pick<AudioManager, 'register' | 'play'>;
 }
+
+/** A silent deck still answers a tap on its preview, with the sound a beaten card makes. */
+const SILENT_DECK_DEMO = 'beat';
 
 type Catalog =
     | { kind: 'loading' }
@@ -59,11 +65,21 @@ function problem(error: unknown): { text: string; reason: string } {
  * Cosmetics for coins and coins for Telegram Stars. Prices and ownership come from the server on every visit; the
  * client only shows them and asks. Equipping writes the server loadout, which also moves the device's deck.
  */
-export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
+export function Shop({ api, telegram, loadIndex = fetchPackIndex, sound = audio }: Props) {
     const [tab, setTab] = useState<string>('decks');
     const [catalog, setCatalog] = useState<Catalog>({ kind: 'loading' });
-    const [previews, setPreviews] = useState<Record<string, string[]>>({});
+    const [packs, setPacks] = useState<Record<string, PackIndexEntry>>({});
     const [busy, setBusy] = useState<string>();
+
+    const playDemo = (pack: PackIndexEntry | undefined) => {
+        if (!pack?.demoSound) {
+            sound.play(SILENT_DECK_DEMO);
+            return;
+        }
+        const name = `demo:${pack.id}`;
+        sound.register(name, `${import.meta.env.BASE_URL}${pack.demoSound}`, 'voice');
+        sound.play(name);
+    };
     const [message, setMessage] = useState<{ text: string; reason: string }>();
 
     useEffect(() => {
@@ -72,10 +88,7 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
             .then((view) => live && setCatalog({ kind: 'ready', ...view }))
             .catch((error: unknown) => live && setCatalog({ kind: 'failed', error: describeError(error) }));
         loadIndex()
-            .then(
-                (packs) =>
-                    live && setPreviews(Object.fromEntries(packs.map((pack) => [pack.id, pack.preview]))),
-            )
+            .then((packs) => live && setPacks(Object.fromEntries(packs.map((pack) => [pack.id, pack]))))
             .catch(() => {});
         return () => {
             live = false;
@@ -187,7 +200,8 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
                             <ItemCard
                                 key={item.code}
                                 item={item}
-                                preview={previews[item.contentRef]}
+                                preview={packs[item.contentRef]?.preview}
+                                onPreview={() => playDemo(packs[item.contentRef])}
                                 busy={busy}
                                 onBuy={() => void buy(item)}
                                 onEquip={() => void equip(item)}
@@ -203,6 +217,7 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
 interface ItemCardProps {
     item: ShopItemView;
     preview: string[] | undefined;
+    onPreview: () => void;
     busy: string | undefined;
     onBuy: () => void;
     onEquip: () => void;
@@ -211,7 +226,7 @@ interface ItemCardProps {
 /** Emotes are owned, never equipped: every owned emote is in the tray at the table. */
 const EQUIPPABLE: ReadonlySet<ItemType> = new Set(['DECK', 'CARD_BACK', 'TABLE', 'FRAME']);
 
-function ItemCard({ item, preview, busy, onBuy, onEquip }: ItemCardProps) {
+function ItemCard({ item, preview, onPreview, busy, onBuy, onEquip }: ItemCardProps) {
     const action = (() => {
         if (!item.owned) {
             return (
@@ -251,9 +266,22 @@ function ItemCard({ item, preview, busy, onBuy, onEquip }: ItemCardProps) {
             data-owned={String(item.owned)}
             data-equipped={String(item.equipped)}
         >
-            <span class="shop-preview">
-                <Preview item={item} images={preview} />
-            </span>
+            {item.type === 'DECK' ? (
+                // Tapping a deck lets you hear it before buying: its demo sound plays on the voice channel.
+                <button
+                    type="button"
+                    class="shop-preview playable"
+                    aria-label={t('shop.playDemo', { name: item.name })}
+                    data-testid={`preview-${item.code}`}
+                    onClick={onPreview}
+                >
+                    <Preview item={item} images={preview} />
+                </button>
+            ) : (
+                <span class="shop-preview">
+                    <Preview item={item} images={preview} />
+                </span>
+            )}
             <span class="name">{item.name}</span>
             {!item.owned && <CoinAmount amount={item.price} data-testid="price" />}
             {action}
