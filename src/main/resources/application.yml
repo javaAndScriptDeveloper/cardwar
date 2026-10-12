@@ -106,6 +106,8 @@ cardwar:
   duel:
     # Abandoned duels expire on their own; refreshed on every accepted move.
     state-ttl: ${DUEL_STATE_TTL:2h}
+    # Each move has this long; when it runs out the server moves for the player, and the third time forfeits them.
+    move-timeout: ${DUEL_MOVE_TIMEOUT:30s}
     # How long a shared invite can be accepted. Fixed at creation, never refreshed.
     invite-ttl: ${DUEL_INVITE_TTL:15m}
 

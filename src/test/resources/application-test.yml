@@ -28,6 +28,10 @@ cardwar:
     # Nothing listens here: replies fail fast and are swallowed, so tests never reach the real Bot API.
     api-url: http://127.0.0.1:9
   duel:
+    # The schedulers would otherwise act on other tests' duels mid-assertion; tests drive timeouts and the
+    # stake sweep explicitly with an instant instead.
+    clock-tick: 1h
+    stake-sweep-interval: 1h
     stream:
       # A heartbeat every second so the idle-stream test does not wait for the production interval.
       heartbeat: 1s

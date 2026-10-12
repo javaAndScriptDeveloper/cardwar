@@ -42,6 +42,11 @@ public class RedisGameStateStore implements GameStateStore {
     private static final String FIELD_VERSION = "version";
     private static final String FIELD_STARTED_AT = "startedAt";
     private static final String FIELD_STAKE = "stake";
+    private static final String FIELD_DEADLINE = "deadline";
+    private static final String FIELD_STRIKES_A = "strikesA";
+    private static final String FIELD_STRIKES_B = "strikesB";
+    /** Sorted set of duel ids scored by their move deadline (epoch ms): what the clock scheduler scans. */
+    private static final String DEADLINES = "cardwar:duel:deadlines";
 
     private static final RedisScript<Long> COMPARE_AND_SET = new DefaultRedisScript<>(
             """
@@ -51,8 +56,14 @@ public class RedisGameStateStore implements GameStateStore {
             elseif stored ~= ARGV[1] then
                 return 0
             end
-            redis.call('HSET', KEYS[1], 'version', ARGV[2], 'state', ARGV[3], 'startedAt', ARGV[4], 'stake', ARGV[7])
+            redis.call('HSET', KEYS[1], 'version', ARGV[2], 'state', ARGV[3], 'startedAt', ARGV[4], 'stake', ARGV[7],
+                'deadline', ARGV[8], 'strikesA', ARGV[9], 'strikesB', ARGV[10])
             redis.call('PEXPIRE', KEYS[1], ARGV[5])
+            if ARGV[8] == '' then
+                redis.call('ZREM', KEYS[4], ARGV[6])
+            else
+                redis.call('ZADD', KEYS[4], ARGV[8], ARGV[6])
+            end
             for i = 2, 3 do
                 redis.call('SADD', KEYS[i], ARGV[6])
                 redis.call('PEXPIRE', KEYS[i], ARGV[5])
@@ -74,17 +85,30 @@ public class RedisGameStateStore implements GameStateStore {
 
     @Override
     public Optional<StoredDuel> find(DuelId duelId) {
-        List<Object> fields =
-                redis.opsForHash().multiGet(key(duelId), List.of(FIELD_STATE, FIELD_STARTED_AT, FIELD_STAKE));
+        List<Object> fields = redis.opsForHash()
+                .multiGet(
+                        key(duelId),
+                        List.of(
+                                FIELD_STATE,
+                                FIELD_STARTED_AT,
+                                FIELD_STAKE,
+                                FIELD_DEADLINE,
+                                FIELD_STRIKES_A,
+                                FIELD_STRIKES_B));
         Object state = fields.get(0);
         Object startedAt = fields.get(1);
-        Object stake = fields.get(2);
         if (state == null || startedAt == null) {
             return Optional.empty();
         }
-        // Duels stored before stakes existed have no stake field: they were friendly.
-        long coins = stake == null ? 0 : Long.parseLong((String) stake);
-        return Optional.of(new StoredDuel(read((String) state), Instant.parse((String) startedAt), coins));
+        // Duels stored before stakes and the clock existed lack those fields: friendly, untimed.
+        String deadline = (String) fields.get(3);
+        return Optional.of(new StoredDuel(
+                read((String) state),
+                Instant.parse((String) startedAt),
+                longOrZero(fields.get(2)),
+                deadline == null || deadline.isEmpty() ? null : Instant.ofEpochMilli(Long.parseLong(deadline)),
+                (int) longOrZero(fields.get(4)),
+                (int) longOrZero(fields.get(5))));
     }
 
     @Override
@@ -94,14 +118,18 @@ public class RedisGameStateStore implements GameStateStore {
                 List.of(
                         key(duel.state().duelId()),
                         indexKey(duel.state().playerA()),
-                        indexKey(duel.state().playerB())),
+                        indexKey(duel.state().playerB()),
+                        DEADLINES),
                 Long.toString(expectedVersion),
                 Long.toString(duel.state().version()),
                 write(duel.state()),
                 duel.startedAt().toString(),
                 Long.toString(ttl.toMillis()),
                 duel.state().duelId().value().toString(),
-                Long.toString(duel.stake()));
+                Long.toString(duel.stake()),
+                duel.deadline() == null ? "" : Long.toString(duel.deadline().toEpochMilli()),
+                Integer.toString(duel.strikesA()),
+                Integer.toString(duel.strikesB()));
         if (applied == null || applied == 0L) {
             throw new ConflictException("The duel moved on while this move was being made");
         }
@@ -116,6 +144,20 @@ public class RedisGameStateStore implements GameStateStore {
             redis.opsForSet().remove(indexKey(duel.state().playerB()), member);
         });
         redis.delete(key(duelId));
+        redis.opsForZSet().remove(DEADLINES, duelId.value().toString());
+    }
+
+    @Override
+    public List<UUID> dueDeadlines(Instant now) {
+        Set<String> due = redis.opsForZSet().rangeByScore(DEADLINES, 0, now.toEpochMilli());
+        if (due == null) {
+            return List.of();
+        }
+        return due.stream().map(UUID::fromString).toList();
+    }
+
+    private static long longOrZero(Object value) {
+        return value == null ? 0 : Long.parseLong((String) value);
     }
 
     @Override

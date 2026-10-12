@@ -2,8 +2,10 @@ package cardwar.session.store;
 
 import cardwar.engine.DuelId;
 import cardwar.engine.PlayerId;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * Where in-progress duels live. Deliberately an interface: the session service is written against this and never
@@ -18,6 +20,9 @@ public interface GameStateStore {
     long ABSENT = -1L;
 
     Optional<StoredDuel> find(DuelId duelId);
+
+    /** Duels whose move clock ran out at or before {@code now}, oldest deadline first. */
+    List<UUID> dueDeadlines(Instant now);
 
     /**
      * Stores the duel, but only if the stored version still equals {@code expectedVersion} (or, for

@@ -3,8 +3,11 @@ package cardwar.session.dto;
 import cardwar.engine.Card;
 import cardwar.engine.DuelPhase;
 import cardwar.engine.DuelState;
+import cardwar.engine.DurakRules;
 import cardwar.engine.PlayerId;
+import cardwar.session.store.StoredDuel;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,9 +32,28 @@ public record DuelView(
         DuelPhase phase,
         OutcomeView outcome,
         long version,
-        long stake) {
+        long stake,
+        Instant deadline,
+        UUID toMove,
+        StrikesView strikes) {
 
-    public static DuelView of(DuelState state, PlayerId viewer, long stake) {
+    /** Clocks that ran out on each side; the third one forfeits. */
+    public record StrikesView(int you, int opponent) {}
+
+    public static DuelView of(StoredDuel stored, PlayerId viewer) {
+        DuelState state = stored.state();
+        PlayerId mover = DurakRules.toMove(state);
+        return of(
+                state,
+                viewer,
+                stored.stake(),
+                state.isFinished() ? null : stored.deadline(),
+                mover == null ? null : mover.value(),
+                new StrikesView(stored.strikesOf(viewer), stored.strikesOf(state.opponentOf(viewer))));
+    }
+
+    private static DuelView of(
+            DuelState state, PlayerId viewer, long stake, Instant deadline, UUID toMove, StrikesView strikes) {
         PlayerId opponent = state.opponentOf(viewer);
         return new DuelView(
                 state.duelId().value(),
@@ -48,6 +70,9 @@ public record DuelView(
                 state.phase(),
                 state.outcome() == null ? null : OutcomeView.of(state.outcome()),
                 state.version(),
-                stake);
+                stake,
+                deadline,
+                toMove,
+                strikes);
     }
 }

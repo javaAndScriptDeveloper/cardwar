@@ -31,7 +31,9 @@ public class GameMetrics {
     public enum MoveOutcome {
         OK,
         REJECTED,
-        CONFLICT
+        CONFLICT,
+        /** Played by the server for a player whose move clock ran out. */
+        AUTO
     }
 
     public enum InviteEvent {
