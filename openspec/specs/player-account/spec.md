@@ -90,6 +90,30 @@ The system SHALL track per-player progress covering duels played, duels won and 
 - **WHEN** an unauthenticated client requests the profile endpoint
 - **THEN** the API responds with 401
 
+### Requirement: Win streak, XP and rank
+The system SHALL keep, per player, the current win streak, the best win streak ever and XP, updated once per
+participant when a duel's result is recorded, in the same transaction as the result, so a completion that runs twice
+cannot count twice. A win SHALL add one to the streak (and raise the best streak when passed) and 30 XP, or 40 XP
+when the duel had a stake; a loss SHALL reset the streak to zero and add 10 XP; a draw SHALL leave the streak as it
+is and add 15 XP. The rank SHALL follow XP alone: `DURAK` from 0, `PIDKYDNYI` from 100, `KOZYR` from 300, `SHULER`
+from 700, `LEHENDA` from 1500. `GET /api/v1/me/progress` SHALL answer the caller's `duelsPlayed`, `duelsWon`,
+`winStreak`, `bestWinStreak`, `xp`, `rank`, `nextRankXp` (null at the top rank) and `streakBonusPercent`
+(`10 × min(winStreak, 5)`, the bonus the next staked win pays); the same fields SHALL appear under `progress` in
+`GET /api/v1/me`. The best win streak SHALL be readable by the monetization module through its `StreakSource` port.
+
+#### Scenario: Two wins then a loss
+- **WHEN** a player wins two friendly duels in a row and then loses one
+- **THEN** after the wins the streak is 2, the XP 60 and `streakBonusPercent` 20
+- **AND** after the loss the streak is 0, the best streak still 2 and the XP 70
+
+#### Scenario: A draw keeps the streak
+- **WHEN** a player on a streak of 1 draws a duel
+- **THEN** the streak is still 1 and the XP is up 15
+
+#### Scenario: Rank crossed
+- **WHEN** a player's XP reaches 100
+- **THEN** `rank` reads `PIDKYDNYI` and `nextRankXp` 300
+
 ### Requirement: Two accounts suffice for local play
 The system SHALL support playing a complete duel between two ordinary registered accounts with no bot, AI or singleplayer opponent, so local testing needs only two registrations.
 

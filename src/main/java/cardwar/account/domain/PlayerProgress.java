@@ -33,6 +33,16 @@ public class PlayerProgress {
     @Column(name = "duels_won", nullable = false)
     private int duelsWon;
 
+    /** Consecutive wins; a loss resets it, a draw leaves it. */
+    @Column(name = "win_streak", nullable = false)
+    private int winStreak;
+
+    @Column(name = "best_win_streak", nullable = false)
+    private int bestWinStreak;
+
+    @Column(name = "xp", nullable = false)
+    private int xp;
+
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 

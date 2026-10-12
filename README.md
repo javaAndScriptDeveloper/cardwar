@@ -101,6 +101,7 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/auth/telegram`       | Exchange Mini App `initData` for a token; creates the account once    |
 | `GET  /api/v1/me`                  | Own profile (name; Telegram `handle`, `photoUrl` when present), progress and collection |
 | `GET  /api/v1/me/duels`            | Own finished duels, newest first (opponent name/handle/photo, WON/LOST/DRAW, reason, stake, net coins) |
+| `GET  /api/v1/me/progress`         | Win streak, best streak, XP, rank (`DURAK`…`LEHENDA`), next rank XP, next staked win's bonus % |
 | `GET  /api/v1/wallet`              | Balance and today's bonus (available, amount, streak day, next time)  |
 | `POST /api/v1/wallet/daily-bonus`  | Claim today's bonus (`409 BONUS_ALREADY_CLAIMED` the second time)      |
 | `GET  /api/v1/wallet/transactions` | The caller's latest 50 coin movements                                  |

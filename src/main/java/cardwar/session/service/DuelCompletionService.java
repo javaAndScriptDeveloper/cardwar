@@ -1,5 +1,6 @@
 package cardwar.session.service;
 
+import cardwar.account.dto.DuelOutcomeKind;
 import cardwar.account.service.AccountService;
 import cardwar.engine.Outcome;
 import cardwar.session.domain.DuelResult;
@@ -61,10 +62,18 @@ public class DuelCompletionService {
                 duel.moveCount(),
                 duel.stake()));
 
-        accounts.recordDuelPlayed(playerA, playerA.equals(winner));
-        accounts.recordDuelPlayed(playerB, playerB.equals(winner));
+        boolean staked = duel.stake() > 0;
+        accounts.recordDuelPlayed(playerA, outcomeFor(playerA, outcome), staked);
+        accounts.recordDuelPlayed(playerB, outcomeFor(playerB, outcome), staked);
         // Same transaction as the result row: the pot is paid exactly when the result becomes durable.
         wallets.settle(duelId.toString(), winner);
         log.info("Duel {} finished after {} moves", duelId, duel.moveCount());
+    }
+
+    private static DuelOutcomeKind outcomeFor(UUID player, Outcome outcome) {
+        if (outcome.draw()) {
+            return DuelOutcomeKind.DRAW;
+        }
+        return outcome.winner().value().equals(player) ? DuelOutcomeKind.WIN : DuelOutcomeKind.LOSS;
     }
 }

@@ -1,5 +1,6 @@
 package cardwar.api.controller;
 
+import cardwar.account.dto.ProgressView;
 import cardwar.account.service.AccountService;
 import cardwar.api.dto.MeView;
 import cardwar.monetization.service.EntitlementService;
@@ -40,6 +41,12 @@ public class MeController {
                 accounts.summary(caller.playerId()),
                 accounts.progressOf(caller.playerId()),
                 entitlements.collection(caller.playerId()));
+    }
+
+    @GetMapping("/progress")
+    @Operation(summary = "Win streak, best streak, XP, rank and the bonus the next staked win pays")
+    public ProgressView progress(@AuthenticationPrincipal PlayerIdentity caller) {
+        return accounts.progressOf(caller.playerId());
     }
 
     @GetMapping("/duels")

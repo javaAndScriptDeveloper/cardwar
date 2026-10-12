@@ -2,8 +2,10 @@ package cardwar.account.service;
 
 import cardwar.account.domain.Player;
 import cardwar.account.domain.PlayerProgress;
+import cardwar.account.dto.DuelOutcomeKind;
 import cardwar.account.dto.PlayerSummary;
 import cardwar.account.dto.ProgressView;
+import cardwar.account.dto.Rank;
 import cardwar.account.repository.PlayerProgressRepository;
 import cardwar.account.repository.PlayerRepository;
 import cardwar.exception.ConflictException;
@@ -182,20 +184,57 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public ProgressView progressOf(UUID playerId) {
-        return progress.findById(playerId)
-                .map(row -> new ProgressView(row.getDuelsPlayed(), row.getDuelsWon(), wallets.balance(playerId)))
-                .orElseThrow(() -> new NotFoundException("Player not found"));
+        return viewOf(requireProgress(playerId));
     }
 
-    /** Called once per participant when a duel finishes. A draw counts as played for both and won by neither. */
+    /** The longest run of consecutive wins ever; 0 for an unknown player, since nothing is gated on absence. */
+    @Transactional(readOnly = true)
+    public int bestWinStreakOf(UUID playerId) {
+        return progress.findById(playerId).map(PlayerProgress::getBestWinStreak).orElse(0);
+    }
+
+    /**
+     * Called once per participant when a duel finishes, inside the completion's transaction, so a completion that
+     * runs twice (the sweep and the last move) cannot count twice. A win extends the streak, a loss ends it, a draw
+     * leaves it alone; XP is 30 for a win (40 when coins were at stake), 10 for a loss, 15 for a draw.
+     */
     @Transactional
-    public void recordDuelPlayed(UUID playerId, boolean won) {
-        PlayerProgress row = progress.findById(playerId).orElseThrow(() -> new NotFoundException("Player not found"));
+    public ProgressView recordDuelPlayed(UUID playerId, DuelOutcomeKind kind, boolean staked) {
+        PlayerProgress row = requireProgress(playerId);
         row.setDuelsPlayed(row.getDuelsPlayed() + 1);
-        if (won) {
-            row.setDuelsWon(row.getDuelsWon() + 1);
+        switch (kind) {
+            case WIN -> {
+                row.setDuelsWon(row.getDuelsWon() + 1);
+                row.setWinStreak(row.getWinStreak() + 1);
+                row.setBestWinStreak(Math.max(row.getBestWinStreak(), row.getWinStreak()));
+                row.setXp(row.getXp() + XP_WIN + (staked ? XP_STAKED_WIN_EXTRA : 0));
+            }
+            case LOSS -> {
+                row.setWinStreak(0);
+                row.setXp(row.getXp() + XP_LOSS);
+            }
+            case DRAW -> row.setXp(row.getXp() + XP_DRAW);
         }
         row.setUpdatedAt(Instant.now());
+        return viewOf(row);
+    }
+
+    private PlayerProgress requireProgress(UUID playerId) {
+        return progress.findById(playerId).orElseThrow(() -> new NotFoundException("Player not found"));
+    }
+
+    private ProgressView viewOf(PlayerProgress row) {
+        Rank rank = Rank.of(row.getXp());
+        return new ProgressView(
+                row.getDuelsPlayed(),
+                row.getDuelsWon(),
+                wallets.balance(row.getPlayerId()),
+                row.getWinStreak(),
+                row.getBestWinStreak(),
+                row.getXp(),
+                rank,
+                rank.nextXp(),
+                ProgressView.bonusPercentFor(row.getWinStreak()));
     }
 
     /**
@@ -219,6 +258,11 @@ public class AccountService {
      */
     /** Mirrors the {@code display_name} column width. */
     private static final int MAX_DISPLAY_NAME = 64;
+
+    static final int XP_WIN = 30;
+    static final int XP_STAKED_WIN_EXTRA = 10;
+    static final int XP_LOSS = 10;
+    static final int XP_DRAW = 15;
 
     private static final String DUMMY_HASH = "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 }

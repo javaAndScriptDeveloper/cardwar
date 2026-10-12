@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import cardwar.account.dto.DuelOutcomeKind;
 import cardwar.account.service.AccountService;
 import cardwar.monetization.domain.Entitlement;
 import cardwar.monetization.dto.EntitlementSource;
@@ -94,7 +95,7 @@ class EntitlementIntegrationTest extends AbstractIntegrationTest {
     @Test
     void progressUnlockAtThresholdIsGrantedWithTheProgressSource() throws Exception {
         for (int win = 0; win < 10; win++) {
-            accounts.recordDuelPlayed(player.id(), true);
+            accounts.recordDuelPlayed(player.id(), DuelOutcomeKind.WIN, false);
         }
 
         api.unlockTheme(player, "VANGUARD")
