@@ -57,4 +57,34 @@ class DeckTest {
 
         assertThat(first).isNotEqualTo(second);
     }
+
+    /**
+     * Every card is equally likely at every position: the property that makes a deal fair, and the one an off-by-one
+     * in Fisher-Yates (Sattolo's variant, or {@code nextInt(36)} each step) quietly breaks. Pearson's chi-square
+     * over the 36 x 36 position table has 1225 degrees of freedom (mean 1225, sd about 49.5); 1500 is over five sd
+     * above, so a fair shuffle passes with room to spare and a biased one does not.
+     */
+    @Test
+    void everyCardIsEquallyLikelyAtEveryPosition() {
+        int size = Deck.ordered().size();
+        int rounds = size * 2000;
+        long[][] seen = new long[size][size];
+        var random = new SplittableRandom(2026);
+        List<Card> ordered = Deck.ordered();
+        for (int round = 0; round < rounds; round++) {
+            List<Card> shuffled = Deck.shuffled(random);
+            for (int position = 0; position < size; position++) {
+                seen[ordered.indexOf(shuffled.get(position))][position]++;
+            }
+        }
+
+        double expected = (double) rounds / size;
+        double chiSquare = 0;
+        for (long[] row : seen) {
+            for (long count : row) {
+                chiSquare += (count - expected) * (count - expected) / expected;
+            }
+        }
+        assertThat(chiSquare).isLessThan(1500);
+    }
 }

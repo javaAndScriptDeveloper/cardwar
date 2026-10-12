@@ -3,6 +3,7 @@ import { useRef } from 'preact/hooks';
 import type { DuelView } from '../api/types';
 import { arrange, type LayoutDirective } from '../content/layout';
 import { type Card, cardId, sameCard, type Suit } from '../game/cards';
+import { sortHand } from '../game/hand';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { cardLabel, suitLabel, t } from '../i18n';
 import { CardBack, CardImage } from './CardImage';
@@ -212,7 +213,7 @@ export function Table({
                 <span class="count">{view.hand.length}</span>
             </footer>
             <div class="hand" data-testid="hand">
-                {arrange(view.hand, layouts).map((card) => (
+                {arrange(sortHand(view.hand, view.trumpSuit), layouts).map((card) => (
                     <HandCard
                         key={cardId(card)}
                         card={card}

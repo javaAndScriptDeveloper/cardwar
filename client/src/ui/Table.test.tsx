@@ -32,21 +32,26 @@ describe('Table hand layout', () => {
     const handOrder = (container: Element) =>
         [...container.querySelectorAll('.hand-card')].map((el) => el.getAttribute('data-card'));
 
-    it('draws the hand in the order the pack layouts give, cards unchanged', () => {
+    it('applies the pack layouts on top of the sorted hand, cards unchanged', () => {
         const hand = [c('KING', 'SPADES'), c('SIX', 'CLUBS'), c('JACK', 'SPADES')];
         const { container } = renderTable({
             view: view({ hand }),
             layouts: [{ layout: 'stick_together', cards: ['KING_OF_SPADES', 'JACK_OF_SPADES'] }],
         });
 
-        expect(handOrder(container)).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']);
+        expect(handOrder(container)).toEqual(['SIX_OF_CLUBS', 'KING_OF_SPADES', 'JACK_OF_SPADES']);
     });
 
-    it('keeps the server order without layouts', () => {
-        const hand = [c('KING', 'SPADES'), c('SIX', 'CLUBS'), c('JACK', 'SPADES')];
+    it('sorts the hand by suit and rank with trumps last, whatever order the server sends', () => {
+        const hand = [c('SIX', 'HEARTS'), c('KING', 'SPADES'), c('SIX', 'CLUBS'), c('JACK', 'SPADES')];
         const { container } = renderTable({ view: view({ hand }) });
 
-        expect(handOrder(container)).toEqual(['KING_OF_SPADES', 'SIX_OF_CLUBS', 'JACK_OF_SPADES']);
+        expect(handOrder(container)).toEqual([
+            'SIX_OF_CLUBS',
+            'JACK_OF_SPADES',
+            'KING_OF_SPADES',
+            'SIX_OF_HEARTS',
+        ]);
     });
 });
 

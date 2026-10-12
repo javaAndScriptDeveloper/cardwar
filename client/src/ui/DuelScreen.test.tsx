@@ -305,6 +305,8 @@ describe('DuelScreen with a content pack', () => {
     const KS = c('KING', 'SPADES');
     const JS = c('JACK', 'SPADES');
     const SIX = c('SIX', 'CLUBS');
+    // Sorting alone puts J, Q, K of spades in a row; the queen is what the sticky rule has to move past.
+    const QS = c('QUEEN', 'SPADES');
     const pack: PackManifest = {
         id: 'demo',
         version: 1,
@@ -335,27 +337,42 @@ describe('DuelScreen with a content pack', () => {
     it('lays out the hand by the equipped pack rules', async () => {
         equipped.value = pack;
         const { api, nudge } = setup();
-        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, JS] }));
+        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, QS, JS] }));
         nudge();
 
         await waitFor(() =>
-            expect(handOrder()).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']),
+            expect(handOrder()).toEqual([
+                'SIX_OF_CLUBS',
+                'KING_OF_SPADES',
+                'JACK_OF_SPADES',
+                'QUEEN_OF_SPADES',
+            ]),
         );
         expect(document.querySelector('.hand-card img')?.getAttribute('src')).toContain('/packs/demo/cards/');
     });
 
     it('applies a pack that finishes loading mid-duel to the hand already on screen', async () => {
         const { api, nudge } = setup();
-        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, JS] }));
+        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, QS, JS] }));
         nudge();
         await waitFor(() =>
-            expect(handOrder()).toEqual(['KING_OF_SPADES', 'SIX_OF_CLUBS', 'JACK_OF_SPADES']),
+            expect(handOrder()).toEqual([
+                'SIX_OF_CLUBS',
+                'JACK_OF_SPADES',
+                'QUEEN_OF_SPADES',
+                'KING_OF_SPADES',
+            ]),
         );
 
         equipped.value = pack;
 
         await waitFor(() =>
-            expect(handOrder()).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']),
+            expect(handOrder()).toEqual([
+                'SIX_OF_CLUBS',
+                'KING_OF_SPADES',
+                'JACK_OF_SPADES',
+                'QUEEN_OF_SPADES',
+            ]),
         );
     });
 
