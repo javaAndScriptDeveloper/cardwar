@@ -63,10 +63,12 @@ public class DuelCompletionService {
                 duel.stake()));
 
         boolean staked = duel.stake() > 0;
+        // The bonus is for the streak the winner brought to the table, read before this win extends it.
+        int streakBefore = winner == null ? 0 : accounts.progressOf(winner).winStreak();
         accounts.recordDuelPlayed(playerA, outcomeFor(playerA, outcome), staked);
         accounts.recordDuelPlayed(playerB, outcomeFor(playerB, outcome), staked);
         // Same transaction as the result row: the pot is paid exactly when the result becomes durable.
-        wallets.settle(duelId.toString(), winner);
+        wallets.settle(duelId.toString(), winner, streakBefore);
         log.info("Duel {} finished after {} moves", duelId, duel.moveCount());
     }
 

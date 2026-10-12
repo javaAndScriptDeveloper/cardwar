@@ -10,8 +10,10 @@ import cardwar.engine.DuelId;
 import cardwar.engine.DurakEngine;
 import cardwar.engine.GameCommand;
 import cardwar.engine.PlayerId;
+import cardwar.session.service.DuelCompletionService;
 import cardwar.session.service.StakeSweepService;
 import cardwar.session.store.GameStateStore;
+import cardwar.session.store.StoredDuel;
 import cardwar.wallet.dto.CoinKind;
 import cardwar.wallet.service.WalletService;
 import java.time.Instant;
@@ -43,6 +45,9 @@ class StakeIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     GameStateStore store;
+
+    @Autowired
+    DuelCompletionService completion;
 
     ApiDriver api;
     ApiDriver.Player alice;
@@ -208,6 +213,56 @@ class StakeIntegrationTest extends AbstractIntegrationTest {
         wallets.settle(refunded, bob.id());
         assertThat(wallets.balance(alice.id())).isEqualTo(600);
         assertThat(wallets.balance(bob.id())).isEqualTo(400);
+    }
+
+    @Test
+    void aStakedWinOnAStreakPaysABonusFromTheHouseOnceEvenIfCompletionRunsTwice() throws Exception {
+        var duels = new FinishedDuels(completion, wallets);
+        // The first win starts the streak; nothing is on it yet, so the pot is all it pays.
+        duels.won(alice, bob, 100);
+        assertThat(wallets.balance(alice.id())).isEqualTo(600);
+
+        StoredDuel second = duels.decided(alice, bob, 100);
+        completion.complete(second, Instant.now());
+        completion.complete(second, Instant.now());
+
+        // Pot 200 plus 10% of the stake for a streak of one before this win.
+        assertThat(wallets.balance(alice.id())).isEqualTo(710);
+        assertThat(wallets.balance(bob.id())).isEqualTo(300);
+        assertThat(wallets.transactions(alice.id()).stream()
+                        .filter(row -> row.kind() == CoinKind.STREAK_BONUS)
+                        .count())
+                .isEqualTo(1);
+        assertThat(wallets.ledgerSum(alice.id())).isEqualTo(710);
+        String duelId = second.state().duelId().value().toString();
+        mvc.perform(get("/api/v1/me/duels").headers(api.bearer(alice)))
+                .andExpect(jsonPath("$[0].duelId").value(duelId))
+                .andExpect(jsonPath("$[0].coinDelta").value(110));
+
+        // Two wins before this one: 20%.
+        duels.won(alice, bob, 100);
+        assertThat(wallets.balance(alice.id())).isEqualTo(830);
+    }
+
+    @Test
+    void aDrawOnAStreakPaysNoBonusAndSettleWithoutAStreakPaysThePotOnly() {
+        var duels = new FinishedDuels(completion, wallets);
+        duels.won(alice, bob, 100);
+
+        duels.drawn(alice, bob, 100);
+
+        assertThat(wallets.balance(alice.id())).isEqualTo(600);
+        assertThat(wallets.balance(bob.id())).isEqualTo(400);
+        assertThat(wallets.transactions(alice.id()).stream().noneMatch(row -> row.kind() == CoinKind.STREAK_BONUS))
+                .isTrue();
+
+        String duel = UUID.randomUUID().toString();
+        wallets.escrow(duel, 100, alice.id(), bob.id());
+        wallets.settle(duel, alice.id());
+        assertThat(wallets.balance(alice.id())).isEqualTo(700);
+        assertThat(WalletService.streakBonus(100, 0)).isZero();
+        assertThat(WalletService.streakBonus(100, 3)).isEqualTo(30);
+        assertThat(WalletService.streakBonus(500, 9)).isEqualTo(250);
     }
 
     @Test

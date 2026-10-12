@@ -52,3 +52,19 @@ stake, and history entries the caller's net coins for that duel.
 #### Scenario: Abandoned duel
 - **WHEN** both players abandon a staked duel and its state expires
 - **THEN** both stakes are returned exactly once
+
+### Requirement: Streak bonus
+When a staked duel is settled for a winner who was already on a win streak, the winner SHALL also receive
+`stake × 10% × min(streak before this win, 5)` from the house, as a `STREAK_BONUS` ledger row under the reference
+`duel:<duelId>:streak`, in the same transaction and behind the same already-settled guard as the pot, so a repeated
+settlement pays neither again. A draw and a friendly duel SHALL pay no bonus. A history entry's net coins SHALL
+include the bonus.
+
+#### Scenario: Second staked win in a row
+- **WHEN** a player who won their previous duel wins a 100-coin duel
+- **THEN** they receive the 200-coin pot and a 10-coin `STREAK_BONUS`, once, however many times completion runs
+- **AND** the history entry for that duel reads a net of +110
+
+#### Scenario: Long streak
+- **WHEN** a player on a streak of nine wins a 500-coin duel
+- **THEN** the bonus is 250 coins (50%, the cap)

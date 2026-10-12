@@ -24,8 +24,9 @@ public interface CoinTransactionRepository extends JpaRepository<CoinTransaction
     long sumByPlayer(@Param("playerId") UUID playerId);
 
     @Query("select coalesce(sum(t.amount), 0) from CoinTransaction t"
-            + " where t.playerId = :playerId and t.reference = :reference")
-    long sumByPlayerAndReference(@Param("playerId") UUID playerId, @Param("reference") String reference);
+            + " where t.playerId = :playerId and t.reference in :references")
+    long sumByPlayerAndReferenceIn(
+            @Param("playerId") UUID playerId, @Param("references") Collection<String> references);
 
     /** Escrows older than {@code before} with no payout or refund under the same reference. */
     @Query("select distinct e.reference from CoinTransaction e where e.kind = cardwar.wallet.dto.CoinKind.STAKE_ESCROW"

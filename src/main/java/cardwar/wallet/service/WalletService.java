@@ -30,6 +30,7 @@ public class WalletService {
 
     public static final long STARTER_COINS = 500;
     public static final String INSUFFICIENT_COINS = "INSUFFICIENT_COINS";
+    static final int MAX_BONUS_STREAK = 5;
 
     private final WalletRepository wallets;
     private final CoinTransactionRepository ledger;
@@ -121,6 +122,16 @@ public class WalletService {
     /** Pays the pot to the winner, or returns each stake when {@code winner} is null (a draw). Safe to repeat. */
     @Transactional
     public void settle(String duelReference, UUID winner) {
+        settle(duelReference, winner, 0);
+    }
+
+    /**
+     * {@link #settle(String, UUID)} plus the streak bonus: a winner who was already on {@code streakBeforeWin} wins
+     * gets {@link #streakBonus} from the house on top of the pot. It is paid in the same guarded pass as the pot, so a
+     * repeated settlement pays neither again; a draw has no winner and so no bonus.
+     */
+    @Transactional
+    public void settle(String duelReference, UUID winner, int streakBeforeWin) {
         List<CoinTransaction> escrows = lockEscrowed(duelReference);
         if (escrows.isEmpty() || alreadySettled(duelReference)) {
             return;
@@ -131,7 +142,24 @@ public class WalletService {
         }
         long pot = escrows.stream().mapToLong(row -> -row.getAmount()).sum();
         credit(winner, pot, CoinKind.STAKE_PAYOUT, duelReference);
-        log.info("Paid the pot of duel {} to the winner", duelReference);
+        long stake = escrows.stream()
+                .filter(row -> row.getPlayerId().equals(winner))
+                .mapToLong(row -> -row.getAmount())
+                .sum();
+        long bonus = streakBonus(stake, streakBeforeWin);
+        if (bonus > 0) {
+            credit(winner, bonus, CoinKind.STREAK_BONUS, streakReference(duelReference));
+        }
+        log.info("Paid the pot of duel {} to the winner (streak bonus {})", duelReference, bonus);
+    }
+
+    /** 10% of the stake per win already on the streak, capped at five wins (50%). */
+    public static long streakBonus(long stake, int streakBeforeWin) {
+        return stake * 10 * Math.min(Math.max(streakBeforeWin, 0), MAX_BONUS_STREAK) / 100;
+    }
+
+    private static String streakReference(String duelReference) {
+        return "duel:" + duelReference + ":streak";
     }
 
     /** Returns each escrowed stake. Safe to repeat; used for draws and for duels nobody finished. */
@@ -171,10 +199,10 @@ public class WalletService {
         return ledger.unsettledEscrowReferences(before);
     }
 
-    /** What this duel did to this player's coins, net. */
+    /** What this duel did to this player's coins, net: stake, payout or refund, and the streak bonus if any. */
     @Transactional(readOnly = true)
     public long netFor(UUID playerId, String duelReference) {
-        return ledger.sumByPlayerAndReference(playerId, duelReference);
+        return ledger.sumByPlayerAndReferenceIn(playerId, List.of(duelReference, streakReference(duelReference)));
     }
 
     private boolean apply(Wallet wallet, long amount, CoinKind kind, String reference) {
