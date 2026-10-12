@@ -12,3 +12,7 @@ if (!('animate' in Element.prototype)) {
         configurable: true,
     });
 }
+
+// Pointer capture is part of the swipe gesture; jsdom does not implement it.
+Element.prototype.setPointerCapture ??= () => {};
+Element.prototype.releasePointerCapture ??= () => {};

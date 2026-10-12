@@ -2,8 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
 import type { DuelView, MoveRequest } from '../api/types';
-import { type Card, sameCard } from '../game/cards';
-import { type Result, resultOf } from '../game/diff';
+import { audio } from '../audio';
+import type { SignedInPlayer } from '../auth/session';
+import { type Card, cardId, sameCard } from '../game/cards';
+import { diffViews, type Result, resultOf, type TableEvent } from '../game/diff';
+import { animate } from '../motion';
+import { settings } from '../state/settings';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
@@ -19,6 +23,7 @@ export type StreamOpener = (
 
 interface Props {
     duelId: string;
+    player: SignedInPlayer;
     api: DuelApi;
     telegram: Telegram;
     openStream: StreamOpener;
@@ -45,10 +50,13 @@ function explain(result: Result, opponentName: string): string {
  * <p>The backend deletes a duel the moment it finishes. Whoever did not make the last move therefore gets a 404 on
  * the re-fetch, and the result comes from their history instead.
  */
-export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props) {
+export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }: Props) {
     const [state, setState] = useState<State>({ kind: 'loading' });
     const [opponentName, setOpponentName] = useState(t('duel.opponent'));
     const version = useRef(-1);
+    const previousView = useRef<DuelView>(undefined);
+    const [lastEvents, setLastEvents] = useState<TableEvent[]>([]);
+    const tableRef = useRef<HTMLDivElement>(null);
     const closeStream = useRef<() => void>(() => {});
 
     const finishFromHistory = useCallback(async () => {
@@ -65,18 +73,39 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
         }
     }, [api, duelId]);
 
-    const show = useCallback((view: DuelView) => {
-        if (view.version < version.current) {
+    const show = useCallback(
+        (view: DuelView) => {
+            if (view.version < version.current) {
+                return;
+            }
+            version.current = view.version;
+            const events = diffViews(previousView.current, view);
+            previousView.current = view;
+            // Sounds and haptics need no element, so they fire here; animations wait for the render (see below).
+            for (const event of events) {
+                react(event, telegram.haptic);
+            }
+            setLastEvents(events);
+            if (view.phase === 'FINISHED') {
+                closeStream.current();
+                setState({ kind: 'over', result: resultOf(view) });
+            } else {
+                setState({ kind: 'playing', view });
+            }
+        },
+        [telegram],
+    );
+
+    // Animate what the last view changed, once its elements exist.
+    useEffect(() => {
+        const root = tableRef.current;
+        if (!root || lastEvents.length === 0) {
             return;
         }
-        version.current = view.version;
-        if (view.phase === 'FINISHED') {
-            closeStream.current();
-            setState({ kind: 'over', result: resultOf(view) });
-        } else {
-            setState({ kind: 'playing', view });
+        for (const event of lastEvents) {
+            void animateEvent(root, event);
         }
-    }, []);
+    }, [lastEvents]);
 
     // One re-fetch in flight at a time. A move produces a burst of events, and each is a nudge; they collapse into
     // at most one follow-up fetch, which keeps a fast game well inside the per-player rate limit.
@@ -176,6 +205,10 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                 await refresh();
             } else {
                 telegram.haptic('error');
+                const hand = tableRef.current?.querySelector('[data-testid="hand"]');
+                if (hand) {
+                    void animate(hand, 'shake', {});
+                }
                 if (error instanceof ApiError) {
                     say(
                         reasonMessage(error.reason) ?? describeError(error),
@@ -244,6 +277,11 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                     class={`result ${state.result.result.toLowerCase()}`}
                     data-testid="result"
                     data-result={state.result.result}
+                    ref={(el) => {
+                        if (el) {
+                            void animate(el, 'deal', {});
+                        }
+                    }}
                 >
                     <h1>{t(`duel.result.${state.result.result}`)}</h1>
                     <p>{explain(state.result, opponentName)}</p>
@@ -254,12 +292,14 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
             );
         case 'playing':
             return (
-                <>
+                <div class="duel" ref={tableRef}>
                     <Table
                         view={state.view}
-                        opponentName={opponentName}
+                        you={{ name: t('duel.you'), photoUrl: player.photoUrl }}
+                        opponent={{ name: opponentName }}
                         selectedTarget={selectedTarget}
                         busy={busy}
+                        swipe={settings.value.swipe}
                         onHandCard={(card) => onHandCard(state.view, card)}
                         onTableCard={(attack) => onTableCard(state.view, attack)}
                         onTake={() => void play({ type: 'TAKE' })}
@@ -270,7 +310,91 @@ export function DuelScreen({ duelId, api, telegram, openStream, onExit }: Props)
                             {toast.text}
                         </p>
                     )}
-                </>
+                </div>
             );
+    }
+}
+
+/** Sounds and haptics for one table event. Cosmetic by contract: nothing here can produce a move. */
+function react(event: TableEvent, haptic: Telegram['haptic']): void {
+    switch (event.type) {
+        case 'card_played':
+            audio.play('slide');
+            break;
+        case 'card_beaten':
+            audio.play('beat');
+            if (event.by === 'you') {
+                haptic('success');
+            }
+            break;
+        case 'cards_taken':
+            audio.play('take');
+            if (event.by === 'you') {
+                haptic('warning');
+            }
+            break;
+        case 'card_dealt':
+            if (event.to === 'you') {
+                audio.play('deal');
+            }
+            break;
+        case 'turn_started':
+            if (event.yours) {
+                audio.play('turn');
+            }
+            break;
+        case 'duel_finished':
+            audio.play(event.result === 'LOST' ? 'lose' : 'win');
+            haptic(event.result === 'LOST' ? 'error' : 'success');
+            break;
+        case 'duel_started':
+        case 'attack_ended':
+            break;
+    }
+}
+
+/** Animations for one table event, on the elements the new view rendered. */
+async function animateEvent(root: HTMLElement, event: TableEvent): Promise<void> {
+    const pair = (card: Card) => root.querySelector(`.pair[data-attack="${cardId(card)}"]`);
+    switch (event.type) {
+        case 'card_played': {
+            const el = pair(event.card);
+            if (el) {
+                await animate(el, 'deal', {});
+            }
+            break;
+        }
+        case 'card_beaten': {
+            const el = pair(event.attack)?.querySelector('.defence') ?? pair(event.attack);
+            if (el) {
+                await animate(el, 'beat', {});
+            }
+            break;
+        }
+        case 'cards_taken': {
+            const felt = root.querySelector('[data-testid="felt"]');
+            if (felt && event.by === 'you') {
+                await animate(felt, 'shake', {});
+            }
+            break;
+        }
+        case 'turn_started': {
+            const status = root.querySelector('[role="status"]');
+            if (status && event.yours) {
+                await animate(status, 'pulse', {});
+            }
+            break;
+        }
+        case 'card_dealt': {
+            const hand = root.querySelector('[data-testid="hand"]');
+            if (hand && event.to === 'you') {
+                await animate(hand, 'deal', {});
+            }
+            break;
+        }
+        case 'duel_started':
+        case 'attack_ended':
+        case 'duel_finished':
+            break;
     }
 }

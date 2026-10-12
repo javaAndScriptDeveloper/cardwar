@@ -5,7 +5,16 @@ import { ApiError } from '../api/client';
 import type { DuelView } from '../api/types';
 import { c, view } from '../game/fixtures/views';
 import { resolveTelegram } from '../telegram/webapp';
+import { audio } from '../audio';
+import { animate } from '../motion';
 import { DuelScreen } from './DuelScreen';
+
+vi.mock('../audio', () => ({ audio: { play: vi.fn() } }));
+vi.mock('../motion', () => ({
+    animate: vi.fn().mockResolvedValue(undefined),
+    flyTo: vi.fn().mockResolvedValue(undefined),
+    motionEnabled: () => true,
+}));
 
 function setup(start: DuelView) {
     const api = {
@@ -18,6 +27,7 @@ function setup(start: DuelView) {
     render(
         <DuelScreen
             duelId="duel-1"
+            player={{ playerId: 'me', username: 'alice' }}
             api={api}
             telegram={telegram}
             openStream={() => () => {}}
@@ -193,5 +203,56 @@ describe('moves', () => {
         await tap('SIX_OF_CLUBS');
 
         await waitFor(() => expect(screen.getByRole('heading', { name: t('duel.result.WON') })).toBeTruthy());
+    });
+
+    describe('feel', () => {
+        it('plays the beat sound, slams the card and buzzes when you beat a card', async () => {
+            const before = view({
+                attacker: 'them',
+                phase: 'DEFEND',
+                table: [{ attack: c('SEVEN', 'SPADES') }],
+            });
+            const after = view({
+                attacker: 'them',
+                phase: 'DEFEND',
+                table: [{ attack: c('SEVEN', 'SPADES'), defence: c('NINE', 'SPADES') }],
+                hand: [c('SIX', 'CLUBS'), c('ACE', 'HEARTS')],
+                version: 1,
+            });
+            const { api, telegram } = setup(before);
+            api.move.mockResolvedValue(after);
+
+            await tap('NINE_OF_SPADES');
+
+            await waitFor(() => expect(audio.play).toHaveBeenCalledWith('beat'));
+            expect(telegram.haptic).toHaveBeenCalledWith('success');
+            await waitFor(() =>
+                expect(animate).toHaveBeenCalledWith(expect.any(Element), 'beat', expect.anything()),
+            );
+        });
+
+        it('plays the lose sound when the duel is lost', async () => {
+            const lost = view({
+                phase: 'FINISHED',
+                outcome: { winner: 'them', loser: 'me', draw: false, reason: 'OUT_OF_CARDS' },
+            });
+            setup(lost);
+
+            await waitFor(() =>
+                expect(screen.getByTestId('result').getAttribute('data-result')).toBe('LOST'),
+            );
+            expect(audio.play).toHaveBeenCalledWith('lose');
+        });
+
+        it('shakes the hand on an illegal move', async () => {
+            const { api } = setup(view());
+            api.move.mockRejectedValue(new ApiError(400, { reason: 'NOT_YOUR_TURN' }));
+
+            await tap('SIX_OF_CLUBS');
+
+            await waitFor(() =>
+                expect(animate).toHaveBeenCalledWith(expect.any(Element), 'shake', expect.anything()),
+            );
+        });
     });
 });

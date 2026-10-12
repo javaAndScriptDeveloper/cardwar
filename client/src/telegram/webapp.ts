@@ -35,7 +35,7 @@ export interface TelegramUser {
     photoUrl?: string;
 }
 
-export type HapticKind = 'success' | 'error' | 'tap';
+export type HapticKind = 'success' | 'error' | 'warning' | 'tap';
 
 export interface Telegram {
     /** True only inside a Telegram client, where initData is signed and the server will accept it. */

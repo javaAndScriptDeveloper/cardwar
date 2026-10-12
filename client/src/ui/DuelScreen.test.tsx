@@ -25,6 +25,7 @@ function setup() {
     const utils = render(
         <DuelScreen
             duelId="duel-1"
+            player={{ playerId: 'me', username: 'alice' }}
             api={api}
             telegram={resolveTelegram({})}
             openStream={openStream}

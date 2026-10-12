@@ -57,6 +57,7 @@ if (root) {
                         <DuelScreen
                             key={duelId}
                             duelId={duelId}
+                            player={player}
                             api={api}
                             telegram={telegram}
                             openStream={openStream}

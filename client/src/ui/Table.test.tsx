@@ -7,7 +7,8 @@ import { Table, type TableProps } from './Table';
 function renderTable(overrides: Partial<TableProps> = {}) {
     const props: TableProps = {
         view: view(),
-        opponentName: 'Bob',
+        you: { name: 'Я' },
+        opponent: { name: 'Bob' },
         onHandCard: vi.fn(),
         onTableCard: vi.fn(),
         onTake: vi.fn(),
@@ -107,5 +108,62 @@ describe('Table', () => {
                 'aria-pressed',
             ),
         ).toBe('true');
+    });
+
+    describe('swipe to play', () => {
+        function drag(el: Element, dx: number, dy: number) {
+            fireEvent.pointerDown(el, { pointerId: 1, clientX: 100, clientY: 300, isPrimary: true });
+            fireEvent.pointerMove(el, { pointerId: 1, clientX: 100 + dx / 2, clientY: 300 + dy / 2 });
+            fireEvent.pointerMove(el, { pointerId: 1, clientX: 100 + dx, clientY: 300 + dy });
+            fireEvent.pointerUp(el, { pointerId: 1, clientX: 100 + dx, clientY: 300 + dy });
+            // Browsers send a click after pointerup on the same element, drag or not.
+            fireEvent.click(el);
+        }
+        const firstCard = () => document.querySelector('.hand-card') as HTMLElement;
+
+        it('plays a card on an upward swipe', () => {
+            const { props } = renderTable({ swipe: true });
+            drag(firstCard(), 0, -80);
+            expect(props.onHandCard).toHaveBeenCalledTimes(1);
+            expect(props.onHandCard).toHaveBeenCalledWith(c('SIX', 'CLUBS'));
+        });
+
+        it('a tap still plays exactly once', () => {
+            const { props } = renderTable({ swipe: true });
+            drag(firstCard(), 0, 0);
+            expect(props.onHandCard).toHaveBeenCalledTimes(1);
+        });
+
+        it('short drag is a no-op', () => {
+            const { props } = renderTable({ swipe: true });
+            drag(firstCard(), 0, -20);
+            expect(props.onHandCard).not.toHaveBeenCalled();
+        });
+
+        it('horizontal drag is a no-op', () => {
+            const { props } = renderTable({ swipe: true });
+            drag(firstCard(), 90, -10);
+            expect(props.onHandCard).not.toHaveBeenCalled();
+        });
+
+        it('does not swipe when the setting is off, but still taps', () => {
+            const { props } = renderTable({ swipe: false });
+            drag(firstCard(), 0, -80);
+            expect(props.onHandCard).not.toHaveBeenCalled();
+            drag(firstCard(), 0, 0);
+            expect(props.onHandCard).toHaveBeenCalledTimes(1);
+        });
+
+        it('ignores drags while a move is in flight', () => {
+            const { props } = renderTable({ swipe: true, busy: true });
+            drag(firstCard(), 0, -80);
+            expect(props.onHandCard).not.toHaveBeenCalled();
+        });
+    });
+
+    it('shows both avatars', () => {
+        renderTable({ you: { name: 'Я' }, opponent: { name: 'Оля Коваль' } });
+        expect(screen.getByTestId('opponent-avatar').textContent).toBe('ОК');
+        expect(screen.getByTestId('you-avatar').textContent).toBe('Я');
     });
 });
