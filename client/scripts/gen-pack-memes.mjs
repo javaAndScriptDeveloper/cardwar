@@ -2,7 +2,7 @@
 /**
  * Generates the `memes-demo` content pack: 36 placeholder faces (a colour and a generic meme title per tag, the
  * rank and suit large enough to play by), a back, two synthesized sounds and the manifest with four rules that
- * exercise every effect type. The titles are deliberately generic roles, never real people; the owner replaces
+ * exercise every effect type, the spoken line included. The titles are deliberately generic roles, never real people; the owner replaces
  * faces and titles with real content later. The output is committed, like the classic deck.
  *
  *   npm run gen:pack:memes
@@ -132,7 +132,7 @@ const manifest = {
             id: 'victory-fanfare',
             on: 'duel_finished',
             if: { outcome: 'WON' },
-            do: [{ sound: 'fanfare' }, { haptic: 'success' }],
+            do: [{ sound: 'fanfare' }, { haptic: 'success' }, { say: { uk: 'Перемога!' } }],
         },
     ],
 };

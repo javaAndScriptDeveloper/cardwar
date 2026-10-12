@@ -57,7 +57,9 @@ export type Effect =
     | { anim: string; target?: Target }
     | { bubble: Localized; target?: Target }
     | { haptic: PackHaptic }
-    | { layout: LayoutKind; cards: string[] };
+    | { layout: LayoutKind; cards: string[] }
+    /** Read aloud by the device's Ukrainian voice; shown as a bubble on the table where there is none. */
+    | { say: Localized; rate?: number; pitch?: number };
 
 export interface Rule {
     id: string;

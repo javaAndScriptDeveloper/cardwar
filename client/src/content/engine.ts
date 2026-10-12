@@ -19,7 +19,7 @@ type Side = 'you' | 'opponent';
 
 /** Where a visual effect lands: an area of the table, or one card of a pair (pairs are keyed by their attack). */
 export type Anchor =
-    { area: 'hand' | 'table' | 'you' | 'opponent' } | { card: string; slot: 'attack' | 'defence' };
+    { area: 'hand' | 'table' | 'felt' | 'you' | 'opponent' } | { card: string; slot: 'attack' | 'defence' };
 
 /** A resolved effect, ready for the runtime: names looked up, targets anchored. */
 export type Action =
@@ -28,7 +28,9 @@ export type Action =
     | { kind: 'motion'; primitive: AnimPrimitive; anchor: Anchor }
     | { kind: 'bubble'; text: Localized; anchor: Anchor }
     | { kind: 'haptic'; haptic: PackHaptic }
-    | { kind: 'layout'; layout: LayoutKind; cards: string[] };
+    | { kind: 'layout'; layout: LayoutKind; cards: string[] }
+    /** Spoken at once; the anchor is where the line is shown when the device cannot speak it. */
+    | { kind: 'say'; text: Localized; rate?: number; pitch?: number; anchor: Anchor };
 
 export interface Firing {
     ruleId: string;
@@ -65,6 +67,7 @@ interface Facts {
 const AREAS = {
     hand: { area: 'hand' },
     table: { area: 'table' },
+    felt: { area: 'felt' },
     you: { area: 'you' },
     opponent: { area: 'opponent' },
 } as const;
@@ -199,6 +202,17 @@ function resolve(effect: Effect, facts: Facts, context: EngineContext): Action |
         }
         warn(`content: unknown haptic "${String(raw['haptic'])}" skipped`);
         return undefined;
+    }
+    if ('say' in raw) {
+        const rate = raw['rate'];
+        const pitch = raw['pitch'];
+        return {
+            kind: 'say',
+            text: raw['say'] as Localized,
+            ...(typeof rate === 'number' ? { rate } : {}),
+            ...(typeof pitch === 'number' ? { pitch } : {}),
+            anchor: AREAS.table,
+        };
     }
     if ('layout' in raw) {
         if (oneOf(LAYOUTS, raw['layout']) && Array.isArray(raw['cards'])) {

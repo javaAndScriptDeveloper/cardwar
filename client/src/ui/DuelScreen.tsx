@@ -3,6 +3,7 @@ import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
 import type { ChallengeView, DuelEvent, DuelSummary, DuelView, InviteView, MoveRequest } from '../api/types';
 import { audio } from '../audio';
+import { speech } from '../audio/speech';
 import type { SignedInPlayer } from '../auth/session';
 import type { LayoutDirective } from '../content/layout';
 import { equipped } from '../content/loader';
@@ -169,6 +170,7 @@ export function DuelScreen({
             pack &&
             new PackRuntime(pack, {
                 audio,
+                speech,
                 haptic: buzz,
                 animate: (el, primitive) => animate(el, primitive),
                 motionEnabled,

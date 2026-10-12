@@ -242,6 +242,7 @@ describe('evaluate: effects', () => {
         ['defence', EVENTS.card_beaten, 'defence', { card: 'ACE_OF_HEARTS', slot: 'defence' }],
         ['hand', EVENTS.card_beaten, 'hand', { area: 'hand' }],
         ['table', EVENTS.card_beaten, 'table', { area: 'table' }],
+        ['felt', EVENTS.card_beaten, 'felt', { area: 'felt' }],
         ['you', EVENTS.card_beaten, 'you', { area: 'you' }],
         ['opponent', EVENTS.card_beaten, 'opponent', { area: 'opponent' }],
         ['default with a card', EVENTS.card_played, undefined, { card: 'SIX_OF_CLUBS', slot: 'attack' }],
@@ -262,6 +263,13 @@ describe('evaluate: effects', () => {
     it('shows bubbles at their anchor', () => {
         expect(run([{ bubble: { uk: 'Ой' }, target: 'beaten' }])).toEqual([
             { kind: 'bubble', text: { uk: 'Ой' }, anchor: { card: 'ACE_OF_HEARTS', slot: 'attack' } },
+        ]);
+    });
+
+    it('resolves say lines with their rate and pitch, anchored to the table for the bubble fallback', () => {
+        expect(run([{ say: { uk: 'Йоу' } }, { say: { uk: 'Мінус гроші' }, rate: 1.3, pitch: 0.7 }])).toEqual([
+            { kind: 'say', text: { uk: 'Йоу' }, anchor: { area: 'table' } },
+            { kind: 'say', text: { uk: 'Мінус гроші' }, rate: 1.3, pitch: 0.7, anchor: { area: 'table' } },
         ]);
     });
 

@@ -173,7 +173,7 @@
       "id": "victory-fanfare",
       "on": "duel_finished",
       "if": { "outcome": "WON" },
-      "do": [{ "sound": "fanfare" }, { "haptic": "success" }]
+      "do": [{ "sound": "fanfare" }, { "haptic": "success" }, { "say": { "uk": "Перемога!" } }]
     }
   ]
 }

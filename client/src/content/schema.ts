@@ -31,8 +31,9 @@ export const CONDITIONS = [
     'any',
 ] as const;
 
-export const EFFECTS = ['sound', 'anim', 'bubble', 'haptic', 'layout'] as const;
-export const TARGETS = ['played', 'beaten', 'defence', 'hand', 'table', 'you', 'opponent'] as const;
+export const EFFECTS = ['sound', 'anim', 'bubble', 'haptic', 'layout', 'say'] as const;
+/** `table` is the pairs area; `felt` the whole green, for effects such as a blackout. */
+export const TARGETS = ['played', 'beaten', 'defence', 'hand', 'table', 'felt', 'you', 'opponent'] as const;
 export const HAPTICS = ['success', 'error', 'warning', 'tap'] as const;
 export const LAYOUTS = ['stick_together', 'pin_left', 'pin_right'] as const;
 /** Motion primitives a rule may name; `glide` needs two rects, so it is not a rule effect. */
@@ -83,13 +84,18 @@ const TOP_LEVEL = [
 ];
 const RULE_KEYS = ['id', 'on', 'if', 'do', 'cooldownMs'];
 const MATCHER_KEYS = ['id', 'rank', 'suit', 'tag'];
+const SAY_KEYS = ['say', 'rate', 'pitch'];
 const MAX_DURATION_MS = 10_000;
+/** A spoken line must fit a bubble too, because that is its fallback. */
+const MAX_SAY_CHARS = 120;
+const RATE_RANGE = [0.5, 2] as const;
+const PITCH_RANGE = [0, 2] as const;
 
 const isObject = (value: unknown): value is Json =>
     typeof value === 'object' && value !== null && !Array.isArray(value);
 const oneOf = (list: readonly string[], value: unknown): boolean =>
     typeof value === 'string' && list.includes(value);
-const isLocalized = (value: unknown): boolean =>
+const isLocalized = (value: unknown): value is { uk: string } =>
     isObject(value) && typeof value['uk'] === 'string' && value['uk'].trim().length > 0;
 const quote = (list: readonly string[]) => list.map((item) => `"${item}"`).join(', ');
 
@@ -320,6 +326,12 @@ export function validatePack(json: unknown, options: ValidateOptions): Validatio
         if (target !== undefined && !oneOf(TARGETS, target)) {
             fail(`${path}.target`, `expected one of ${quote(TARGETS)}`);
         }
+        const inRange = (key: string, [min, max]: readonly [number, number]) => {
+            const item = value[key];
+            if (item !== undefined && (typeof item !== 'number' || item < min || item > max)) {
+                fail(`${path}.${key}`, `expected a number in ${min}..${max}`);
+            }
+        };
         switch (kinds[0]) {
             case 'sound':
                 if (!oneOf(soundNames, value['sound'])) {
@@ -347,6 +359,22 @@ export function validatePack(json: unknown, options: ValidateOptions): Validatio
                 }
                 cardList(`${path}.cards`, value['cards'], value['layout'] === 'stick_together' ? 2 : 1);
                 break;
+            case 'say': {
+                const line = value['say'];
+                if (!isLocalized(line)) {
+                    fail(`${path}.say`, 'expected { "uk": "..." }');
+                } else if (line.uk.length > MAX_SAY_CHARS) {
+                    fail(`${path}.say`, `expected at most ${MAX_SAY_CHARS} characters`);
+                }
+                inRange('rate', RATE_RANGE);
+                inRange('pitch', PITCH_RANGE);
+                for (const key of Object.keys(value)) {
+                    if (!SAY_KEYS.includes(key)) {
+                        unknown(`${path}.${key}`, 'unknown key');
+                    }
+                }
+                break;
+            }
         }
     };
 

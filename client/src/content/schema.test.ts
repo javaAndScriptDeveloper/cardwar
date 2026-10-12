@@ -189,6 +189,56 @@ describe('validatePack', () => {
         expect(errorsOf(json).join('\n')).toContain(message);
     });
 
+    describe('say effect', () => {
+        const say = (effect: Record<string, unknown>) => withRule({ do: [effect] });
+
+        it('accepts a line with optional rate and pitch', () => {
+            expect(errorsOf(say({ say: { uk: 'Мінус гроші' } }))).toEqual([]);
+            expect(errorsOf(say({ say: { uk: 'Йоу' }, rate: 0.5, pitch: 2 }))).toEqual([]);
+        });
+
+        it.each([
+            ['empty text', { say: { uk: '' } }, 'rules[0].do[0].say: expected { "uk": "..." }'],
+            ['missing text', { say: 'Йоу' }, 'rules[0].do[0].say: expected { "uk": "..." }'],
+            [
+                'text over 120 chars',
+                { say: { uk: 'а'.repeat(121) } },
+                'rules[0].do[0].say: expected at most 120',
+            ],
+            [
+                'rate above 2',
+                { say: { uk: 'Йоу' }, rate: 3 },
+                'rules[0].do[0].rate: expected a number in 0.5..2',
+            ],
+            ['rate below 0.5', { say: { uk: 'Йоу' }, rate: 0.1 }, 'rules[0].do[0].rate'],
+            [
+                'pitch above 2',
+                { say: { uk: 'Йоу' }, pitch: 2.5 },
+                'rules[0].do[0].pitch: expected a number in 0..2',
+            ],
+            ['pitch not a number', { say: { uk: 'Йоу' }, pitch: 'high' }, 'rules[0].do[0].pitch'],
+        ])('rejects %s', (_, effect, message) => {
+            expect(errorsOf(say(effect)).join('\n')).toContain(message);
+        });
+
+        it('reports unknown keys beside say as errors when strict and as warnings otherwise', () => {
+            const json = say({ say: { uk: 'Йоу' }, volume: 1 });
+            expect(validatePack(json, { strict: true }).errors).toEqual([
+                'rules[0].do[0].volume: unknown key',
+            ]);
+            expect(validatePack(json, { strict: false })).toEqual({
+                errors: [],
+                warnings: ['rules[0].do[0].volume: unknown key'],
+            });
+        });
+    });
+
+    it('accepts the felt as an animation target', () => {
+        expect(errorsOf(withRule({ do: [{ anim: 'shake', target: 'felt' }] }))).toEqual([]);
+        expect(TARGETS).toContain('felt');
+        expect(EFFECTS).toContain('say');
+    });
+
     it('requires all 36 faces', () => {
         const cards = { ...(deck()['cards'] as Record<string, unknown>) };
         delete cards['ACE_OF_SPADES'];

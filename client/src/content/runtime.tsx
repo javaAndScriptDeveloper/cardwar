@@ -25,6 +25,8 @@ export interface Bubble {
 export interface RuntimeDeps {
     /** Already gated by the sound setting. */
     audio: { play(name: string): void };
+    /** Gated by the sound setting too; false means nothing was spoken, so the line is shown instead. */
+    speech: { say(text: string, options?: { rate?: number; pitch?: number }): boolean };
     /** Already gated by the vibration setting. */
     haptic: (kind: HapticKind) => void;
     /** Already gated by reduced motion. */
@@ -44,7 +46,8 @@ type Visual = Extract<Action, { kind: 'css' | 'motion' | 'bubble' }>;
 
 const AREA_SELECTORS = {
     hand: '[data-testid="hand"]',
-    table: '[data-testid="felt"]',
+    table: '[data-testid="pairs"]',
+    felt: '[data-testid="felt"]',
     you: '[data-testid="you-avatar"]',
     opponent: '[data-testid="opponent-avatar"]',
 } as const;
@@ -102,6 +105,20 @@ export class PackRuntime {
                         case 'layout':
                             layouts.push({ layout: action.layout, cards: action.cards });
                             break;
+                        case 'say': {
+                            const { rate, pitch } = action;
+                            const options = {
+                                ...(rate !== undefined ? { rate } : {}),
+                                ...(pitch !== undefined ? { pitch } : {}),
+                            };
+                            if (!this.deps.speech.say(action.text.uk, options)) {
+                                this.pending.push({
+                                    ruleId,
+                                    action: { kind: 'bubble', text: action.text, anchor: action.anchor },
+                                });
+                            }
+                            break;
+                        }
                         default:
                             this.pending.push({ ruleId, action });
                     }

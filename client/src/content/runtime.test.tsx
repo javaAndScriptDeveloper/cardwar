@@ -52,6 +52,7 @@ function deps(overrides: Partial<RuntimeDeps> = {}) {
     let now = 1000;
     const all = {
         audio: { play: vi.fn() },
+        speech: { say: vi.fn(() => true) },
         haptic: vi.fn(),
         animate: vi.fn(async () => {}),
         motionEnabled: () => true,
@@ -67,7 +68,7 @@ function table(): HTMLElement {
     const root = document.createElement('div');
     root.innerHTML = `
         <div data-testid="opponent-avatar"></div>
-        <div data-testid="felt"><button class="pair" data-attack="ACE_OF_HEARTS"><img><img class="card defence"></button></div>
+        <div data-testid="felt"><div data-testid="pairs"><button class="pair" data-attack="ACE_OF_HEARTS"><img><img class="card defence"></button></div></div>
         <div data-testid="you-avatar"></div>
         <div data-testid="hand"></div>`;
     document.body.append(root);
@@ -192,6 +193,65 @@ describe('PackRuntime', () => {
 
         vi.advanceTimersByTime(3000);
         expect(runtime.bubbles.value).toEqual([]);
+    });
+
+    describe('say', () => {
+        const talker: Rule = {
+            id: 'talker',
+            on: 'card_beaten',
+            do: [{ say: { uk: 'Мінус гроші' }, rate: 1.2, pitch: 0.8 }],
+        };
+
+        it('reads the line at once through the injected voice, with its rate and pitch', () => {
+            const { deps: d } = deps();
+            const runtime = new PackRuntime(pack([talker]), d);
+
+            runtime.handle([beaten], { hand: [], phase: 'DEFEND' });
+
+            expect(d.speech.say).toHaveBeenCalledWith('Мінус гроші', { rate: 1.2, pitch: 0.8 });
+            runtime.flush(table());
+            expect(runtime.bubbles.value).toEqual([]);
+        });
+
+        it('shows the line as a bubble over the pairs when the voice is silent', () => {
+            const { deps: d } = deps({ speech: { say: vi.fn(() => false) } });
+            const runtime = new PackRuntime(pack([talker]), d);
+            const root = table();
+            const pairs = root.querySelector<HTMLElement>('[data-testid="pairs"]');
+            if (!pairs) throw new Error('no pairs area');
+            pairs.getBoundingClientRect = () => ({ left: 50, top: 60, width: 100, height: 80 }) as DOMRect;
+
+            runtime.handle([beaten], { hand: [], phase: 'DEFEND' });
+            runtime.flush(root);
+
+            expect(runtime.bubbles.value).toHaveLength(1);
+            expect(runtime.bubbles.value[0]).toMatchObject({
+                ruleId: 'talker',
+                text: 'Мінус гроші',
+                left: 100,
+                top: 60,
+            });
+        });
+    });
+
+    it('toggles a css animation on the felt itself for its duration', () => {
+        const { deps: d } = deps();
+        const dark: Rule = {
+            id: 'dark',
+            on: 'cards_taken',
+            do: [{ anim: 'rain', target: 'felt' }],
+        };
+        const runtime = new PackRuntime(pack([dark]), d);
+        const root = table();
+        const felt = root.querySelector('[data-testid="felt"]');
+
+        runtime.handle([{ type: 'cards_taken', by: 'you', count: 2 }], { hand: [], phase: 'ATTACK' });
+        runtime.flush(root);
+        expect(felt?.classList.contains('fx-rain')).toBe(true);
+        expect(root.querySelector('[data-testid="pairs"]')?.classList.contains('fx-rain')).toBe(false);
+
+        vi.advanceTimersByTime(900);
+        expect(felt?.classList.contains('fx-rain')).toBe(false);
     });
 
     it('warns once per unknown thing, however often it comes up', () => {

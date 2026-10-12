@@ -213,7 +213,7 @@
       ]
     },
     "target": {
-      "enum": ["played", "beaten", "defence", "hand", "table", "you", "opponent"]
+      "enum": ["played", "beaten", "defence", "hand", "table", "felt", "you", "opponent"]
     },
     "haptic": {
       "enum": ["success", "error", "warning", "tap"]
@@ -359,6 +359,32 @@
         }
       }
     },
+    "sayEffect": {
+      "type": "object",
+      "required": ["say"],
+      "additionalProperties": false,
+      "description": "Spoken by the device's Ukrainian voice; falls back to a bubble on the table.",
+      "properties": {
+        "say": {
+          "allOf": [{ "$ref": "#/$defs/localized" }],
+          "properties": {
+            "uk": {
+              "maxLength": 120
+            }
+          }
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0.5,
+          "maximum": 2
+        },
+        "pitch": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 2
+        }
+      }
+    },
     "rule": {
       "type": "object",
       "required": ["id", "on", "do"],
@@ -393,6 +419,9 @@
               },
               {
                 "$ref": "#/$defs/layoutEffect"
+              },
+              {
+                "$ref": "#/$defs/sayEffect"
               }
             ]
           }
