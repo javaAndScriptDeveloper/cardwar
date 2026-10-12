@@ -1,11 +1,10 @@
+import { submitDevLogin } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 /**
  * The app shell outside a duel: tabs, settings that survive a reload, and a pending invite that comes back after
  * the Mini App is reopened (Telegram reloads it whenever the player switches to a chat).
  */
-
-const PASSWORD = 'correct-horse-battery';
 
 /** Signs in through the dev shim; with no path the current page is reloaded (a hash-only goto would not reload). */
 async function signInAs(page: Page, username: string, path?: string): Promise<void> {
@@ -14,9 +13,7 @@ async function signInAs(page: Page, username: string, path?: string): Promise<vo
     } else {
         await page.reload();
     }
-    await page.getByTestId('dev-username').fill(username);
-    await page.getByTestId('dev-password').fill(PASSWORD);
-    await page.getByTestId('dev-sign-in').click();
+    await submitDevLogin(page, username);
 }
 
 test('the shell navigates, remembers settings and resumes a pending invite', async ({ page }) => {

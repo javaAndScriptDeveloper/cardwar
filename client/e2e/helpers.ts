@@ -12,14 +12,34 @@ export function runSuffix(): string {
     return `${Date.now() % 1_000_000}`;
 }
 
+/**
+ * Fills and submits the dev-shim login on `page`. Sign-ins are rate limited per address (10 a minute, as in
+ * production), and a full E2E run signs in more often than that from one machine, so a throttled attempt waits for the
+ * bucket to refill and tries again, as a patient person would, instead of loosening the limit for tests.
+ */
+export async function submitDevLogin(page: Page, username: string): Promise<void> {
+    await page.getByTestId('dev-username').fill(username);
+    await page.getByTestId('dev-password').fill(PASSWORD);
+    for (let attempt = 1; ; attempt++) {
+        await page.getByTestId('dev-sign-in').click();
+        const signedIn = page.getByTestId('dev-sign-in').waitFor({ state: 'detached', timeout: 15_000 });
+        const refused = page.getByRole('alert').waitFor({ state: 'visible', timeout: 15_000 });
+        const outcome = await Promise.race([signedIn.then(() => 'in'), refused.then(() => 'refused')]).catch(
+            () => 'in',
+        );
+        if (outcome === 'in' || attempt >= 3) {
+            return;
+        }
+        await page.waitForTimeout(61_000);
+    }
+}
+
 /** Signs in (registering a new name) in a fresh browser context, as a separate person on a separate phone. */
 export async function signIn(browser: Browser, username: string, path = '/app/'): Promise<Page> {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(path);
-    await page.getByTestId('dev-username').fill(username);
-    await page.getByTestId('dev-password').fill(PASSWORD);
-    await page.getByTestId('dev-sign-in').click();
+    await submitDevLogin(page, username);
     return page;
 }
 

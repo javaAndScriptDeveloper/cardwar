@@ -1,3 +1,4 @@
+import { submitDevLogin } from './helpers';
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 
 /**
@@ -8,7 +9,6 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
  * decision is read from data-* attributes, never from visible copy.
  */
 
-const PASSWORD = 'correct-horse-battery';
 const RANKS = ['SIX', 'SEVEN', 'EIGHT', 'NINE', 'TEN', 'JACK', 'QUEEN', 'KING', 'ACE'];
 const MAX_MOVES = 600;
 const PLAY_DEADLINE_MS = 3 * 60_000;
@@ -38,9 +38,7 @@ async function signIn(browser: Browser, username: string, path = '/app/'): Promi
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(path);
-    await page.getByTestId('dev-username').fill(username);
-    await page.getByTestId('dev-password').fill(PASSWORD);
-    await page.getByTestId('dev-sign-in').click();
+    await submitDevLogin(page, username);
     return page;
 }
 

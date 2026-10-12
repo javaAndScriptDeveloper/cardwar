@@ -1,3 +1,4 @@
+import { submitDevLogin } from './helpers';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 /**
@@ -5,15 +6,11 @@ import { expect, test, type Browser, type Page } from '@playwright/test';
  * clock running. The duel itself is played out by duel.spec.ts; this only proves the pairing and the clock.
  */
 
-const PASSWORD = 'correct-horse-battery';
-
 async function signIn(browser: Browser, username: string): Promise<Page> {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto('/app/');
-    await page.getByTestId('dev-username').fill(username);
-    await page.getByTestId('dev-password').fill(PASSWORD);
-    await page.getByTestId('dev-sign-in').click();
+    await submitDevLogin(page, username);
     return page;
 }
 
