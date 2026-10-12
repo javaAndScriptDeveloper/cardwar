@@ -121,12 +121,12 @@ public class WalletService {
     /** Pays the pot to the winner, or returns each stake when {@code winner} is null (a draw). Safe to repeat. */
     @Transactional
     public void settle(String duelReference, UUID winner) {
-        List<CoinTransaction> escrows = ledger.findByReferenceAndKind(duelReference, CoinKind.STAKE_ESCROW);
-        if (escrows.isEmpty()) {
+        List<CoinTransaction> escrows = lockEscrowed(duelReference);
+        if (escrows.isEmpty() || alreadySettled(duelReference)) {
             return;
         }
         if (winner == null) {
-            refund(duelReference);
+            refundEscrows(escrows, duelReference);
             return;
         }
         long pot = escrows.stream().mapToLong(row -> -row.getAmount()).sum();
@@ -137,7 +137,30 @@ public class WalletService {
     /** Returns each escrowed stake. Safe to repeat; used for draws and for duels nobody finished. */
     @Transactional
     public void refund(String duelReference) {
-        for (CoinTransaction escrow : ledger.findByReferenceAndKind(duelReference, CoinKind.STAKE_ESCROW)) {
+        List<CoinTransaction> escrows = lockEscrowed(duelReference);
+        if (escrows.isEmpty() || alreadySettled(duelReference)) {
+            return;
+        }
+        refundEscrows(escrows, duelReference);
+    }
+
+    /**
+     * A duel's stakes end exactly one way: paid to a winner or returned. Payout and refund are different ledger kinds,
+     * so the per-kind idempotency key alone would let both happen (a sweep racing a late finish); both paths take the
+     * participants' wallet locks and then check for either outcome.
+     */
+    private boolean alreadySettled(String duelReference) {
+        return ledger.existsByReferenceAndKindIn(duelReference, List.of(CoinKind.STAKE_PAYOUT, CoinKind.STAKE_REFUND));
+    }
+
+    private List<CoinTransaction> lockEscrowed(String duelReference) {
+        List<CoinTransaction> escrows = ledger.findByReferenceAndKind(duelReference, CoinKind.STAKE_ESCROW);
+        escrows.stream().map(CoinTransaction::getPlayerId).sorted().distinct().forEach(this::lock);
+        return escrows;
+    }
+
+    private void refundEscrows(List<CoinTransaction> escrows, String duelReference) {
+        for (CoinTransaction escrow : escrows) {
             credit(escrow.getPlayerId(), -escrow.getAmount(), CoinKind.STAKE_REFUND, duelReference);
         }
         log.info("Refunded the stakes of duel {}", duelReference);

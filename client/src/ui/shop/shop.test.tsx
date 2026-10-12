@@ -190,8 +190,13 @@ describe('Shop', () => {
         expect(api.starsInvoice).toHaveBeenCalledWith('coins-1000');
         const [link, onStatus] = telegram.openInvoice.mock.calls[0] as [string, (status: string) => void];
         expect(link).toBe('https://t.me/$inv');
+        api.wallet.mockResolvedValue(walletView(1200));
         onStatus('paid');
-        await waitFor(() => expect(wallet.value?.balance).toBe(200));
+        await waitFor(() =>
+            expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('credit-pending'),
+        );
+        await waitFor(() => expect(wallet.value?.balance).toBe(1200), { timeout: 3000 });
+        await waitFor(() => expect(screen.getByRole('alert').getAttribute('data-reason')).toBe('paid'));
     });
 
     it('says so when Stars payments are unavailable', async () => {

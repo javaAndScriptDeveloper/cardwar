@@ -10,6 +10,10 @@ import org.springframework.data.repository.query.Param;
 
 public interface MatchmakingEntryRepository extends JpaRepository<MatchmakingEntry, UUID> {
 
+    /** The caller's own entry, row-locked, so leaving or re-entering cannot race a pairing that matched it. */
+    @Query(value = "select * from matchmaking_entry where player_id = :player for update", nativeQuery = true)
+    Optional<MatchmakingEntry> lockOwn(@Param("player") UUID player);
+
     /** Serialises entries at one stake table for the rest of the transaction; released on commit or rollback. */
     @Query(value = "select cast(pg_advisory_xact_lock(:table) as text)", nativeQuery = true)
     String lockTable(@Param("table") long table);
@@ -17,7 +21,8 @@ public interface MatchmakingEntryRepository extends JpaRepository<MatchmakingEnt
     /** The longest-waiting other player at this table whose entry is still fresh. */
     @Query(
             value = "select * from matchmaking_entry where stake = :stake and player_id <> :player"
-                    + " and matched_duel_id is null and created_at > :freshAfter order by created_at limit 1",
+                    + " and matched_duel_id is null and created_at > :freshAfter order by created_at limit 1"
+                    + " for update skip locked",
             nativeQuery = true)
     Optional<MatchmakingEntry> oldestWaiting(
             @Param("stake") long stake, @Param("player") UUID player, @Param("freshAfter") Instant freshAfter);

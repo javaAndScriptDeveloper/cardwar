@@ -34,7 +34,7 @@ public class CoinTransaction {
     @Column(name = "kind", nullable = false, length = 32)
     private CoinKind kind;
 
-    @Column(name = "reference", nullable = false, length = 64)
+    @Column(name = "reference", nullable = false, length = 255)
     private String reference;
 
     @Column(name = "created_at", nullable = false)

@@ -6,7 +6,12 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import cardwar.engine.DuelId;
+import cardwar.engine.DurakEngine;
+import cardwar.engine.GameCommand;
+import cardwar.engine.PlayerId;
 import cardwar.session.service.StakeSweepService;
+import cardwar.session.store.GameStateStore;
 import cardwar.wallet.dto.CoinKind;
 import cardwar.wallet.service.WalletService;
 import java.time.Instant;
@@ -35,6 +40,9 @@ class StakeIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     StakeSweepService sweep;
+
+    @Autowired
+    GameStateStore store;
 
     ApiDriver api;
     ApiDriver.Player alice;
@@ -183,5 +191,41 @@ class StakeIntegrationTest extends AbstractIntegrationTest {
         sweep.sweep(Instant.now().plusSeconds(24 * 3600));
 
         assertThat(wallets.balance(alice.id())).isEqualTo(400);
+    }
+
+    @Test
+    void aSettledDuelCannotAlsoBeRefundedAndARefundedOneCannotAlsoPay() {
+        String paid = UUID.randomUUID().toString();
+        wallets.escrow(paid, 100, alice.id(), bob.id());
+        wallets.settle(paid, alice.id());
+        wallets.refund(paid);
+        assertThat(wallets.balance(alice.id())).isEqualTo(600);
+        assertThat(wallets.balance(bob.id())).isEqualTo(400);
+
+        String refunded = UUID.randomUUID().toString();
+        wallets.escrow(refunded, 100, alice.id(), bob.id());
+        wallets.refund(refunded);
+        wallets.settle(refunded, bob.id());
+        assertThat(wallets.balance(alice.id())).isEqualTo(600);
+        assertThat(wallets.balance(bob.id())).isEqualTo(400);
+    }
+
+    @Test
+    void theSweepCompletesAFinishedDuelWhoseCompletionFailedInsteadOfRefundingIt() throws Exception {
+        String inviteId = inviteId(invite(alice, 100));
+        UUID duelId = api.duelView(api.acceptInvite(bob, inviteId)).duelId();
+        // A finished state left in Redis, as if completion had crashed after the final move.
+        var stored = store.find(new DuelId(duelId)).orElseThrow();
+        var resigned = new DurakEngine().apply(stored.state(), new PlayerId(bob.id()), new GameCommand.Resign());
+        store.save(
+                stored.with(resigned.state()).withDeadline(null), stored.state().version());
+
+        sweep.sweep(Instant.now().plusSeconds(24 * 3600));
+
+        assertThat(wallets.balance(alice.id())).isEqualTo(600);
+        assertThat(wallets.balance(bob.id())).isEqualTo(400);
+        assertThat(store.find(new DuelId(duelId))).isEmpty();
+        mvc.perform(get("/api/v1/me/duels").headers(api.bearer(alice)))
+                .andExpect(jsonPath("$[0].endReason").value("FORFEIT"));
     }
 }

@@ -5,7 +5,7 @@ import { fetchPackIndex } from '../../content/loader';
 import type { PackIndexEntry } from '../../content/types';
 import { t } from '../../i18n';
 import { applyLoadout, refreshLoadout } from '../../state/loadout';
-import { refreshWallet, wallet } from '../../state/wallet';
+import { awaitCredit, refreshWallet, wallet } from '../../state/wallet';
 import type { Telegram } from '../../telegram/webapp';
 import { BackSwatch, emoteGlyph, FrameSwatch, TableSwatch } from '../cosmetics';
 import { describeError } from '../errors';
@@ -122,8 +122,12 @@ export function Shop({ api, telegram, loadIndex = fetchPackIndex }: Props) {
             const { invoiceLink } = await api.starsInvoice(pack.id);
             telegram.openInvoice(invoiceLink, (status) => {
                 if (status === 'paid') {
-                    setMessage({ text: t('shop.paid'), reason: 'paid' });
-                    void refreshWallet(api);
+                    setMessage({ text: t('shop.creditPending'), reason: 'credit-pending' });
+                    void awaitCredit(api, wallet.value?.balance ?? 0).then((credited) => {
+                        if (credited) {
+                            setMessage({ text: t('shop.paid'), reason: 'paid' });
+                        }
+                    });
                 } else if (status === 'failed') {
                     setMessage({ text: t('shop.errors.paymentFailed'), reason: 'payment-failed' });
                 }

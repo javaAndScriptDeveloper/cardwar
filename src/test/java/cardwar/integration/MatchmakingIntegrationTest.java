@@ -159,4 +159,18 @@ class MatchmakingIntegrationTest extends AbstractIntegrationTest {
             pool.shutdownNow();
         }
     }
+
+    @Test
+    void leavingAfterBeingMatchedKeepsTheMatch() throws Exception {
+        enter(alice, 0).andExpect(jsonPath("$.status").value("WAITING"));
+        String duelId = (String) api.readBody(enter(bob, 0)).get("duelId");
+
+        mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete("/api/v1/matchmaking")
+                        .headers(api.bearer(alice)))
+                .andExpect(status().isNoContent());
+
+        statusOf(alice)
+                .andExpect(jsonPath("$.status").value("MATCHED"))
+                .andExpect(jsonPath("$.duelId").value(duelId));
+    }
 }

@@ -147,9 +147,9 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
                 """
                 {"update_id": 9, "message": {"message_id": 1, "chat": {"id": 42, "type": "private"},
                  "successful_payment": {"currency": "XTR", "total_amount": 50, "invoice_payload": "%s",
-                 "telegram_payment_charge_id": "charge-%s"}}}
+                 "telegram_payment_charge_id": "%s"}}}
                 """
-                        .formatted(payload, UUID.randomUUID());
+                        .formatted(payload, realisticChargeId());
         for (int i = 0; i < 2; i++) {
             mvc.perform(post("/api/v1/telegram/webhook")
                             .header("X-Telegram-Bot-Api-Secret-Token", bot.webhookSecret())
@@ -159,6 +159,12 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
         }
 
         assertThat(wallets.balance(alice.id())).isEqualTo(500 + 1000);
+    }
+
+    /** Real Stars charge ids are long opaque strings; the ledger reference must hold them. */
+    private static String realisticChargeId() {
+        return "stxA" + (UUID.randomUUID().toString() + UUID.randomUUID() + UUID.randomUUID()).replace("-", "")
+                + "_Zq9-xYk2LmN0pQr";
     }
 
     @Test

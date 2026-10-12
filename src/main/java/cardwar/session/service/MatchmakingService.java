@@ -60,7 +60,7 @@ public class MatchmakingService {
         }
         entries.lockTable(stake);
         Instant now = clock.instant();
-        Optional<MatchmakingEntry> own = entries.findById(caller.value());
+        Optional<MatchmakingEntry> own = entries.lockOwn(caller.value());
         if (own.isPresent() && own.get().getMatchedDuelId() != null) {
             return consume(own.get());
         }
@@ -84,6 +84,9 @@ public class MatchmakingService {
             var duelId = new DuelId(UUID.randomUUID());
             wallets.escrow(duelId.value().toString(), stake, other.getPlayerId(), caller.value());
             other.matched(duelId.value());
+            // Everything the database must hold is written before the duel exists in Redis, so a failing flush
+            // rolls the escrow back before any duel could be played for coins nobody paid.
+            entries.saveAndFlush(other);
             duels.startQuickMatch(caller, new PlayerId(other.getPlayerId()), duelId, stake);
             metrics.matchmaking(MatchmakingEvent.MATCHED);
             metrics.matchmakingWait(Duration.between(other.getCreatedAt(), now));
@@ -113,7 +116,7 @@ public class MatchmakingService {
 
     @Transactional
     public void leave(PlayerId caller) {
-        entries.findById(caller.value())
+        entries.lockOwn(caller.value())
                 .filter(entry -> entry.getMatchedDuelId() == null)
                 .ifPresent(entry -> {
                     entries.delete(entry);

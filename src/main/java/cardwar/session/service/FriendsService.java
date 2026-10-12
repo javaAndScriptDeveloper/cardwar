@@ -7,7 +7,10 @@ import cardwar.exception.BadRequestException;
 import cardwar.session.dto.ChallengeView;
 import cardwar.session.dto.FriendView;
 import cardwar.session.dto.InviteView;
+import cardwar.session.policy.ChallengeCooldown;
 import cardwar.session.repository.DuelResultRepository;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 import lombok.extern.slf4j.Slf4j;
@@ -26,13 +29,19 @@ public class FriendsService {
     private final AccountService accounts;
     private final DuelInviteService invites;
     private final TelegramBotService bot;
+    private final ChallengeCooldown cooldown;
 
     public FriendsService(
-            DuelResultRepository results, AccountService accounts, DuelInviteService invites, TelegramBotService bot) {
+            DuelResultRepository results,
+            AccountService accounts,
+            DuelInviteService invites,
+            TelegramBotService bot,
+            Clock clock) {
         this.results = results;
         this.accounts = accounts;
         this.invites = invites;
         this.bot = bot;
+        this.cooldown = new ChallengeCooldown(clock, Duration.ofMinutes(1));
     }
 
     @Transactional(readOnly = true)
@@ -56,12 +65,17 @@ public class FriendsService {
         if (!results.havePlayed(caller.value(), friend)) {
             throw new BadRequestException("You can challenge players you have played before", "NOT_A_FRIEND");
         }
+        UUID before = invites.pending(caller).map(InviteView::inviteId).orElse(null);
         InviteView invite = invites.create(caller, stake, friend);
-        String from = accounts.summary(caller.value()).displayName();
-        // Best effort: a challenge stands even when the DM cannot be delivered; the inbox shows it either way.
-        accounts.telegramUserIdOf(friend)
-                .ifPresent(chat ->
-                        bot.notifyChallenge(chat, from, stake, invite.inviteId().toString()));
+        boolean fresh = !invite.inviteId().equals(before);
+        // Only a new challenge is announced, at most once a minute per friend; best effort either way, the inbox
+        // shows the challenge regardless.
+        if (fresh && cooldown.allow(caller.value(), friend)) {
+            String from = accounts.summary(caller.value()).displayName();
+            accounts.telegramUserIdOf(friend)
+                    .ifPresent(chat -> bot.notifyChallenge(
+                            chat, from, stake, invite.inviteId().toString()));
+        }
         log.info("Invite {} sent as a challenge", invite.inviteId());
         return invite;
     }
