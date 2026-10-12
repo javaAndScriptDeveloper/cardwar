@@ -135,6 +135,7 @@ public class GameMetrics {
             case GameCommand.Defend ignored -> "defend";
             case GameCommand.TakeCards ignored -> "take";
             case GameCommand.EndAttack ignored -> "end_attack";
+            case GameCommand.Resign ignored -> "resign";
         };
     }
 

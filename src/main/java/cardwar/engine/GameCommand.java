@@ -28,4 +28,7 @@ public sealed interface GameCommand {
 
     /** End the attack once every attack card has been beaten, sending the table to the discard pile. */
     record EndAttack() implements GameCommand {}
+
+    /** Give the duel up: the other player wins. Allowed whoever is to move; the timer uses it on a third strike. */
+    record Resign() implements GameCommand {}
 }

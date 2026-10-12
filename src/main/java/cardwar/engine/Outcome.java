@@ -22,6 +22,10 @@ public record Outcome(PlayerId winner, PlayerId loser, boolean draw, EndReason r
         return new Outcome(winner, loser, false, EndReason.OPPONENT_OUT_OF_CARDS);
     }
 
+    public static Outcome forfeited(PlayerId winner, PlayerId loser) {
+        return new Outcome(winner, loser, false, EndReason.FORFEIT);
+    }
+
     public static Outcome drawn() {
         return new Outcome(null, null, true, EndReason.DRAW);
     }

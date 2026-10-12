@@ -110,6 +110,7 @@ public final class DurakEngine {
             case GameCommand.Defend defend -> defend(working, actor, defend.attackCard(), defend.defenceCard());
             case GameCommand.TakeCards ignored -> take(working, actor);
             case GameCommand.EndAttack ignored -> endAttack(working, actor);
+            case GameCommand.Resign ignored -> resign(working, actor);
         }
         working.version = state.version() + 1;
         return new Result(working.freeze(), working.events);
@@ -254,6 +255,13 @@ public final class DurakEngine {
         w.phase = DuelPhase.FINISHED;
         w.events.add(new GameEvent.DuelFinished(w.outcome));
         return true;
+    }
+
+    private void resign(Working w, PlayerId actor) {
+        PlayerId other = actor.equals(w.playerA) ? w.playerB : w.playerA;
+        w.outcome = Outcome.forfeited(other, actor);
+        w.phase = DuelPhase.FINISHED;
+        w.events.add(new GameEvent.DuelFinished(w.outcome));
     }
 
     // --- helpers ------------------------------------------------------------------------------------------
