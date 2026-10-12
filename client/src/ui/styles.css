@@ -1,24 +1,4 @@
-/* Telegram injects --tg-theme-* variables; the fallbacks are for the browser dev shim. */
-:root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --text: var(--tg-theme-text-color, #1b1b1f);
-    --hint: var(--tg-theme-hint-color, #8a8a93);
-    --accent: var(--tg-theme-button-color, #2f7de1);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --surface: var(--tg-theme-secondary-bg-color, #f1f2f5);
-    --danger: var(--tg-theme-destructive-text-color, #d93838);
-    --felt: #1f6b45;
-    color-scheme: light dark;
-}
-
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: var(--tg-theme-bg-color, #17181c);
-        --text: var(--tg-theme-text-color, #ececf1);
-        --hint: var(--tg-theme-hint-color, #8e8e99);
-        --surface: var(--tg-theme-secondary-bg-color, #24252b);
-    }
-}
+@import './kit/tokens.css';
 
 * {
     box-sizing: border-box;
@@ -41,11 +21,12 @@ body {
 .app {
     max-width: 480px;
     margin: 0 auto;
-    padding: 16px;
+    padding: var(--space-4);
+    padding-bottom: calc(var(--nav-h) + var(--space-4) + var(--safe-bottom));
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: var(--space-3);
 }
 
 h1 {
@@ -64,7 +45,7 @@ h1 {
     flex-direction: column;
     gap: 10px;
     padding: 14px;
-    border-radius: 12px;
+    border-radius: var(--radius-m);
     background: var(--surface);
 }
 
@@ -90,21 +71,225 @@ button {
     font: inherit;
     font-weight: 600;
     padding: 12px 16px;
-    border-radius: 10px;
+    border-radius: var(--radius-m);
     border: none;
     background: var(--surface);
     color: var(--text);
     cursor: pointer;
+    transition:
+        transform 90ms,
+        filter 120ms;
 }
 
-button.primary {
+button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+button.primary,
+.btn.primary {
     background: var(--accent);
     color: var(--accent-text);
 }
 
+.btn.ghost {
+    background: transparent;
+}
+
+.btn.danger {
+    background: color-mix(in srgb, var(--danger) 18%, var(--surface));
+    color: var(--danger);
+}
+
+.btn.lg,
 button:disabled {
     opacity: 0.45;
     cursor: default;
+}
+
+.spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: var(--space-2);
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -0.15em;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ---- Kit --------------------------------------------------------------------------------------------------- */
+
+.avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--surface-2);
+    color: var(--text);
+    font-weight: 700;
+    flex: none;
+    overflow: hidden;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: var(--font-s);
+    font-weight: 600;
+    background: var(--surface-2);
+    color: var(--hint);
+}
+
+.badge.accent {
+    background: color-mix(in srgb, var(--accent) 22%, transparent);
+    color: var(--accent);
+}
+
+.badge.success {
+    background: color-mix(in srgb, var(--success) 22%, transparent);
+    color: var(--success);
+}
+
+.badge.danger {
+    background: color-mix(in srgb, var(--danger) 22%, transparent);
+    color: var(--danger);
+}
+
+.sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgb(0 0 0 / 50%);
+    display: flex;
+    align-items: flex-end;
+    z-index: 20;
+}
+
+.sheet {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-4) calc(var(--space-5) + var(--safe-bottom));
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    animation: sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.sheet h2 {
+    margin: 0;
+    font-size: var(--font-l);
+}
+
+@keyframes sheet-up {
+    from {
+        transform: translateY(40px);
+        opacity: 0;
+    }
+}
+
+.tabs {
+    display: flex;
+    gap: var(--space-1);
+    padding: var(--space-1);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    overflow-x: auto;
+}
+
+.tabs button {
+    flex: 1 0 auto;
+    padding: 8px 12px;
+    border-radius: var(--radius-s);
+    background: transparent;
+    color: var(--hint);
+    font-size: var(--font-m);
+}
+
+.tabs button.active {
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.list-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    padding: var(--space-3);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+    color: var(--text);
+    text-align: left;
+    font-weight: 500;
+}
+
+.list-row-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.list-row-title {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.list-row-subtitle {
+    font-size: var(--font-s);
+    color: var(--hint);
+}
+
+.bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--nav-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    display: flex;
+    justify-content: space-around;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid color-mix(in srgb, var(--hint) 20%, transparent);
+    z-index: 10;
+}
+
+.bottom-nav button {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 8px 0;
+    border-radius: 0;
+    background: transparent;
+    color: var(--hint);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.bottom-nav button[aria-current='page'] {
+    color: var(--accent);
+}
+
+.bottom-nav button:active:not(:disabled) {
+    transform: none;
 }
 
 .error {
@@ -126,11 +311,6 @@ button:disabled {
     flex-direction: column;
     gap: 6px;
     font-size: 0.95rem;
-}
-
-button.big {
-    padding: 16px;
-    font-size: 1.05rem;
 }
 
 .invite-code {
