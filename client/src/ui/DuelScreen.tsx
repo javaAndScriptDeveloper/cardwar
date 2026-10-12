@@ -13,6 +13,7 @@ import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
+import { CoinAmount } from './kit';
 import { Table } from './Table';
 
 export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels'>;
@@ -33,13 +34,22 @@ interface Props {
 type State =
     | { kind: 'loading' }
     | { kind: 'playing'; view: DuelView }
-    | { kind: 'over'; result: Result }
+    /** `coins` is the caller's signed net for a staked duel, undefined for a friendly one. */
+    | { kind: 'over'; result: Result; coins: number | undefined }
     | { kind: 'gone'; message: string };
 
 /** Delay before re-trying a re-fetch that failed (429 or no network). */
 const RETRY_MS = 1500;
 /** How many times the history is read for a finished duel before the duel is declared gone. */
 const HISTORY_ATTEMPTS = 4;
+
+/** What a finished view moved for the caller: the winner takes the pot (net +stake), a draw refunds both. */
+function coinsOf(view: DuelView, result: Result): number | undefined {
+    if (!(view.stake > 0)) {
+        return undefined;
+    }
+    return result.result === 'WON' ? view.stake : result.result === 'LOST' ? -view.stake : 0;
+}
 
 function explain(result: Result, opponentName: string): string {
     return t(`duel.explain.${result.result}`, { name: opponentName });
@@ -91,7 +101,11 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 }
                 if (entry) {
                     setOpponentName(entry.opponentUsername);
-                    setState({ kind: 'over', result: { result: entry.result, reason: entry.endReason } });
+                    setState({
+                        kind: 'over',
+                        result: { result: entry.result, reason: entry.endReason },
+                        coins: entry.stake > 0 ? entry.coinDelta : undefined,
+                    });
                     // This player did not make the last move, so no view carried the finish: react to it here.
                     react({ type: 'duel_finished', result: entry.result }, buzz);
                     return;
@@ -128,7 +142,8 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             setLastEvents(events);
             if (view.phase === 'FINISHED') {
                 closeStream.current();
-                setState({ kind: 'over', result: resultOf(view) });
+                const result = resultOf(view);
+                setState({ kind: 'over', result, coins: coinsOf(view, result) });
             } else {
                 setState({ kind: 'playing', view });
             }
@@ -325,6 +340,20 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 >
                     <h1>{t(`duel.result.${state.result.result}`)}</h1>
                     <p>{explain(state.result, opponentName)}</p>
+                    {state.coins !== undefined && (
+                        <div
+                            class="coin-delta"
+                            data-testid="coin-delta"
+                            data-delta={state.coins}
+                            ref={(el) => {
+                                if (el) {
+                                    void animate(el, 'deal', {});
+                                }
+                            }}
+                        >
+                            <CoinAmount amount={state.coins} signed />
+                        </div>
+                    )}
                     <button class="primary big" data-testid="back-to-lobby" onClick={exit}>
                         {t('duel.back')}
                     </button>

@@ -4,7 +4,7 @@ import { type Card, cardId, sameCard } from '../game/cards';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { cardLabel, t } from '../i18n';
 import { CardBack, CardImage } from './CardImage';
-import { Avatar } from './kit';
+import { Avatar, CoinAmount } from './kit';
 
 export interface Participant {
     name: string;
@@ -84,6 +84,11 @@ export function Table({
                         data-card={cardId(view.trumpCard)}
                     />
                     <span class="hint">{t('duel.trump')}</span>
+                    {view.stake > 0 && (
+                        <span class="pot" data-testid="pot" data-pot={2 * view.stake} title={t('duel.pot')}>
+                            <CoinAmount amount={2 * view.stake} />
+                        </span>
+                    )}
                 </div>
                 <div class="pairs" data-testid="pairs">
                     {view.table.map((pair) => {

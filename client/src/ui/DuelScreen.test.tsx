@@ -86,6 +86,56 @@ describe('DuelScreen', () => {
         await waitFor(() => expect(screen.getByRole('heading', { name: t('duel.result.WON') })).toBeTruthy());
     });
 
+    it.each([
+        [{ winner: 'me', loser: 'them', draw: false }, 'WON', '100'],
+        [{ winner: 'them', loser: 'me', draw: false }, 'LOST', '-100'],
+        [{ draw: true }, 'DRAW', '0'],
+    ])('shows the coins a staked duel moved (%j → %s)', async (outcome, result, delta) => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockResolvedValueOnce(
+            view({ version: 40, phase: 'FINISHED', stake: 100, outcome: { ...outcome, reason: 'X' } }),
+        );
+        nudge();
+
+        await waitFor(() => expect(screen.getByTestId('result').getAttribute('data-result')).toBe(result));
+        expect(screen.getByTestId('coin-delta').getAttribute('data-delta')).toBe(delta);
+    });
+
+    it('shows no coins for a friendly duel', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockResolvedValueOnce(
+            view({ version: 40, phase: 'FINISHED', outcome: { winner: 'me', draw: false, reason: 'X' } }),
+        );
+        nudge();
+
+        await screen.findByTestId('result');
+        expect(screen.queryByTestId('coin-delta')).toBeNull();
+    });
+
+    it('takes the coin delta from the history when the duel is already gone', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockRejectedValueOnce(new ApiError(404));
+        api.history.mockResolvedValueOnce([
+            {
+                duelId: 'duel-1',
+                result: 'LOST',
+                endReason: 'OPPONENT_OUT_OF_CARDS',
+                opponentUsername: 'bob',
+                stake: 500,
+                coinDelta: -500,
+            },
+        ]);
+        nudge();
+
+        await waitFor(() => expect(screen.getByTestId('coin-delta').getAttribute('data-delta')).toBe('-500'));
+    });
+
     it('falls back to the history once the finished duel is gone, and goes back to start', async () => {
         const { api, nudge, onExit, close } = setup();
         await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());

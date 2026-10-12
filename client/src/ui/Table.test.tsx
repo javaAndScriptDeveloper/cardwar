@@ -54,6 +54,15 @@ describe('Table', () => {
         expect(screen.getAllByAltText(t('card.back')).length).toBe(4 + 1);
     });
 
+    it('shows the pot of a staked duel next to the trump, and none for a friendly one', () => {
+        const { unmount } = renderTable({ view: view({ stake: 500 }) });
+        expect(screen.getByTestId('pot').getAttribute('data-pot')).toBe('1000');
+        unmount();
+
+        renderTable({ view: view({ stake: 0 }) });
+        expect(screen.queryByTestId('pot')).toBeNull();
+    });
+
     it('enables Take for the defender facing an open attack, and End attack never', () => {
         renderTable({ view: defending });
         expect((screen.getByTestId('take') as HTMLButtonElement).disabled).toBe(false);
