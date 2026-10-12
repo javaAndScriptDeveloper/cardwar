@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
+<defs>
+<pattern id="monogram" width="64" height="36" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)">
+<text x="2" y="24" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="14" letter-spacing="2" fill="#ffffff" fill-opacity="0.12">СЛУГИ</text>
+</pattern>
+</defs>
+<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="#0b2a5b"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="url(#monogram)"/>
+<rect x="22" y="22" width="196" height="292" rx="8" fill="none" stroke="#f2c14e" stroke-width="2" stroke-opacity="0.8"/>
+<g transform="translate(76 92)" fill="#f2c14e">
+<path d="M44 0 L54 20 L50 20 L50 96 L38 96 L38 20 L34 20 Z"/>
+<path d="M10 10 C -4 42, 2 82, 34 100 L34 112 C -8 98, -14 42, 2 6 Z"/>
+<path d="M78 10 C 92 42, 86 82, 54 100 L54 112 C 96 98, 102 42, 86 6 Z"/>
+<path d="M30 112 H58 L66 128 L44 144 L22 128 Z"/>
+</g>
+<text x="120" y="294" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="#f2c14e">САТИРА</text>
+</svg>

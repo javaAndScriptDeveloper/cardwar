@@ -1,0 +1,371 @@
+/**
+ * «Слуги народу (сатира)»: nine public figures as poster cards, one per rank, with a quote per suit in the deadpan
+ * register of the «Smak» channel: parody of public conduct, obviously made up, never presented as news. Within
+ * the boundaries of docs/superpowers/specs/2026-10-13-popular-polish-design.md §2. The quotes are the product;
+ * everything else here is plumbing for scripts/gen-pack-satire.mjs.
+ */
+import { FONT, H, W, frame } from '../lib/poster.mjs';
+import { env, noiseSource, render, sine } from '../lib/wav.mjs';
+
+const personas = [
+    {
+        rank: 'SIX',
+        name: 'Безугла',
+        role: 'народна депутатка',
+        emoji: '📱',
+        colour: '#7b1fa2',
+        tag: 'bezuhla',
+        quotes: {
+            CLUBS: 'Вимагаю звільнити цю карту. І наступну теж.',
+            DIAMONDS: 'Пост о третій ночі. Тема: винні всі.',
+            HEARTS: 'Відкрила фейсбук — закрила дискусію.',
+            SPADES: 'Я не критикую. Я констатую. Голосно.',
+        },
+    },
+    {
+        rank: 'SEVEN',
+        name: 'Арахамія',
+        role: 'голова фракції',
+        emoji: '🤝',
+        colour: '#00796b',
+        tag: 'arakhamia',
+        quotes: {
+            CLUBS: 'Це був ситуативний союз із вашою картою.',
+            DIAMONDS: 'Монобільшість — це коли більшість моно.',
+            HEARTS: 'Домовились. Про що — скажу пізніше.',
+            SPADES: 'Голосуємо за. Потім прочитаємо.',
+        },
+    },
+    {
+        rank: 'EIGHT',
+        name: 'Гончаренко',
+        role: 'термінове звернення',
+        emoji: '⚡',
+        colour: '#e65100',
+        tag: 'honcharenko',
+        quotes: {
+            CLUBS: '⚡ Термінове звернення. Кінець звернення.',
+            DIAMONDS: 'Знімаю тікток із засідання. Засідання — фон.',
+            HEARTS: 'Я вже в ефірі. Де саме — не принципово.',
+            SPADES: 'Терміново! Деталі — у наступному терміново.',
+        },
+    },
+    {
+        rank: 'NINE',
+        name: 'Тимошенко',
+        role: 'коса',
+        emoji: '🎀',
+        colour: '#c2185b',
+        tag: 'tymoshenko',
+        quotes: {
+            CLUBS: 'Коса — сила. Решта — деталі.',
+            DIAMONDS: 'Я повернулась. Я, власне, і не йшла.',
+            HEARTS: 'Обіцяю знизити ціну на газ для цієї карти.',
+            SPADES: 'Зачіска нова, програма та сама.',
+        },
+    },
+    {
+        rank: 'TEN',
+        name: 'Кличко',
+        role: 'мер',
+        emoji: '🥊',
+        colour: '#1565c0',
+        tag: 'klychko',
+        quotes: {
+            CLUBS: 'Сьогодні в завтрашній день не всі можуть дивитися.',
+            DIAMONDS: 'Київ готовий. До чого — уточнюємо.',
+            HEARTS: 'Ми стоїмо на порозі, і він уже близько.',
+            SPADES: 'Я це сказав? Значить, так і буде. Або ні.',
+        },
+    },
+    {
+        rank: 'JACK',
+        name: 'Порошенко',
+        role: 'армія, мова, віра',
+        emoji: '🍬',
+        colour: '#b71c1c',
+        tag: 'poroshenko',
+        quotes: {
+            CLUBS: 'Армія! Мова! Віра! Карта!',
+            DIAMONDS: 'Томос на кожну карту. І цукерку.',
+            HEARTS: 'Я прийшов із цукерками. І з тезами.',
+            SPADES: 'Геть від Москви! І від цього ходу.',
+        },
+    },
+    {
+        rank: 'QUEEN',
+        name: 'Єрмак',
+        role: 'офіс',
+        emoji: '🗂️',
+        colour: '#37474f',
+        tag: 'yermak',
+        quotes: {
+            CLUBS: 'Офіс не коментує. Офіс грає.',
+            DIAMONDS: 'Мене нема на фото, але я поруч. Завжди.',
+            HEARTS: 'Усі питання — через офіс. Офіс — це я.',
+            SPADES: 'Хід погоджено. Ким — не уточнюється.',
+        },
+    },
+    {
+        rank: 'KING',
+        name: 'Залужний',
+        role: 'залізний генерал',
+        emoji: '🛡️',
+        colour: '#556b2f',
+        tag: 'zaluzhnyi',
+        quotes: {
+            CLUBS: 'Залізний. Без коментарів.',
+            DIAMONDS: 'Спокійно. Я бачив гірші розклади.',
+            HEARTS: "Лондон на зв'язку. Карта — теж.",
+            SPADES: 'Усміхнувся. Усі зрозуміли, що це туз.',
+        },
+    },
+    {
+        rank: 'ACE',
+        name: 'Зеленський',
+        role: 'президент',
+        emoji: '🎤',
+        colour: '#1b5e20',
+        tag: 'zelenskyi',
+        quotes: {
+            CLUBS: 'Доброго вечора. Ми з козирями.',
+            DIAMONDS: 'Я тут. І карта тут. Усі тут.',
+            HEARTS: 'Дякую кожному, хто сьогодні відбився.',
+            SPADES: 'Звернення коротке: цей хід — переможний.',
+        },
+    },
+];
+
+/** Dark blue, a repeated «СЛУГИ» monogram and a trident drawn with paths; no external assets. */
+function back() {
+    const trident = `<g transform="translate(76 92)" fill="#f2c14e">
+<path d="M44 0 L54 20 L50 20 L50 96 L38 96 L38 20 L34 20 Z"/>
+<path d="M10 10 C -4 42, 2 82, 34 100 L34 112 C -8 98, -14 42, 2 6 Z"/>
+<path d="M78 10 C 92 42, 86 82, 54 100 L54 112 C 96 98, 102 42, 86 6 Z"/>
+<path d="M30 112 H58 L66 128 L44 144 L22 128 Z"/>
+</g>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+<defs>
+<pattern id="monogram" width="64" height="36" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)">
+<text x="2" y="24" ${FONT} font-weight="700" font-size="14" letter-spacing="2" fill="#ffffff" fill-opacity="0.12">СЛУГИ</text>
+</pattern>
+</defs>
+${frame()}
+<rect x="16" y="16" width="${W - 32}" height="${H - 32}" rx="10" fill="#0b2a5b"/>
+<rect x="16" y="16" width="${W - 32}" height="${H - 32}" rx="10" fill="url(#monogram)"/>
+<rect x="22" y="22" width="${W - 44}" height="${H - 44}" rx="8" fill="none" stroke="#f2c14e" stroke-width="2" stroke-opacity="0.8"/>
+${trident}
+<text x="${W / 2}" y="${H - 42}" text-anchor="middle" ${FONT} font-weight="700" font-size="13" letter-spacing="2" fill="#f2c14e">САТИРА</text>
+</svg>
+`;
+}
+
+/* The felt goes dark for the rule's duration while two «windows» flicker, like a block on a generator. */
+const styles = `/* Classes named by this pack's css animations; the runtime adds one to the target for its durationMs. */
+.fx-blackout {
+    position: relative;
+    animation: fx-blackout-dim 1800ms ease-in-out;
+}
+
+.fx-blackout::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(circle at 24% 38%, rgb(255 214 110 / 90%) 0 4px, transparent 6px),
+        radial-gradient(circle at 76% 62%, rgb(255 214 110 / 90%) 0 4px, transparent 6px);
+    animation: fx-blackout-flicker 1800ms steps(1, end);
+}
+
+@keyframes fx-blackout-dim {
+    0% {
+        filter: brightness(1);
+    }
+    15% {
+        filter: brightness(0.25);
+    }
+    85% {
+        filter: brightness(0.25);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@keyframes fx-blackout-flicker {
+    0% {
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    35% {
+        opacity: 0;
+    }
+    45% {
+        opacity: 1;
+    }
+    60% {
+        opacity: 0.3;
+    }
+    70% {
+        opacity: 1;
+    }
+    85% {
+        opacity: 0;
+    }
+}
+`;
+
+const noise = noiseSource(11);
+/* Listed with the demo first: the shop plays `fanfare` when the deck's preview is tapped. */
+const sounds = {
+    // A brassy C-E-G-C fanfare.
+    fanfare: render(1.0, (t, p) => {
+        const step = Math.min(3, Math.floor(p * 4));
+        const f = [523, 659, 784, 1047][step];
+        const tone = sine(t, f) * 0.6 + sine(t, 2 * f) * 0.3 + sine(t, 3 * f) * 0.12;
+        return tone * env((p * 4) % 1, 0.03, step === 3 ? 0.12 : 0.35) * 0.4;
+    }),
+    // Applause: noise shaped by many small bursts, swelling and fading.
+    applause: render(1.4, (t, p) => {
+        const burst = Math.pow(
+            Math.abs(Math.sin(2 * Math.PI * 13 * t) * Math.sin(2 * Math.PI * 7.3 * t)),
+            1.5,
+        );
+        return noise() * (0.35 + 0.65 * burst) * Math.sin(Math.PI * p) * 0.4;
+    }),
+    // A blackout: a mains hum sliding down and dying.
+    blackout: render(1.2, (t, p) => {
+        const f = 110 - 70 * p;
+        return (
+            (sine(t, f) * 0.6 + sine(t, 2 * f) * 0.25 + sine(t, 50) * 0.15 * (1 - p)) *
+            env(p, 0.05, 0.25) *
+            0.5
+        );
+    }),
+    // A short bright ding.
+    ding: render(0.4, (t, p) => (sine(t, 1320) * 0.7 + sine(t, 2640) * 0.2) * env(p, 0.005, 0.2) * 0.4),
+};
+
+const animations = { blackout: { kind: 'css', className: 'fx-blackout', durationMs: 1800 } };
+
+const played = (tag, side) => ({ on: 'card_played', if: side ? { side, card: { tag } } : { card: { tag } } });
+const beaten = (tag) => ({ on: 'card_beaten', if: { beaten: { tag } } });
+
+const rules = [
+    // The president and the office are not seen apart, on any suit.
+    ...['CLUBS', 'DIAMONDS', 'HEARTS', 'SPADES'].map((suit) => {
+        const cards = [`ACE_OF_${suit}`, `QUEEN_OF_${suit}`];
+        return {
+            id: `inseparable-${suit.toLowerCase()}`,
+            on: 'hand_changed',
+            if: { handHas: cards },
+            do: [{ layout: 'stick_together', cards }],
+        };
+    }),
+    {
+        id: 'klychko-beaten',
+        ...beaten('klychko'),
+        do: [
+            { anim: 'shake', target: 'beaten' },
+            { bubble: { uk: 'Сьогодні в завтрашній день не всі можуть дивитися' }, target: 'beaten' },
+            { say: { uk: 'Сьогодні в завтрашній день не всі можуть дивитися' }, rate: 0.9 },
+        ],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'poroshenko-played',
+        ...played('poroshenko', 'you'),
+        do: [{ say: { uk: 'Армія! Мова! Віра!' }, rate: 1.1 }],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'bezuhla-played',
+        ...played('bezuhla', 'opponent'),
+        do: [
+            { bubble: { uk: 'Вас треба звільнити' }, target: 'you' },
+            { anim: 'shake', target: 'you' },
+        ],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'arakhamia-beaten',
+        ...beaten('arakhamia'),
+        do: [{ bubble: { uk: 'Це був ситуативний союз' }, target: 'beaten' }],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'honcharenko-played',
+        ...played('honcharenko'),
+        do: [
+            { sound: 'ding' },
+            { bubble: { uk: '⚡ Термінове звернення' }, target: 'played' },
+            { say: { uk: 'Терміново!' }, rate: 1.3, pitch: 1.2 },
+        ],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'tymoshenko-played',
+        ...played('tymoshenko'),
+        do: [
+            { anim: 'pulse', target: 'played' },
+            { bubble: { uk: 'Коса — сила' }, target: 'played' },
+        ],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'zaluzhnyi-beats',
+        on: 'card_beaten',
+        if: { card: { tag: 'zaluzhnyi' } },
+        do: [
+            { sound: 'applause' },
+            { say: { uk: 'Залізний генерал' }, rate: 0.9, pitch: 0.8 },
+            { haptic: 'success' },
+        ],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'trump-reveal',
+        on: 'duel_started',
+        if: { random: 0.5 },
+        do: [{ bubble: { uk: "Козир — Трамп. Перемир'я на 15 хвилин" }, target: 'table' }],
+    },
+    {
+        id: 'blackout',
+        on: 'cards_taken',
+        if: { side: 'you' },
+        do: [
+            { sound: 'blackout' },
+            { anim: 'blackout', target: 'felt' },
+            { bubble: { uk: 'ДТЕК: стабілізаційне відключення' }, target: 'table' },
+        ],
+        cooldownMs: 8000,
+    },
+    {
+        id: 'won',
+        on: 'duel_finished',
+        if: { outcome: 'WON' },
+        do: [{ sound: 'fanfare' }, { say: { uk: 'Перемога! Дякую кожному' } }, { haptic: 'success' }],
+    },
+    {
+        id: 'lost',
+        on: 'duel_finished',
+        if: { outcome: 'LOST' },
+        do: [{ bubble: { uk: 'Все йде за планом' }, target: 'table' }],
+    },
+];
+
+export default {
+    id: 'sluhy-narodu',
+    name: 'Слуги народу (сатира)',
+    personas,
+    back,
+    styles,
+    sounds,
+    animations,
+    rules,
+};

@@ -1,0 +1,299 @@
+{
+  "id": "sluhy-narodu",
+  "version": 1,
+  "type": "DECK",
+  "name": { "uk": "Слуги народу (сатира)" },
+  "back": "cards/back.svg",
+  "styles": "anim/fx.css",
+  "cards": {
+    "SIX_OF_CLUBS": { "image": "cards/SIX_OF_CLUBS.svg", "title": { "uk": "Безугла" }, "tags": ["bezuhla"] },
+    "SEVEN_OF_CLUBS": {
+      "image": "cards/SEVEN_OF_CLUBS.svg",
+      "title": { "uk": "Арахамія" },
+      "tags": ["arakhamia"]
+    },
+    "EIGHT_OF_CLUBS": {
+      "image": "cards/EIGHT_OF_CLUBS.svg",
+      "title": { "uk": "Гончаренко" },
+      "tags": ["honcharenko"]
+    },
+    "NINE_OF_CLUBS": {
+      "image": "cards/NINE_OF_CLUBS.svg",
+      "title": { "uk": "Тимошенко" },
+      "tags": ["tymoshenko"]
+    },
+    "TEN_OF_CLUBS": { "image": "cards/TEN_OF_CLUBS.svg", "title": { "uk": "Кличко" }, "tags": ["klychko"] },
+    "JACK_OF_CLUBS": {
+      "image": "cards/JACK_OF_CLUBS.svg",
+      "title": { "uk": "Порошенко" },
+      "tags": ["poroshenko"]
+    },
+    "QUEEN_OF_CLUBS": { "image": "cards/QUEEN_OF_CLUBS.svg", "title": { "uk": "Єрмак" }, "tags": ["yermak"] },
+    "KING_OF_CLUBS": {
+      "image": "cards/KING_OF_CLUBS.svg",
+      "title": { "uk": "Залужний" },
+      "tags": ["zaluzhnyi"]
+    },
+    "ACE_OF_CLUBS": {
+      "image": "cards/ACE_OF_CLUBS.svg",
+      "title": { "uk": "Зеленський" },
+      "tags": ["zelenskyi"]
+    },
+    "SIX_OF_DIAMONDS": {
+      "image": "cards/SIX_OF_DIAMONDS.svg",
+      "title": { "uk": "Безугла" },
+      "tags": ["bezuhla"]
+    },
+    "SEVEN_OF_DIAMONDS": {
+      "image": "cards/SEVEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Арахамія" },
+      "tags": ["arakhamia"]
+    },
+    "EIGHT_OF_DIAMONDS": {
+      "image": "cards/EIGHT_OF_DIAMONDS.svg",
+      "title": { "uk": "Гончаренко" },
+      "tags": ["honcharenko"]
+    },
+    "NINE_OF_DIAMONDS": {
+      "image": "cards/NINE_OF_DIAMONDS.svg",
+      "title": { "uk": "Тимошенко" },
+      "tags": ["tymoshenko"]
+    },
+    "TEN_OF_DIAMONDS": {
+      "image": "cards/TEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Кличко" },
+      "tags": ["klychko"]
+    },
+    "JACK_OF_DIAMONDS": {
+      "image": "cards/JACK_OF_DIAMONDS.svg",
+      "title": { "uk": "Порошенко" },
+      "tags": ["poroshenko"]
+    },
+    "QUEEN_OF_DIAMONDS": {
+      "image": "cards/QUEEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Єрмак" },
+      "tags": ["yermak"]
+    },
+    "KING_OF_DIAMONDS": {
+      "image": "cards/KING_OF_DIAMONDS.svg",
+      "title": { "uk": "Залужний" },
+      "tags": ["zaluzhnyi"]
+    },
+    "ACE_OF_DIAMONDS": {
+      "image": "cards/ACE_OF_DIAMONDS.svg",
+      "title": { "uk": "Зеленський" },
+      "tags": ["zelenskyi"]
+    },
+    "SIX_OF_HEARTS": {
+      "image": "cards/SIX_OF_HEARTS.svg",
+      "title": { "uk": "Безугла" },
+      "tags": ["bezuhla"]
+    },
+    "SEVEN_OF_HEARTS": {
+      "image": "cards/SEVEN_OF_HEARTS.svg",
+      "title": { "uk": "Арахамія" },
+      "tags": ["arakhamia"]
+    },
+    "EIGHT_OF_HEARTS": {
+      "image": "cards/EIGHT_OF_HEARTS.svg",
+      "title": { "uk": "Гончаренко" },
+      "tags": ["honcharenko"]
+    },
+    "NINE_OF_HEARTS": {
+      "image": "cards/NINE_OF_HEARTS.svg",
+      "title": { "uk": "Тимошенко" },
+      "tags": ["tymoshenko"]
+    },
+    "TEN_OF_HEARTS": { "image": "cards/TEN_OF_HEARTS.svg", "title": { "uk": "Кличко" }, "tags": ["klychko"] },
+    "JACK_OF_HEARTS": {
+      "image": "cards/JACK_OF_HEARTS.svg",
+      "title": { "uk": "Порошенко" },
+      "tags": ["poroshenko"]
+    },
+    "QUEEN_OF_HEARTS": {
+      "image": "cards/QUEEN_OF_HEARTS.svg",
+      "title": { "uk": "Єрмак" },
+      "tags": ["yermak"]
+    },
+    "KING_OF_HEARTS": {
+      "image": "cards/KING_OF_HEARTS.svg",
+      "title": { "uk": "Залужний" },
+      "tags": ["zaluzhnyi"]
+    },
+    "ACE_OF_HEARTS": {
+      "image": "cards/ACE_OF_HEARTS.svg",
+      "title": { "uk": "Зеленський" },
+      "tags": ["zelenskyi"]
+    },
+    "SIX_OF_SPADES": {
+      "image": "cards/SIX_OF_SPADES.svg",
+      "title": { "uk": "Безугла" },
+      "tags": ["bezuhla"]
+    },
+    "SEVEN_OF_SPADES": {
+      "image": "cards/SEVEN_OF_SPADES.svg",
+      "title": { "uk": "Арахамія" },
+      "tags": ["arakhamia"]
+    },
+    "EIGHT_OF_SPADES": {
+      "image": "cards/EIGHT_OF_SPADES.svg",
+      "title": { "uk": "Гончаренко" },
+      "tags": ["honcharenko"]
+    },
+    "NINE_OF_SPADES": {
+      "image": "cards/NINE_OF_SPADES.svg",
+      "title": { "uk": "Тимошенко" },
+      "tags": ["tymoshenko"]
+    },
+    "TEN_OF_SPADES": { "image": "cards/TEN_OF_SPADES.svg", "title": { "uk": "Кличко" }, "tags": ["klychko"] },
+    "JACK_OF_SPADES": {
+      "image": "cards/JACK_OF_SPADES.svg",
+      "title": { "uk": "Порошенко" },
+      "tags": ["poroshenko"]
+    },
+    "QUEEN_OF_SPADES": {
+      "image": "cards/QUEEN_OF_SPADES.svg",
+      "title": { "uk": "Єрмак" },
+      "tags": ["yermak"]
+    },
+    "KING_OF_SPADES": {
+      "image": "cards/KING_OF_SPADES.svg",
+      "title": { "uk": "Залужний" },
+      "tags": ["zaluzhnyi"]
+    },
+    "ACE_OF_SPADES": {
+      "image": "cards/ACE_OF_SPADES.svg",
+      "title": { "uk": "Зеленський" },
+      "tags": ["zelenskyi"]
+    }
+  },
+  "sounds": {
+    "fanfare": "sounds/fanfare.wav",
+    "applause": "sounds/applause.wav",
+    "blackout": "sounds/blackout.wav",
+    "ding": "sounds/ding.wav"
+  },
+  "animations": { "blackout": { "kind": "css", "className": "fx-blackout", "durationMs": 1800 } },
+  "rules": [
+    {
+      "id": "inseparable-clubs",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_CLUBS", "QUEEN_OF_CLUBS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_CLUBS", "QUEEN_OF_CLUBS"] }]
+    },
+    {
+      "id": "inseparable-diamonds",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_DIAMONDS", "QUEEN_OF_DIAMONDS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_DIAMONDS", "QUEEN_OF_DIAMONDS"] }]
+    },
+    {
+      "id": "inseparable-hearts",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_HEARTS", "QUEEN_OF_HEARTS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_HEARTS", "QUEEN_OF_HEARTS"] }]
+    },
+    {
+      "id": "inseparable-spades",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_SPADES", "QUEEN_OF_SPADES"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_SPADES", "QUEEN_OF_SPADES"] }]
+    },
+    {
+      "id": "klychko-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "klychko" } },
+      "do": [
+        { "anim": "shake", "target": "beaten" },
+        { "bubble": { "uk": "Сьогодні в завтрашній день не всі можуть дивитися" }, "target": "beaten" },
+        { "say": { "uk": "Сьогодні в завтрашній день не всі можуть дивитися" }, "rate": 0.9 }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "poroshenko-played",
+      "on": "card_played",
+      "if": { "side": "you", "card": { "tag": "poroshenko" } },
+      "do": [{ "say": { "uk": "Армія! Мова! Віра!" }, "rate": 1.1 }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "bezuhla-played",
+      "on": "card_played",
+      "if": { "side": "opponent", "card": { "tag": "bezuhla" } },
+      "do": [
+        { "bubble": { "uk": "Вас треба звільнити" }, "target": "you" },
+        { "anim": "shake", "target": "you" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "arakhamia-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "arakhamia" } },
+      "do": [{ "bubble": { "uk": "Це був ситуативний союз" }, "target": "beaten" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "honcharenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "honcharenko" } },
+      "do": [
+        { "sound": "ding" },
+        { "bubble": { "uk": "⚡ Термінове звернення" }, "target": "played" },
+        { "say": { "uk": "Терміново!" }, "rate": 1.3, "pitch": 1.2 }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "tymoshenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "tymoshenko" } },
+      "do": [
+        { "anim": "pulse", "target": "played" },
+        { "bubble": { "uk": "Коса — сила" }, "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "zaluzhnyi-beats",
+      "on": "card_beaten",
+      "if": { "card": { "tag": "zaluzhnyi" } },
+      "do": [
+        { "sound": "applause" },
+        { "say": { "uk": "Залізний генерал" }, "rate": 0.9, "pitch": 0.8 },
+        { "haptic": "success" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "trump-reveal",
+      "on": "duel_started",
+      "if": { "random": 0.5 },
+      "do": [{ "bubble": { "uk": "Козир — Трамп. Перемир'я на 15 хвилин" }, "target": "table" }]
+    },
+    {
+      "id": "blackout",
+      "on": "cards_taken",
+      "if": { "side": "you" },
+      "do": [
+        { "sound": "blackout" },
+        { "anim": "blackout", "target": "felt" },
+        { "bubble": { "uk": "ДТЕК: стабілізаційне відключення" }, "target": "table" }
+      ],
+      "cooldownMs": 8000
+    },
+    {
+      "id": "won",
+      "on": "duel_finished",
+      "if": { "outcome": "WON" },
+      "do": [{ "sound": "fanfare" }, { "say": { "uk": "Перемога! Дякую кожному" } }, { "haptic": "success" }]
+    },
+    {
+      "id": "lost",
+      "on": "duel_finished",
+      "if": { "outcome": "LOST" },
+      "do": [{ "bubble": { "uk": "Все йде за планом" }, "target": "table" }]
+    }
+  ]
+}

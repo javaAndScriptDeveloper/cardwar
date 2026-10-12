@@ -1,0 +1,57 @@
+/* Classes named by this pack's css animations; the runtime adds one to the target for its durationMs. */
+.fx-blackout {
+    position: relative;
+    animation: fx-blackout-dim 1800ms ease-in-out;
+}
+
+.fx-blackout::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(circle at 24% 38%, rgb(255 214 110 / 90%) 0 4px, transparent 6px),
+        radial-gradient(circle at 76% 62%, rgb(255 214 110 / 90%) 0 4px, transparent 6px);
+    animation: fx-blackout-flicker 1800ms steps(1, end);
+}
+
+@keyframes fx-blackout-dim {
+    0% {
+        filter: brightness(1);
+    }
+    15% {
+        filter: brightness(0.25);
+    }
+    85% {
+        filter: brightness(0.25);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@keyframes fx-blackout-flicker {
+    0% {
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    35% {
+        opacity: 0;
+    }
+    45% {
+        opacity: 1;
+    }
+    60% {
+        opacity: 0.3;
+    }
+    70% {
+        opacity: 1;
+    }
+    85% {
+        opacity: 0;
+    }
+}

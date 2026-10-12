@@ -21,5 +21,17 @@
       "packs/memes-demo/cards/QUEEN_OF_DIAMONDS.svg"
     ],
     "demoSound": "packs/memes-demo/sounds/lose_money.wav"
+  },
+  {
+    "id": "sluhy-narodu",
+    "name": {
+      "uk": "Слуги народу (сатира)"
+    },
+    "preview": [
+      "packs/sluhy-narodu/cards/ACE_OF_HEARTS.svg",
+      "packs/sluhy-narodu/cards/KING_OF_SPADES.svg",
+      "packs/sluhy-narodu/cards/QUEEN_OF_DIAMONDS.svg"
+    ],
+    "demoSound": "packs/sluhy-narodu/sounds/fanfare.wav"
   }
 ]
