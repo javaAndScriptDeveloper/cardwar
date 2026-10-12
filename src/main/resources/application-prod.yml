@@ -23,3 +23,8 @@ logging:
   level:
     root: INFO
     cardwar: INFO
+  # JSON lines (logstash layout) so Grafana Alloy ships them to Loki and `| json` can filter by field; the MDC
+  # (requestId, and ids set by services) becomes top-level fields.
+  structured:
+    format:
+      console: logstash

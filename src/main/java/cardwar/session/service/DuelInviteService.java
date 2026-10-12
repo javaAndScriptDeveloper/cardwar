@@ -6,6 +6,8 @@ import cardwar.exception.BadRequestException;
 import cardwar.exception.ConflictException;
 import cardwar.exception.ForbiddenException;
 import cardwar.exception.NotFoundException;
+import cardwar.metrics.GameMetrics;
+import cardwar.metrics.GameMetrics.InviteEvent;
 import cardwar.session.dto.DuelView;
 import cardwar.session.dto.InviteView;
 import cardwar.session.store.InviteStore;
@@ -29,16 +31,20 @@ public class DuelInviteService {
 
     private final InviteStore invites;
     private final DuelService duels;
+    private final GameMetrics metrics;
 
-    public DuelInviteService(InviteStore invites, DuelService duels) {
+    public DuelInviteService(InviteStore invites, DuelService duels, GameMetrics metrics) {
         this.invites = invites;
         this.duels = duels;
+        this.metrics = metrics;
     }
 
     /** Idempotent while the caller's invite is pending, so reopening the app and tapping again keeps the code. */
     public InviteView create(PlayerId caller) {
+        boolean reused = invites.findPending(caller.value()).isPresent();
         StoredInvite invite = invites.create(caller.value());
         log.info("Invite {} issued", invite.inviteId());
+        metrics.invite(reused ? InviteEvent.REUSED : InviteEvent.CREATED);
         return view(invite);
     }
 
@@ -57,6 +63,7 @@ public class DuelInviteService {
             case ALREADY_ACCEPTED -> throw new ConflictException("This invite has already been accepted");
             case CLAIMED -> log.info("Invite {} accepted", invite.inviteId());
         }
+        metrics.invite(InviteEvent.ACCEPTED);
         // The acceptor is now busy; their own open invite must not drag them into a second duel.
         invites.cancelPending(caller.value());
         return duels.start(caller, new PlayerId(invite.creator()), duelId);

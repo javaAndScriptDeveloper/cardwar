@@ -4,7 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import cardwar.bot.BotProperties;
 import cardwar.bot.client.TelegramBotApi;
+import cardwar.metrics.GameMetrics;
 import cardwar.security.telegram.TelegramProperties;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,13 @@ class TelegramBotServiceTest {
     final List<Sent> sent = new ArrayList<>();
     final TelegramBotApi api =
             (chatId, text, buttonText, buttonUrl) -> sent.add(new Sent(chatId, text, buttonText, buttonUrl));
+    final SimpleMeterRegistry registry = new SimpleMeterRegistry();
+    final GameMetrics metrics = new GameMetrics(registry);
     final TelegramBotService bot = new TelegramBotService(
             new TelegramProperties("123:token", null),
             new BotProperties("https://cardwar.example/app/", "https://api.telegram.example"),
-            api);
+            api,
+            metrics);
 
     private static JsonNode update(String chatType, String text) {
         return JsonMapper.builder()
@@ -89,7 +94,43 @@ class TelegramBotServiceTest {
         assertThat(bot.acceptsSecret(secret.substring(1))).isFalse();
         assertThat(bot.acceptsSecret(null)).isFalse();
         var tokenless = new TelegramBotService(
-                new TelegramProperties("", null), new BotProperties("https://x/app/", "https://y"), api);
+                new TelegramProperties("", null), new BotProperties("https://x/app/", "https://y"), api, metrics);
         assertThat(tokenless.acceptsSecret(tokenless.webhookSecret())).isFalse();
+    }
+
+    @Test
+    void outcomesAreCounted() {
+        TelegramBotApi failing = (chatId, text, buttonText, buttonUrl) -> false;
+        var unlucky = new TelegramBotService(
+                new TelegramProperties("123:token", null),
+                new BotProperties("https://cardwar.example/app/", "https://api.telegram.example"),
+                failing,
+                metrics);
+
+        bot.handle(update("private", "/start"));
+        bot.handle(update("group", "/start"));
+        unlucky.handle(update("private", "/start"));
+        bot.acceptsSecret("nope");
+
+        assertThat(registry.get("cardwar.bot.updates")
+                        .tag("outcome", "replied")
+                        .counter()
+                        .count())
+                .isEqualTo(1);
+        assertThat(registry.get("cardwar.bot.updates")
+                        .tag("outcome", "ignored")
+                        .counter()
+                        .count())
+                .isEqualTo(1);
+        assertThat(registry.get("cardwar.bot.updates")
+                        .tag("outcome", "failed")
+                        .counter()
+                        .count())
+                .isEqualTo(1);
+        assertThat(registry.get("cardwar.bot.updates")
+                        .tag("outcome", "rejected")
+                        .counter()
+                        .count())
+                .isEqualTo(1);
     }
 }

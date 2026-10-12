@@ -31,6 +31,8 @@ public class SecurityConfig {
         "/actuator/health",
         "/actuator/health/**",
         "/actuator/info",
+        // Scraped by Grafana Alloy over the compose network, which has no token; nginx refuses it from outside.
+        "/actuator/prometheus",
         "/v3/api-docs/**",
         "/swagger-ui.html",
         "/swagger-ui/**"

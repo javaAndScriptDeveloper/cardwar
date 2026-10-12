@@ -61,6 +61,12 @@ ASSET="$(grep -o '/app/assets/[^"]*\.js' /tmp/smoke.app | head -1)"
 [ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/app/some/deep/link")" = 200 ] \
   && pass "unknown /app/ paths fall back to the shell" || fail "no SPA fallback under /app/"
 
+step "1c. Metrics are not public"
+[ "$("${CURL[@]}" -o /dev/null -w '%{http_code}' "$BASE_URL/actuator/prometheus")" = 404 ] \
+  && pass "GET /actuator/prometheus through nginx → 404" || fail "/actuator/prometheus is reachable from outside"
+"${CURL[@]}" -D - -o /dev/null "$BASE_URL/actuator/health" | grep -qi '^x-request-id: [0-9a-f]\{32\}' \
+  && pass "nginx request id reaches the app and comes back" || fail "no X-Request-Id from nginx on /actuator/health"
+
 step "2. Unauthenticated access is refused"
 request GET "/me" && expect_status 401 "GET /me without a token"
 

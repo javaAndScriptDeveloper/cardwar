@@ -9,6 +9,8 @@ import cardwar.account.repository.PlayerRepository;
 import cardwar.exception.BadRequestException;
 import cardwar.exception.ConflictException;
 import cardwar.exception.NotFoundException;
+import cardwar.metrics.GameMetrics;
+import cardwar.metrics.GameMetrics.SignIn;
 import cardwar.security.PlayerIdentity;
 import java.time.Instant;
 import java.util.Optional;
@@ -28,11 +30,17 @@ public class AccountService {
     private final PlayerProgressRepository progress;
     private final PasswordEncoder passwordEncoder;
 
+    private final GameMetrics metrics;
+
     public AccountService(
-            PlayerRepository players, PlayerProgressRepository progress, PasswordEncoder passwordEncoder) {
+            PlayerRepository players,
+            PlayerProgressRepository progress,
+            PasswordEncoder passwordEncoder,
+            GameMetrics metrics) {
         this.players = players;
         this.progress = progress;
         this.passwordEncoder = passwordEncoder;
+        this.metrics = metrics;
     }
 
     @Transactional
@@ -55,6 +63,7 @@ public class AccountService {
         }
         progress.save(new PlayerProgress(player.getId(), now));
         log.info("Registered player {}", player.getId());
+        metrics.signIn(SignIn.REGISTER);
         return new PlayerIdentity(player.getId(), player.getUsername());
     }
 
@@ -123,6 +132,7 @@ public class AccountService {
             log.debug("Failed authentication attempt");
             return Optional.empty();
         }
+        metrics.signIn(SignIn.PASSWORD);
         return found.map(player -> new PlayerIdentity(player.getId(), player.getUsername()));
     }
 

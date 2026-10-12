@@ -23,7 +23,7 @@ public class RestTelegramBotApi implements TelegramBotApi {
     }
 
     @Override
-    public void sendMessage(long chatId, String text, String buttonText, String buttonUrl) {
+    public boolean sendMessage(long chatId, String text, String buttonText, String buttonUrl) {
         var button = Map.of("text", buttonText, "web_app", Map.of("url", buttonUrl));
         var body = Map.of(
                 "chat_id", chatId, "text", text, "reply_markup", Map.of("inline_keyboard", List.of(List.of(button))));
@@ -35,11 +35,13 @@ public class RestTelegramBotApi implements TelegramBotApi {
                     .body(body)
                     .retrieve()
                     .toBodilessEntity();
+            return true;
         } catch (RestClientException failed) {
             // Telegram re-delivers an update only when the webhook fails, not when our reply does; a lost greeting
             // costs the user one more /start, so it is logged and dropped.
             log.warn(
                     "Bot reply to chat {} failed: {}", chatId, failed.getClass().getSimpleName());
+            return false;
         }
     }
 }

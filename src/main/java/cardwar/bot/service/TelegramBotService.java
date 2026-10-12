@@ -2,6 +2,8 @@ package cardwar.bot.service;
 
 import cardwar.bot.BotProperties;
 import cardwar.bot.client.TelegramBotApi;
+import cardwar.metrics.GameMetrics;
+import cardwar.metrics.GameMetrics.BotOutcome;
 import cardwar.security.telegram.TelegramProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -40,9 +42,13 @@ public class TelegramBotService {
     private final TelegramBotApi api;
     private final String webhookSecret;
 
-    public TelegramBotService(TelegramProperties telegram, BotProperties properties, TelegramBotApi api) {
+    private final GameMetrics metrics;
+
+    public TelegramBotService(
+            TelegramProperties telegram, BotProperties properties, TelegramBotApi api, GameMetrics metrics) {
         this.properties = properties;
         this.api = api;
+        this.metrics = metrics;
         this.webhookSecret = telegram.hasBotToken() ? derive(telegram.botToken()) : null;
     }
 
@@ -55,26 +61,30 @@ public class TelegramBotService {
     }
 
     public boolean acceptsSecret(String presented) {
-        return webhookSecret != null
+        boolean accepted = webhookSecret != null
                 && presented != null
                 && MessageDigest.isEqual(
                         webhookSecret.getBytes(StandardCharsets.UTF_8), presented.getBytes(StandardCharsets.UTF_8));
+        if (!accepted) {
+            metrics.botUpdate(BotOutcome.REJECTED);
+        }
+        return accepted;
     }
 
     public void handle(JsonNode update) {
         JsonNode message = update.path("message");
         if (!"private".equals(message.path("chat").path("type").asString(""))) {
             // Mini App buttons only work in private chats; groups and other update kinds get no answer.
+            metrics.botUpdate(BotOutcome.IGNORED);
             return;
         }
         long chatId = message.path("chat").path("id").asLong();
         String text = message.path("text").asString("").strip();
         String invite = inviteOf(text);
-        if (invite != null) {
-            api.sendMessage(chatId, INVITED, "Join the duel", properties.miniAppUrl() + "?invite=" + invite);
-        } else {
-            api.sendMessage(chatId, GREETING, "Play", properties.miniAppUrl());
-        }
+        boolean sent = invite != null
+                ? api.sendMessage(chatId, INVITED, "Join the duel", properties.miniAppUrl() + "?invite=" + invite)
+                : api.sendMessage(chatId, GREETING, "Play", properties.miniAppUrl());
+        metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
     }
 
     private static String inviteOf(String text) {

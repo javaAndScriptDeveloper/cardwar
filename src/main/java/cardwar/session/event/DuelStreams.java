@@ -1,6 +1,8 @@
 package cardwar.session.event;
 
 import cardwar.engine.DuelId;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.Map;
@@ -35,8 +37,13 @@ public class DuelStreams implements MessageListener {
     private final DuelStreamProperties properties;
     private final ScheduledExecutorService heartbeat;
 
-    public DuelStreams(DuelStreamProperties properties) {
+    public DuelStreams(DuelStreamProperties properties, MeterRegistry registry) {
         this.properties = properties;
+        Gauge.builder("cardwar.sse.streams.open", byDuel, streams -> streams.values().stream()
+                        .mapToInt(Map::size)
+                        .sum())
+                .description("Open server-sent event streams to clients")
+                .register(registry);
         // A daemon thread, so a stuck emitter can never keep the JVM from exiting.
         this.heartbeat = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread thread = new Thread(runnable, "duel-stream-heartbeat");

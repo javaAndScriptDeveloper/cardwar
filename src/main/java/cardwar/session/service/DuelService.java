@@ -4,10 +4,15 @@ import cardwar.account.service.AccountService;
 import cardwar.engine.DuelId;
 import cardwar.engine.DurakEngine;
 import cardwar.engine.GameCommand;
+import cardwar.engine.IllegalMoveException;
 import cardwar.engine.PlayerId;
 import cardwar.exception.BadRequestException;
+import cardwar.exception.ConflictException;
 import cardwar.exception.ForbiddenException;
 import cardwar.exception.NotFoundException;
+import cardwar.metrics.GameMetrics;
+import cardwar.metrics.GameMetrics.MoveOutcome;
+import cardwar.metrics.GameMetrics.StartMode;
 import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
 import cardwar.session.event.DuelEventPublisher;
@@ -35,24 +40,27 @@ public class DuelService {
     private final DuelEventPublisher publisher;
     private final DuelCompletionService completion;
     private final AccountService accounts;
+    private final GameMetrics metrics;
 
     public DuelService(
             DurakEngine engine,
             GameStateStore store,
             DuelEventPublisher publisher,
             DuelCompletionService completion,
-            AccountService accounts) {
+            AccountService accounts,
+            GameMetrics metrics) {
         this.engine = engine;
         this.store = store;
         this.publisher = publisher;
         this.completion = completion;
         this.accounts = accounts;
+        this.metrics = metrics;
     }
 
     /** Every duel is between two real accounts; there is deliberately no way to ask for a bot here. */
     public DuelView create(PlayerId caller, String opponentUsername) {
         UUID opponentId = accounts.requireIdByUsername(opponentUsername);
-        return start(caller, new PlayerId(opponentId), new DuelId(UUID.randomUUID()));
+        return start(caller, new PlayerId(opponentId), new DuelId(UUID.randomUUID()), StartMode.DIRECT);
     }
 
     /**
@@ -60,6 +68,10 @@ public class DuelService {
      * exists so it can record it atomically with the acceptance.
      */
     public DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId) {
+        return start(caller, opponent, duelId, StartMode.INVITE);
+    }
+
+    private DuelView start(PlayerId caller, PlayerId opponent, DuelId duelId, StartMode mode) {
         if (opponent.equals(caller)) {
             throw new BadRequestException("A duel needs two different players");
         }
@@ -69,6 +81,7 @@ public class DuelService {
         store.save(stored, GameStateStore.ABSENT);
         publisher.publish(duelId, result.events());
         log.info("Duel {} created", duelId.value());
+        metrics.duelStarted(mode);
         return DuelView.of(result.state(), caller);
     }
 
@@ -80,13 +93,24 @@ public class DuelService {
         StoredDuel stored = requireParticipation(duelId, caller);
         long expectedVersion = stored.state().version();
 
-        var result = engine.apply(stored.state(), caller, command);
-        StoredDuel next = stored.with(result.state());
-        store.save(next, expectedVersion);
-        publisher.publish(next.state().duelId(), result.events());
+        StoredDuel next;
+        try {
+            var result = engine.apply(stored.state(), caller, command);
+            next = stored.with(result.state());
+            store.save(next, expectedVersion);
+            publisher.publish(next.state().duelId(), result.events());
+        } catch (IllegalMoveException rejected) {
+            metrics.move(command, MoveOutcome.REJECTED);
+            throw rejected;
+        } catch (ConflictException lostRace) {
+            metrics.move(command, MoveOutcome.CONFLICT);
+            throw lostRace;
+        }
+        metrics.move(command, MoveOutcome.OK);
 
         if (next.state().isFinished()) {
             completion.complete(next, Instant.now());
+            metrics.duelFinished(next.state().outcome());
             // Only once the result is durable: until then the state store is the only copy of this duel.
             store.delete(next.state().duelId());
         }

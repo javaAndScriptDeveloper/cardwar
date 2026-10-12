@@ -1,5 +1,7 @@
 package cardwar.account.service;
 
+import cardwar.metrics.GameMetrics;
+import cardwar.metrics.GameMetrics.SignIn;
 import cardwar.security.PlayerIdentity;
 import cardwar.security.PrincipalResolver;
 import cardwar.security.telegram.TelegramInitDataVerifier;
@@ -20,14 +22,20 @@ public class TelegramSignInService implements PrincipalResolver {
 
     private final TelegramInitDataVerifier verifier;
     private final AccountService accounts;
+    private final GameMetrics metrics;
 
-    public TelegramSignInService(TelegramInitDataVerifier verifier, AccountService accounts) {
+    public TelegramSignInService(TelegramInitDataVerifier verifier, AccountService accounts, GameMetrics metrics) {
         this.verifier = verifier;
         this.accounts = accounts;
+        this.metrics = metrics;
     }
 
     @Override
     public Optional<PlayerIdentity> resolve(String initData) {
-        return verifier.verify(initData).map(user -> accounts.registerTelegram(user.id(), user.displayName()));
+        return verifier.verify(initData).map(user -> {
+            PlayerIdentity identity = accounts.registerTelegram(user.id(), user.displayName());
+            metrics.signIn(SignIn.TELEGRAM);
+            return identity;
+        });
     }
 }

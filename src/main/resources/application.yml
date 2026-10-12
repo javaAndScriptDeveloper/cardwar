@@ -69,6 +69,14 @@ management:
   info:
     env:
       enabled: true
+  metrics:
+    tags:
+      # Every series says which service it came from; Grafana queries also filter on the scrape job.
+      application: cardwar
+    distribution:
+      percentiles-histogram:
+        # Buckets for the p95 latency panel; one histogram for all routes keeps the series count small.
+        http.server.requests: true
 
 cardwar:
   security:
