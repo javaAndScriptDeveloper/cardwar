@@ -167,3 +167,17 @@ Every event produced by the engine SHALL be published to a per-duel Redis channe
 #### Scenario: Duel completion is announced
 - **WHEN** a duel finishes
 - **THEN** both participants receive a duel-finished event carrying the outcome
+
+### Requirement: Move clock
+Each move SHALL have a time limit (default 30 seconds) enforced by the server. The duel view SHALL carry the deadline,
+whose clock runs (`toMove`) and both players' strikes. When a clock runs out the server SHALL play, for the player
+holding the game up, the least damaging legal move (take; end a beaten attack; lead the lowest non-trump), adding a
+strike; the third strike SHALL end the duel as a forfeit (`FORFEIT`) with the stake paid to the opponent. A move the
+player makes SHALL clear their strikes. A real move and a timeout racing SHALL resolve to exactly one of them.
+
+### Requirement: Quick match
+`POST /api/v1/matchmaking {stake}` SHALL pair the caller with the longest-waiting player at the same stake table, or
+queue them for 60 seconds. Pairing SHALL escrow both stakes and start the duel atomically; two players entering
+together SHALL always be paired; a waiting player who can no longer pay SHALL be dropped. `GET` SHALL report
+WAITING, MATCHED (with the duel, once) or EXPIRED, and `DELETE` SHALL leave the queue.
+

@@ -113,6 +113,19 @@ the Redis key is deleted; the duel then answers `404`.
 | `POST /api/v1/duels/invites`       | Create an invite (optional `{stake}`: 0/100/500/1000/5000) to share for 15 min |
 | `GET  /api/v1/duels/invites/{id}`  | Invite status for its creator; names the duel once accepted           |
 | `POST /api/v1/duels/invites/{id}/accept` | Accept, escrow both stakes, start the duel (`400` own/`INSUFFICIENT_COINS`, `404`, `409`) |
+| `POST /api/v1/matchmaking`         | Quick match at a stake table: pairs at once or queues for 60 s        |
+| `GET  /api/v1/matchmaking`         | WAITING / MATCHED (duel id, once) / EXPIRED, or `204` when not queued  |
+| `DELETE /api/v1/matchmaking`       | Leave the queue                                                        |
+| `GET  /api/v1/friends`             | Everybody you played, with the record between you                      |
+| `POST /api/v1/friends/{id}/challenge` | Challenge a friend at a stake; the bot DMs them a Join button        |
+| `GET  /api/v1/challenges`          | Challenges waiting for you                                             |
+| `POST /api/v1/duels/invites/{id}/decline` | Decline a challenge addressed to you                           |
+| `GET  /api/v1/shop`                | Cosmetics with ownership/equipped state, and Stars coin packs          |
+| `POST /api/v1/shop/items/{code}/buy` | Buy for coins (`400 INSUFFICIENT_COINS`, `409 ALREADY_OWNED`)        |
+| `POST /api/v1/shop/items/{code}/equip` | Equip an owned item                                                |
+| `GET  /api/v1/me/loadout`          | What you have equipped, and your emotes                                |
+| `POST /api/v1/shop/stars/invoice`  | Telegram Stars invoice link for a coin pack                            |
+| `POST /api/v1/duels/{id}/emotes`   | Throw an owned emote at the table (one per 3 s)                        |
 | `GET  /api/v1/duels/active`        | The caller's in-progress duels, card-free, for resuming after a restart |
 | `GET  /api/v1/duels/{id}`          | The caller's redacted view                                            |
 | `POST /api/v1/duels/{id}/moves`    | Submit a move; the engine re-validates it against the stored state    |
