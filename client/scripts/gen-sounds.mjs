@@ -9,24 +9,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { env, noiseSource, render, sine, wav } from './lib/wav.mjs';
 
-const RATE = 22050;
 const OUT = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'sounds', 'default');
-
-/** Builds samples in [-1, 1] from a per-sample function over seconds. */
-function render(seconds, sample) {
-    const n = Math.round(seconds * RATE);
-    const out = new Float32Array(n);
-    for (let i = 0; i < n; i++) {
-        out[i] = sample(i / RATE, i / n);
-    }
-    return out;
-}
-
-const env = (p, attack = 0.02, release = 0.4) => Math.min(1, p / attack) * Math.pow(1 - p, release * 4);
-const sine = (t, f) => Math.sin(2 * Math.PI * f * t);
-let seed = 7;
-const noise = () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff) * 2 - 1;
+const noise = noiseSource(7);
 
 const SOUNDS = {
     // A card sliding onto the felt: a short brushed noise burst.
@@ -66,27 +52,6 @@ const SOUNDS = {
             0.4,
     ),
 };
-
-function wav(samples) {
-    const bytes = Buffer.alloc(44 + samples.length * 2);
-    bytes.write('RIFF', 0);
-    bytes.writeUInt32LE(36 + samples.length * 2, 4);
-    bytes.write('WAVE', 8);
-    bytes.write('fmt ', 12);
-    bytes.writeUInt32LE(16, 16);
-    bytes.writeUInt16LE(1, 20); // PCM
-    bytes.writeUInt16LE(1, 22); // mono
-    bytes.writeUInt32LE(RATE, 24);
-    bytes.writeUInt32LE(RATE * 2, 28);
-    bytes.writeUInt16LE(2, 32);
-    bytes.writeUInt16LE(16, 34);
-    bytes.write('data', 36);
-    bytes.writeUInt32LE(samples.length * 2, 40);
-    samples.forEach((value, i) =>
-        bytes.writeInt16LE(Math.round(Math.max(-1, Math.min(1, value)) * 32767), 44 + i * 2),
-    );
-    return bytes;
-}
 
 mkdirSync(OUT, { recursive: true });
 for (const [name, samples] of Object.entries(SOUNDS)) {

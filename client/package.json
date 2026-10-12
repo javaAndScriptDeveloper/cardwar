@@ -13,7 +13,8 @@
     "test": "vitest run",
     "gen:cards": "node scripts/gen-cards.mjs",
     "e2e": "playwright test",
-    "gen:sounds": "node scripts/gen-sounds.mjs"
+    "gen:sounds": "node scripts/gen-sounds.mjs",
+    "gen:pack:memes": "node scripts/gen-pack-memes.mjs"
   },
   "dependencies": {
     "@preact/signals": "^2.11.3",

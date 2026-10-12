@@ -1,0 +1,179 @@
+{
+  "id": "memes-demo",
+  "version": 1,
+  "type": "DECK",
+  "name": { "uk": "Мемна колода (демо)" },
+  "back": "cards/back.svg",
+  "styles": "anim/fx.css",
+  "cards": {
+    "SIX_OF_CLUBS": { "image": "cards/SIX_OF_CLUBS.svg", "title": { "uk": "Кіт" }, "tags": ["cat"] },
+    "SEVEN_OF_CLUBS": {
+      "image": "cards/SEVEN_OF_CLUBS.svg",
+      "title": { "uk": "Сусід" },
+      "tags": ["neighbour"]
+    },
+    "EIGHT_OF_CLUBS": {
+      "image": "cards/EIGHT_OF_CLUBS.svg",
+      "title": { "uk": "Студент" },
+      "tags": ["student"]
+    },
+    "NINE_OF_CLUBS": { "image": "cards/NINE_OF_CLUBS.svg", "title": { "uk": "Бабуся" }, "tags": ["granny"] },
+    "TEN_OF_CLUBS": { "image": "cards/TEN_OF_CLUBS.svg", "title": { "uk": "Таксист" }, "tags": ["taxi"] },
+    "JACK_OF_CLUBS": {
+      "image": "cards/JACK_OF_CLUBS.svg",
+      "title": { "uk": "Реп-зірка" },
+      "tags": ["rapstar"]
+    },
+    "QUEEN_OF_CLUBS": {
+      "image": "cards/QUEEN_OF_CLUBS.svg",
+      "title": { "uk": "Блогерка" },
+      "tags": ["blogger"]
+    },
+    "KING_OF_CLUBS": { "image": "cards/KING_OF_CLUBS.svg", "title": { "uk": "Депутат" }, "tags": ["deputy"] },
+    "ACE_OF_CLUBS": { "image": "cards/ACE_OF_CLUBS.svg", "title": { "uk": "Банкір" }, "tags": ["banker"] },
+    "SIX_OF_DIAMONDS": { "image": "cards/SIX_OF_DIAMONDS.svg", "title": { "uk": "Кіт" }, "tags": ["cat"] },
+    "SEVEN_OF_DIAMONDS": {
+      "image": "cards/SEVEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Сусід" },
+      "tags": ["neighbour"]
+    },
+    "EIGHT_OF_DIAMONDS": {
+      "image": "cards/EIGHT_OF_DIAMONDS.svg",
+      "title": { "uk": "Студент" },
+      "tags": ["student"]
+    },
+    "NINE_OF_DIAMONDS": {
+      "image": "cards/NINE_OF_DIAMONDS.svg",
+      "title": { "uk": "Бабуся" },
+      "tags": ["granny"]
+    },
+    "TEN_OF_DIAMONDS": {
+      "image": "cards/TEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Таксист" },
+      "tags": ["taxi"]
+    },
+    "JACK_OF_DIAMONDS": {
+      "image": "cards/JACK_OF_DIAMONDS.svg",
+      "title": { "uk": "Реп-зірка" },
+      "tags": ["rapstar"]
+    },
+    "QUEEN_OF_DIAMONDS": {
+      "image": "cards/QUEEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Блогерка" },
+      "tags": ["blogger"]
+    },
+    "KING_OF_DIAMONDS": {
+      "image": "cards/KING_OF_DIAMONDS.svg",
+      "title": { "uk": "Депутат" },
+      "tags": ["deputy"]
+    },
+    "ACE_OF_DIAMONDS": {
+      "image": "cards/ACE_OF_DIAMONDS.svg",
+      "title": { "uk": "Банкір" },
+      "tags": ["banker"]
+    },
+    "SIX_OF_HEARTS": { "image": "cards/SIX_OF_HEARTS.svg", "title": { "uk": "Кіт" }, "tags": ["cat"] },
+    "SEVEN_OF_HEARTS": {
+      "image": "cards/SEVEN_OF_HEARTS.svg",
+      "title": { "uk": "Сусід" },
+      "tags": ["neighbour"]
+    },
+    "EIGHT_OF_HEARTS": {
+      "image": "cards/EIGHT_OF_HEARTS.svg",
+      "title": { "uk": "Студент" },
+      "tags": ["student"]
+    },
+    "NINE_OF_HEARTS": {
+      "image": "cards/NINE_OF_HEARTS.svg",
+      "title": { "uk": "Бабуся" },
+      "tags": ["granny"]
+    },
+    "TEN_OF_HEARTS": { "image": "cards/TEN_OF_HEARTS.svg", "title": { "uk": "Таксист" }, "tags": ["taxi"] },
+    "JACK_OF_HEARTS": {
+      "image": "cards/JACK_OF_HEARTS.svg",
+      "title": { "uk": "Реп-зірка" },
+      "tags": ["rapstar"]
+    },
+    "QUEEN_OF_HEARTS": {
+      "image": "cards/QUEEN_OF_HEARTS.svg",
+      "title": { "uk": "Блогерка" },
+      "tags": ["blogger"]
+    },
+    "KING_OF_HEARTS": {
+      "image": "cards/KING_OF_HEARTS.svg",
+      "title": { "uk": "Депутат" },
+      "tags": ["deputy"]
+    },
+    "ACE_OF_HEARTS": { "image": "cards/ACE_OF_HEARTS.svg", "title": { "uk": "Банкір" }, "tags": ["banker"] },
+    "SIX_OF_SPADES": { "image": "cards/SIX_OF_SPADES.svg", "title": { "uk": "Кіт" }, "tags": ["cat"] },
+    "SEVEN_OF_SPADES": {
+      "image": "cards/SEVEN_OF_SPADES.svg",
+      "title": { "uk": "Сусід" },
+      "tags": ["neighbour"]
+    },
+    "EIGHT_OF_SPADES": {
+      "image": "cards/EIGHT_OF_SPADES.svg",
+      "title": { "uk": "Студент" },
+      "tags": ["student"]
+    },
+    "NINE_OF_SPADES": {
+      "image": "cards/NINE_OF_SPADES.svg",
+      "title": { "uk": "Бабуся" },
+      "tags": ["granny"]
+    },
+    "TEN_OF_SPADES": { "image": "cards/TEN_OF_SPADES.svg", "title": { "uk": "Таксист" }, "tags": ["taxi"] },
+    "JACK_OF_SPADES": {
+      "image": "cards/JACK_OF_SPADES.svg",
+      "title": { "uk": "Реп-зірка" },
+      "tags": ["rapstar"]
+    },
+    "QUEEN_OF_SPADES": {
+      "image": "cards/QUEEN_OF_SPADES.svg",
+      "title": { "uk": "Блогерка" },
+      "tags": ["blogger"]
+    },
+    "KING_OF_SPADES": {
+      "image": "cards/KING_OF_SPADES.svg",
+      "title": { "uk": "Депутат" },
+      "tags": ["deputy"]
+    },
+    "ACE_OF_SPADES": { "image": "cards/ACE_OF_SPADES.svg", "title": { "uk": "Банкір" }, "tags": ["banker"] }
+  },
+  "sounds": { "lose_money": "sounds/lose_money.wav", "fanfare": "sounds/fanfare.wav" },
+  "animations": { "money_rain": { "kind": "css", "className": "fx-money-rain", "durationMs": 1200 } },
+  "rules": [
+    {
+      "id": "banker-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "banker" } },
+      "do": [
+        { "sound": "lose_money" },
+        { "anim": "money_rain", "target": "beaten" },
+        { "bubble": { "uk": "Мінус гроші!" }, "target": "beaten" }
+      ],
+      "cooldownMs": 4000
+    },
+    {
+      "id": "inseparable",
+      "on": "hand_changed",
+      "if": { "handHas": ["KING_OF_SPADES", "JACK_OF_SPADES"] },
+      "do": [{ "layout": "stick_together", "cards": ["KING_OF_SPADES", "JACK_OF_SPADES"] }]
+    },
+    {
+      "id": "deputy-promises",
+      "on": "card_played",
+      "if": { "side": "opponent", "card": { "tag": "deputy" } },
+      "do": [
+        { "anim": "shake", "target": "played" },
+        { "bubble": { "uk": "Обіцяю, що це востаннє!" }, "target": "opponent" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "victory-fanfare",
+      "on": "duel_finished",
+      "if": { "outcome": "WON" },
+      "do": [{ "sound": "fanfare" }, { "haptic": "success" }]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
+<defs>
+<pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+<rect width="24" height="24" fill="#ff7043"/><circle cx="12" cy="12" r="5" fill="#ffca28"/>
+</pattern>
+</defs>
+<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
+<rect x="16" y="16" width="208" height="304" rx="10" fill="url(#dots)"/>
+<text x="120" y="182" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="40" fill="#ffffff" stroke="#bf360c" stroke-width="2">МЕМ</text>
+</svg>

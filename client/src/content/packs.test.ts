@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CARD_IDS, validatePack } from './schema';
+import { CARD_IDS, EFFECTS, validatePack } from './schema';
 import type { PackManifest } from './types';
 
 // Vitest runs from client/; the shipped packs are the static files the app serves.
@@ -30,5 +30,45 @@ describe('shipped packs', () => {
                 join(publicDir, `cards/classic/${rank.toLowerCase()}_of_${suit.toLowerCase()}.svg`),
             );
         }
+    });
+
+    describe('memes-demo', () => {
+        const demo = () => read('memes-demo');
+
+        it('titles and tags every face', () => {
+            for (const id of CARD_IDS) {
+                expect(demo().cards[id]?.title?.uk, id).toBeTruthy();
+                expect(demo().cards[id]?.tags?.length, id).toBeGreaterThan(0);
+            }
+            expect(demo().back).toBeDefined();
+        });
+
+        it('ships two sounds and four rules that use every effect type', () => {
+            const pack = demo();
+            expect(Object.keys(pack.sounds ?? {})).toHaveLength(2);
+            const rules = pack.rules ?? [];
+            expect(rules).toHaveLength(4);
+            const kinds = new Set(rules.flatMap((rule) => rule.do.flatMap((effect) => Object.keys(effect))));
+            for (const kind of EFFECTS) {
+                expect(kinds.has(kind), kind).toBe(true);
+            }
+        });
+
+        it('keeps the king and jack of spades together while both are held', () => {
+            const sticky = (demo().rules ?? []).find((rule) => rule.on === 'hand_changed');
+            expect(sticky?.if?.handHas).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES']);
+            expect(sticky?.do).toContainEqual({
+                layout: 'stick_together',
+                cards: ['KING_OF_SPADES', 'JACK_OF_SPADES'],
+            });
+        });
+
+        it('defines the class of every css animation in its stylesheet', () => {
+            const pack = demo();
+            const css = readFileSync(resolve(packsDir, 'memes-demo', pack.styles ?? ''), 'utf8');
+            for (const anim of Object.values(pack.animations ?? {})) {
+                expect(css).toContain(`.${anim.className}`);
+            }
+        });
     });
 });
