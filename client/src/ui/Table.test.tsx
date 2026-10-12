@@ -170,6 +170,46 @@ describe('Table', () => {
         });
     });
 
+    describe('move clock', () => {
+        const soon = (s: number) => new Date(Date.now() + s * 1000).toISOString();
+
+        it('shows the countdown for whoever is to move', () => {
+            const { unmount } = renderTable({ view: view({ deadline: soon(25), toMove: 'me' }) });
+            expect(screen.getByTestId('move-timer').getAttribute('data-to-move')).toBe('you');
+            const seconds = Number(screen.getByTestId('move-timer').getAttribute('data-seconds'));
+            expect(seconds).toBeGreaterThanOrEqual(24);
+            expect(seconds).toBeLessThanOrEqual(25);
+            unmount();
+
+            renderTable({ view: view({ deadline: soon(25), toMove: 'them' }) });
+            expect(screen.getByTestId('move-timer').getAttribute('data-to-move')).toBe('opponent');
+        });
+
+        it('has no countdown without a deadline', () => {
+            renderTable({ view: view() });
+            expect(screen.queryByTestId('move-timer')).toBeNull();
+        });
+
+        it('passes your clock warnings on', async () => {
+            const onClockWarning = vi.fn();
+            renderTable({ view: view({ deadline: soon(4), toMove: 'me' }), onClockWarning });
+            expect(onClockWarning).toHaveBeenCalledWith('five');
+        });
+
+        it('shows the strikes next to each avatar', () => {
+            renderTable({ view: view({ strikes: { you: 1, opponent: 2 } }) });
+
+            expect(screen.getByTestId('strikes-you').getAttribute('data-strikes')).toBe('1');
+            expect(screen.getByTestId('strikes-opponent').getAttribute('data-strikes')).toBe('2');
+            expect(screen.getByTestId('strikes-opponent').querySelectorAll('.strike.on').length).toBe(2);
+        });
+
+        it('shows no strikes for a server without the clock', () => {
+            renderTable({ view: view() });
+            expect(screen.queryByTestId('strikes-you')).toBeNull();
+        });
+    });
+
     it('shows both avatars', () => {
         renderTable({ you: { name: 'Я' }, opponent: { name: 'Оля Коваль' } });
         expect(screen.getByTestId('opponent-avatar').textContent).toBe('ОК');

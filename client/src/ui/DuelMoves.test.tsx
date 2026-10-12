@@ -305,6 +305,52 @@ describe('moves', () => {
             expect(telegram.haptic).toHaveBeenCalledWith('error');
         });
 
+        describe('move clock', () => {
+            // Defending, so the first view's own "your turn" sound does not fire and only the clock's can.
+            const clockView = (toMove: string) =>
+                view({
+                    attacker: 'them',
+                    phase: 'DEFEND',
+                    table: [{ attack: c('SEVEN', 'SPADES') }],
+                    deadline: new Date(Date.now() + 4000).toISOString(),
+                    toMove,
+                });
+
+            it('rings and buzzes as your clock runs out', async () => {
+                vi.mocked(audio.play).mockClear();
+                const { telegram } = setup(clockView('me'));
+
+                await waitFor(() => expect(screen.getByTestId('move-timer')).toBeTruthy());
+                await waitFor(() => expect(audio.play).toHaveBeenCalledWith('turn'));
+                expect(telegram.haptic).toHaveBeenCalledWith('warning');
+            });
+
+            it("stays quiet on the opponent's clock", async () => {
+                vi.mocked(audio.play).mockClear();
+                const { telegram } = setup(clockView('them'));
+
+                await waitFor(() => expect(screen.getByTestId('move-timer')).toBeTruthy());
+                // Give the timer's effects the same chance they get in the test above.
+                await new Promise((resolve) => setTimeout(resolve, 50));
+                expect(audio.play).not.toHaveBeenCalledWith('turn');
+                expect(telegram.haptic).not.toHaveBeenCalled();
+            });
+
+            it('keeps the warning off the phone when vibration is off', async () => {
+                settings.value = { ...DEFAULT_SETTINGS, haptics: false };
+                try {
+                    vi.mocked(audio.play).mockClear();
+                    const { telegram } = setup(clockView('me'));
+
+                    await waitFor(() => expect(screen.getByTestId('move-timer')).toBeTruthy());
+                    await waitFor(() => expect(audio.play).toHaveBeenCalledWith('turn'));
+                    expect(telegram.haptic).not.toHaveBeenCalled();
+                } finally {
+                    settings.value = DEFAULT_SETTINGS;
+                }
+            });
+        });
+
         it('shakes the hand on an illegal move', async () => {
             const { api } = setup(view());
             api.move.mockRejectedValue(new ApiError(400, { reason: 'NOT_YOUR_TURN' }));

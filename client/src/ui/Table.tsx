@@ -5,6 +5,7 @@ import { canEndAttack, canTake, playable, status, statusState } from '../game/se
 import { cardLabel, t } from '../i18n';
 import { CardBack, CardImage } from './CardImage';
 import { Avatar, CoinAmount } from './kit';
+import { type ClockWarning, MoveTimer } from './MoveTimer';
 
 export interface Participant {
     name: string;
@@ -24,7 +25,12 @@ export interface TableProps {
     onTableCard: (attack: Card) => void;
     onTake: () => void;
     onEndAttack: () => void;
+    /** Your own move clock reached ten or five seconds (sound and haptics live in the duel screen). */
+    onClockWarning?: ((warning: ClockWarning) => void) | undefined;
 }
+
+/** Strikes that forfeit the duel; one dot each. */
+const STRIKES_TO_FORFEIT = 3;
 
 /** How far up a card must travel to count as a swipe, and how much sideways drift is still "up". */
 const SWIPE_UP_PX = 56;
@@ -47,6 +53,7 @@ export function Table({
     onTableCard,
     onTake,
     onEndAttack,
+    onClockWarning,
 }: TableProps) {
     const usable = playable(view);
     const isUsable = (card: Card) => usable.some((candidate) => sameCard(candidate, card));
@@ -61,6 +68,7 @@ export function Table({
                     data-testid="opponent-avatar"
                 />
                 <span class="name">{opponent.name}</span>
+                <Strikes side="opponent" count={view.strikes?.opponent} />
                 <span class="count" data-testid="opponent-count">
                     {view.opponentHandCount}
                 </span>
@@ -122,6 +130,13 @@ export function Table({
                 )}
             </div>
 
+            {view.deadline && view.toMove && view.phase !== 'FINISHED' && (
+                <MoveTimer
+                    deadline={view.deadline}
+                    side={view.toMove === view.you ? 'you' : 'opponent'}
+                    onWarning={onClockWarning}
+                />
+            )}
             <p class="status" role="status" data-state={statusState(view)}>
                 {status(view, opponent.name)}
             </p>
@@ -143,6 +158,7 @@ export function Table({
             <footer class="you">
                 <Avatar name={you.name} photoUrl={you.photoUrl} size={28} data-testid="you-avatar" />
                 <span class="name">{you.name}</span>
+                <Strikes side="you" count={view.strikes?.you} />
                 <span class="count">{view.hand.length}</span>
             </footer>
             <div class="hand" data-testid="hand">
@@ -158,6 +174,25 @@ export function Table({
                 ))}
             </div>
         </section>
+    );
+}
+
+/** Missed moves as dots; nothing at all from a server that has no clock. */
+function Strikes({ side, count }: { side: 'you' | 'opponent'; count: number | undefined }) {
+    if (count === undefined) {
+        return null;
+    }
+    return (
+        <span
+            class="strikes"
+            data-testid={`strikes-${side}`}
+            data-strikes={count}
+            title={t('duel.strikes', { n: count, max: STRIKES_TO_FORFEIT })}
+        >
+            {Array.from({ length: STRIKES_TO_FORFEIT }, (_, index) => (
+                <span key={index} class={`strike${index < count ? ' on' : ''}`} />
+            ))}
+        </span>
     );
 }
 

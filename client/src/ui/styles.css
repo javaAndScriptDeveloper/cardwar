@@ -484,13 +484,72 @@ button:disabled {
 
 .opponent {
     display: grid;
-    grid-template-columns: auto auto auto 1fr;
+    grid-template-columns: auto auto auto auto 1fr;
     align-items: center;
     gap: 8px;
 }
 
 .opponent .name {
     font-weight: 600;
+}
+
+.strikes {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.strike {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    border: 1px solid var(--hint);
+}
+
+.strike.on {
+    border-color: var(--danger);
+    background: var(--danger);
+}
+
+.move-timer {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.move-timer-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: var(--hint);
+    transition: width 0.25s linear;
+}
+
+.move-timer.you .move-timer-fill {
+    background: var(--accent);
+}
+
+.move-timer.urgent .move-timer-fill {
+    background: var(--danger);
+}
+
+.move-timer.you.urgent {
+    animation: timer-pulse 1s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+    50% {
+        opacity: 0.55;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .move-timer-fill {
+        transition: none;
+    }
+
+    .move-timer.you.urgent {
+        animation: none;
+    }
 }
 
 .count {

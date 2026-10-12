@@ -14,6 +14,7 @@ import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
 import { CoinAmount } from './kit';
+import type { ClockWarning } from './MoveTimer';
 import { Table } from './Table';
 
 export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels'>;
@@ -82,6 +83,17 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             }
         },
         [telegram],
+    );
+    // Your own clock running low: the turn chime at ten seconds, a buzz at five. The server moves for you at zero.
+    const clockWarning = useCallback(
+        (warning: ClockWarning) => {
+            if (warning === 'ten') {
+                audio.play('turn');
+            } else {
+                buzz('warning');
+            }
+        },
+        [buzz],
     );
     const [lastEvents, setLastEvents] = useState<TableEvent[]>([]);
     const tableRef = useRef<HTMLDivElement>(null);
@@ -373,6 +385,7 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                         onTableCard={(attack) => onTableCard(state.view, attack)}
                         onTake={() => void play({ type: 'TAKE' })}
                         onEndAttack={() => void play({ type: 'END_ATTACK' })}
+                        onClockWarning={clockWarning}
                     />
                     {toast && (
                         <p class="toast" role="alert" data-reason={toast.reason}>
