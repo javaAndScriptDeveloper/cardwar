@@ -39,3 +39,4 @@ nginx/acme/*
 
 ### Agent worktrees (Claude Code) ###
 .claude/worktrees/
+.superpowers/
