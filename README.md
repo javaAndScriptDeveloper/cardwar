@@ -165,7 +165,7 @@ Two Telegram accounts open the Mini App from the bot, one invites the other, and
    ```bash
    SECRET=$(printf 'cardwar-webhook' | openssl dgst -sha256 -hmac "$TELEGRAM_BOT_TOKEN" -r | cut -d' ' -f1)
    curl -s -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" -H 'Content-Type: application/json' \
-     -d "{\"url\":\"https://<your domain>/api/v1/telegram/webhook\",\"secret_token\":\"$SECRET\",\"allowed_updates\":[\"message\"]}"
+     -d "{\"url\":\"https://<your domain>/api/v1/telegram/webhook\",\"secret_token\":\"$SECRET\",\"allowed_updates\":[\"message\",\"pre_checkout_query\"]}"
    ```
 4. Optional: a named app from `/newapp` (set `TELEGRAM_APP_NAME` to its short name) makes invite links
    `t.me/<bot>/<app>?startapp=<invite>`, which open the app directly without the bot chat in between.

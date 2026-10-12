@@ -4,6 +4,7 @@ import cardwar.bot.BotProperties;
 import cardwar.bot.client.TelegramBotApi;
 import cardwar.metrics.GameMetrics;
 import cardwar.metrics.GameMetrics.BotOutcome;
+import cardwar.monetization.service.StarsService;
 import cardwar.security.telegram.TelegramProperties;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
@@ -12,6 +13,7 @@ import java.util.HexFormat;
 import java.util.regex.Pattern;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import tools.jackson.databind.JsonNode;
 
@@ -43,12 +45,18 @@ public class TelegramBotService {
     private final String webhookSecret;
 
     private final GameMetrics metrics;
+    private final ObjectProvider<StarsService> stars;
 
     public TelegramBotService(
-            TelegramProperties telegram, BotProperties properties, TelegramBotApi api, GameMetrics metrics) {
+            TelegramProperties telegram,
+            BotProperties properties,
+            TelegramBotApi api,
+            GameMetrics metrics,
+            ObjectProvider<StarsService> stars) {
         this.properties = properties;
         this.api = api;
         this.metrics = metrics;
+        this.stars = stars;
         this.webhookSecret = telegram.hasBotToken() ? derive(telegram.botToken()) : null;
     }
 
@@ -72,7 +80,24 @@ public class TelegramBotService {
     }
 
     public void handle(JsonNode update) {
+        JsonNode checkout = update.path("pre_checkout_query");
+        if (!checkout.isMissingNode()) {
+            answerCheckout(checkout);
+            return;
+        }
         JsonNode message = update.path("message");
+        JsonNode payment = message.path("successful_payment");
+        if (!payment.isMissingNode()) {
+            StarsService payments = stars.getIfAvailable();
+            boolean credited = payments != null
+                    && "XTR".equals(payment.path("currency").asString(""))
+                    && payments.credit(
+                            payment.path("invoice_payload").asString(""),
+                            payment.path("total_amount").asLong(),
+                            payment.path("telegram_payment_charge_id").asString(""));
+            metrics.botUpdate(credited ? BotOutcome.REPLIED : BotOutcome.FAILED);
+            return;
+        }
         if (!"private".equals(message.path("chat").path("type").asString(""))) {
             // Mini App buttons only work in private chats; groups and other update kinds get no answer.
             metrics.botUpdate(BotOutcome.IGNORED);
@@ -85,6 +110,18 @@ public class TelegramBotService {
                 ? api.sendMessage(chatId, INVITED, "Join the duel", properties.miniAppUrl() + "?invite=" + invite)
                 : api.sendMessage(chatId, GREETING, "Play", properties.miniAppUrl());
         metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
+    }
+
+    /** Telegram waits for this answer before charging: only an invoice we signed, at its own price, goes through. */
+    private void answerCheckout(JsonNode query) {
+        StarsService payments = stars.getIfAvailable();
+        boolean ok = payments != null
+                && "XTR".equals(query.path("currency").asString(""))
+                && payments.verify(
+                        query.path("invoice_payload").asString(""),
+                        query.path("total_amount").asLong());
+        api.answerPreCheckoutQuery(query.path("id").asString(""), ok, ok ? null : "Цей рахунок недійсний.");
+        metrics.botUpdate(ok ? BotOutcome.REPLIED : BotOutcome.REJECTED);
     }
 
     private static String inviteOf(String text) {

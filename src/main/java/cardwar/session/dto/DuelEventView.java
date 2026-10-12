@@ -27,7 +27,14 @@ public record DuelEventView(
         Integer talonRemaining,
         Boolean defenceSucceeded,
         UUID nextAttacker,
-        OutcomeView outcome) {
+        OutcomeView outcome,
+        String emote) {
+
+    /** An emote thrown at the table: who sent it and which one. Not an engine event; only the table shows it. */
+    public static DuelEventView emote(DuelId duelId, UUID from, String emote) {
+        return new DuelEventView(
+                "EMOTE", duelId.value(), from, null, null, null, null, null, null, null, null, null, emote);
+    }
 
     public static DuelEventView of(DuelId duelId, GameEvent event) {
         UUID id = duelId.value();
@@ -159,7 +166,8 @@ public record DuelEventView(
                     talonRemaining,
                     defenceSucceeded,
                     nextAttacker,
-                    outcome);
+                    outcome,
+                    null);
         }
     }
 }

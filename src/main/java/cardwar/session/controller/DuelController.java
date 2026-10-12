@@ -6,9 +6,11 @@ import cardwar.security.PlayerIdentity;
 import cardwar.session.dto.CreateDuelRequest;
 import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
+import cardwar.session.dto.EmoteRequest;
 import cardwar.session.dto.MoveRequest;
 import cardwar.session.event.DuelStreams;
 import cardwar.session.service.DuelService;
+import cardwar.session.service.EmoteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,10 +39,12 @@ public class DuelController {
 
     private final DuelService duels;
     private final DuelStreams streams;
+    private final EmoteService emotes;
 
-    public DuelController(DuelService duels, DuelStreams streams) {
+    public DuelController(DuelService duels, DuelStreams streams, EmoteService emotes) {
         this.duels = duels;
         this.streams = streams;
+        this.emotes = emotes;
     }
 
     @PostMapping
@@ -70,6 +74,16 @@ public class DuelController {
             @PathVariable UUID id,
             @Valid @RequestBody MoveRequest request) {
         return duels.applyCommand(id, actor(caller), request.toCommand());
+    }
+
+    @PostMapping("/{id}/emotes")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Throw an owned emote at the table; both players see it on the event stream")
+    public void emote(
+            @AuthenticationPrincipal PlayerIdentity caller,
+            @PathVariable UUID id,
+            @Valid @RequestBody EmoteRequest request) {
+        emotes.send(id, actor(caller), request.code());
     }
 
     @GetMapping(value = "/{id}/events", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

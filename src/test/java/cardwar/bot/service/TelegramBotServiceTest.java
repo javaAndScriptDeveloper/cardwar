@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import cardwar.bot.BotProperties;
 import cardwar.bot.client.TelegramBotApi;
 import cardwar.metrics.GameMetrics;
+import cardwar.monetization.service.StarsService;
 import cardwar.security.telegram.TelegramProperties;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import java.util.ArrayList;
@@ -26,7 +27,9 @@ class TelegramBotServiceTest {
             new TelegramProperties("123:token", null),
             new BotProperties("https://cardwar.example/app/", "https://api.telegram.example"),
             api,
-            metrics);
+            metrics,
+            new org.springframework.beans.factory.support.StaticListableBeanFactory()
+                    .getBeanProvider(StarsService.class));
 
     private static JsonNode update(String chatType, String text) {
         return JsonMapper.builder()
@@ -94,7 +97,12 @@ class TelegramBotServiceTest {
         assertThat(bot.acceptsSecret(secret.substring(1))).isFalse();
         assertThat(bot.acceptsSecret(null)).isFalse();
         var tokenless = new TelegramBotService(
-                new TelegramProperties("", null), new BotProperties("https://x/app/", "https://y"), api, metrics);
+                new TelegramProperties("", null),
+                new BotProperties("https://x/app/", "https://y"),
+                api,
+                metrics,
+                new org.springframework.beans.factory.support.StaticListableBeanFactory()
+                        .getBeanProvider(StarsService.class));
         assertThat(tokenless.acceptsSecret(tokenless.webhookSecret())).isFalse();
     }
 
@@ -105,7 +113,9 @@ class TelegramBotServiceTest {
                 new TelegramProperties("123:token", null),
                 new BotProperties("https://cardwar.example/app/", "https://api.telegram.example"),
                 failing,
-                metrics);
+                metrics,
+                new org.springframework.beans.factory.support.StaticListableBeanFactory()
+                        .getBeanProvider(StarsService.class));
 
         bot.handle(update("private", "/start"));
         bot.handle(update("group", "/start"));

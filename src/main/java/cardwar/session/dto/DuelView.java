@@ -5,6 +5,7 @@ import cardwar.engine.DuelPhase;
 import cardwar.engine.DuelState;
 import cardwar.engine.DurakRules;
 import cardwar.engine.PlayerId;
+import cardwar.monetization.dto.CosmeticsView;
 import cardwar.session.store.StoredDuel;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.Instant;
@@ -35,7 +36,32 @@ public record DuelView(
         long stake,
         Instant deadline,
         UUID toMove,
-        StrikesView strikes) {
+        StrikesView strikes,
+        CosmeticsView opponentCosmetics) {
+
+    /** The same view with the opponent's visible cosmetics (card back, frame) attached. */
+    public DuelView withOpponentCosmetics(CosmeticsView cosmetics) {
+        return new DuelView(
+                duelId,
+                you,
+                opponent,
+                hand,
+                opponentHandCount,
+                talonCount,
+                trumpCard,
+                trumpSuit,
+                table,
+                discardCount,
+                attacker,
+                phase,
+                outcome,
+                version,
+                stake,
+                deadline,
+                toMove,
+                strikes,
+                cosmetics);
+    }
 
     /** Clocks that ran out on each side; the third one forfeits. */
     public record StrikesView(int you, int opponent) {}
@@ -73,6 +99,7 @@ public record DuelView(
                 stake,
                 deadline,
                 toMove,
-                strikes);
+                strikes,
+                null);
     }
 }

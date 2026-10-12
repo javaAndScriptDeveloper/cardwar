@@ -9,5 +9,6 @@ public enum CoinKind {
     STAKE_PAYOUT,
     STAKE_REFUND,
     PURCHASE,
+    STARS_TOPUP,
     ADJUSTMENT
 }

@@ -14,6 +14,7 @@ import cardwar.exception.NotFoundException;
 import cardwar.metrics.GameMetrics;
 import cardwar.metrics.GameMetrics.MoveOutcome;
 import cardwar.metrics.GameMetrics.StartMode;
+import cardwar.monetization.service.ShopService;
 import cardwar.session.dto.DuelSummary;
 import cardwar.session.dto.DuelView;
 import cardwar.session.event.DuelEventPublisher;
@@ -47,6 +48,7 @@ public class DuelService {
     private final GameMetrics metrics;
     private final Clock clock;
     private final Duration moveTimeout;
+    private final ShopService shop;
 
     /** Clocks a player may let run out; the next one forfeits the duel. */
     static final int STRIKES_TO_FORFEIT = 3;
@@ -60,7 +62,8 @@ public class DuelService {
             AccountService accounts,
             GameMetrics metrics,
             Clock clock,
-            @Value("${cardwar.duel.move-timeout:30s}") Duration moveTimeout) {
+            @Value("${cardwar.duel.move-timeout:30s}") Duration moveTimeout,
+            ShopService shop) {
         this.engine = engine;
         this.store = store;
         this.publisher = publisher;
@@ -69,6 +72,7 @@ public class DuelService {
         this.metrics = metrics;
         this.clock = clock;
         this.moveTimeout = moveTimeout;
+        this.shop = shop;
     }
 
     /** Every duel is between two real accounts; there is deliberately no way to ask for a bot here. */
@@ -197,7 +201,9 @@ public class DuelService {
     }
 
     public DuelView viewFor(UUID duelId, PlayerId caller) {
-        return DuelView.of(requireParticipation(duelId, caller), caller);
+        StoredDuel stored = requireParticipation(duelId, caller);
+        PlayerId opponent = stored.state().opponentOf(caller);
+        return DuelView.of(stored, caller).withOpponentCosmetics(shop.cosmeticsOf(opponent.value()));
     }
 
     /** Used by the event stream, which needs the participation check without needing the state itself. */

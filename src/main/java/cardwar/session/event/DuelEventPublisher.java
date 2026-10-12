@@ -26,6 +26,18 @@ public class DuelEventPublisher {
         this.mapper = mapper;
     }
 
+    public void publishEmote(DuelId duelId, java.util.UUID from, String emote) {
+        try {
+            redis.convertAndSend(
+                    DuelChannels.forDuel(duelId), mapper.writeValueAsString(DuelEventView.emote(duelId, from, emote)));
+        } catch (RuntimeException ex) {
+            log.warn(
+                    "Could not publish an emote for duel {}: {}",
+                    duelId.value(),
+                    ex.getClass().getSimpleName());
+        }
+    }
+
     public void publish(DuelId duelId, List<GameEvent> events) {
         String channel = DuelChannels.forDuel(duelId);
         for (GameEvent event : events) {

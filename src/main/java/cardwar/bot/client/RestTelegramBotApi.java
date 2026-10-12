@@ -44,4 +44,48 @@ public class RestTelegramBotApi implements TelegramBotApi {
             return false;
         }
     }
+
+    @Override
+    public java.util.Optional<String> createInvoiceLink(String title, String description, String payload, long stars) {
+        var body = Map.of(
+                "title", title,
+                "description", description,
+                "payload", payload,
+                "currency", "XTR",
+                "prices", List.of(Map.of("label", title, "amount", stars)));
+        try {
+            var answer = http.post()
+                    .uri("/bot" + botToken + "/createInvoiceLink")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .body(Map.class);
+            Object link = answer == null ? null : answer.get("result");
+            return link instanceof String text ? java.util.Optional.of(text) : java.util.Optional.empty();
+        } catch (RestClientException failed) {
+            log.warn("Creating a Stars invoice failed: {}", failed.getClass().getSimpleName());
+            return java.util.Optional.empty();
+        }
+    }
+
+    @Override
+    public boolean answerPreCheckoutQuery(String queryId, boolean ok, String errorMessage) {
+        var body = ok
+                ? Map.<String, Object>of("pre_checkout_query_id", queryId, "ok", true)
+                : Map.<String, Object>of("pre_checkout_query_id", queryId, "ok", false, "error_message", errorMessage);
+        try {
+            http.post()
+                    .uri("/bot" + botToken + "/answerPreCheckoutQuery")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+            return true;
+        } catch (RestClientException failed) {
+            log.warn(
+                    "Answering a pre-checkout query failed: {}",
+                    failed.getClass().getSimpleName());
+            return false;
+        }
+    }
 }
