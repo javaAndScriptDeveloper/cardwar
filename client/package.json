@@ -15,6 +15,7 @@
     "gen:sounds": "node scripts/gen-sounds.mjs"
   },
   "dependencies": {
+    "@preact/signals": "^2.11.3",
     "preact": "^11.0.1"
   },
   "devDependencies": {
