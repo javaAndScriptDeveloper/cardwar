@@ -117,7 +117,16 @@
     },
     "strikes": "Пропущено ходів: {n} з {max}",
     "emotes": "Емодзі",
-    "emoteTooFast": "Не так швидко: одне емодзі на кілька секунд."
+    "emoteTooFast": "Не так швидко: одне емодзі на кілька секунд.",
+    "rematch": "Реванш",
+    "rematchFor": "Реванш за {n}",
+    "rematchIncoming": "{name} кличе на реванш!",
+    "acceptRematch": "Прийняти",
+    "versus": "проти {name}",
+    "record": "Рахунок між вами",
+    "errors": {
+      "rematch": "Не вдалося надіслати реванш: {error}"
+    }
   },
   "error": {
     "noConnection": "немає з’єднання",

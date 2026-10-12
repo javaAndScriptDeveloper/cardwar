@@ -21,7 +21,7 @@ import { Profile } from './profile/Profile';
 import { Settings } from './settings/Settings';
 import { Shop } from './shop/Shop';
 import { useLaunch } from './useLaunch';
-import type { ChallengeView, FriendView, OutgoingChallengeView } from '../api/types';
+import type { ChallengeView, FriendView, OutgoingChallengeView, InviteView } from '../api/types';
 
 export type ShellApi = Pick<
     ApiClient,
@@ -56,7 +56,14 @@ interface Props {
     /** Invite id the app was opened with (Telegram start_param, or ?invite= from the bot's Join button / dev shim). */
     invite: string | undefined;
     links: LinkConfig;
-    table: (duelId: string, exit: () => void) => ComponentChildren;
+    table: (
+        duelId: string,
+        exit: () => void,
+        rematch: {
+            onRematchSent: (invite: InviteView, opponentName: string) => void;
+            onDuel: (duelId: string) => void;
+        },
+    ) => ComponentChildren;
     pollMs?: number;
     /** How often incoming challenges are re-read while the lobby or friends screen is open. */
     challengePollMs?: number;
@@ -362,7 +369,17 @@ export function Shell({
         return (
             <>
                 {banner}
-                {table(route.duelId, () => navigate({ name: 'lobby' }))}
+                {table(route.duelId, () => navigate({ name: 'lobby' }), {
+                    onRematchSent: (invite, opponentName) => {
+                        setWaitingFor({
+                            inviteId: invite.inviteId,
+                            stake: invite.stake,
+                            challengee: opponentName,
+                        });
+                        navigate({ name: 'lobby' });
+                    },
+                    onDuel: startDuel,
+                })}
             </>
         );
     }

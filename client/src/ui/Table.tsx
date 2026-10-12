@@ -212,7 +212,7 @@ export function Table({
                 <Strikes side="you" count={view.strikes?.you} />
                 <span class="count">{view.hand.length}</span>
             </footer>
-            <div class="hand" data-testid="hand">
+            <div class="hand" data-testid="hand" style={{ '--cards': view.hand.length }}>
                 {arrange(sortHand(view.hand, view.trumpSuit), layouts).map((card) => (
                     <HandCard
                         key={cardId(card)}

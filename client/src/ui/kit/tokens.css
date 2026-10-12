@@ -4,7 +4,7 @@
  * data-scheme on <html> from the Telegram colour scheme (or prefers-color-scheme in the dev shim).
  */
 :root {
-    --hand-card-width: 58px;
+    --hand-card-max: 58px;
     --bg: var(--tg-theme-bg-color, #121317);
     --surface: var(--tg-theme-secondary-bg-color, #1c1e25);
     --surface-2: #262932;

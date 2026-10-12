@@ -66,7 +66,7 @@ if (root) {
                     telegram={telegram}
                     invite={invite}
                     links={links}
-                    table={(duelId, exit) => (
+                    table={(duelId, exit, rematch) => (
                         <DuelScreen
                             key={duelId}
                             duelId={duelId}
@@ -75,6 +75,8 @@ if (root) {
                             telegram={telegram}
                             openStream={openStream}
                             onExit={exit}
+                            onRematchSent={rematch.onRematchSent}
+                            onDuel={rematch.onDuel}
                         />
                     )}
                 />

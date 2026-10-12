@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { t } from '../i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import type { DuelEvent, DuelSummary, DuelView } from '../api/types';
+import type { ChallengeView, DuelEvent, DuelSummary, DuelView } from '../api/types';
 import { loadout } from '../state/loadout';
 import { equipped } from '../content/loader';
 import { CARD_IDS } from '../content/schema';
@@ -13,8 +13,18 @@ import { DuelScreen, type StreamOpener } from './DuelScreen';
 
 type StreamCallbacks = Parameters<StreamOpener>[1];
 
-function setup(options: { first?: DuelView; active?: Partial<DuelSummary>[]; photoUrl?: string } = {}) {
+function setup(
+    options: {
+        first?: DuelView;
+        active?: Partial<DuelSummary>[];
+        photoUrl?: string;
+        extraApi?: Record<string, unknown>;
+        onRematchSent?: (invite: unknown, name: string) => void;
+        onDuel?: (duelId: string) => void;
+    } = {},
+) {
     const api = {
+        ...(options.extraApi ?? {}),
         duel: vi.fn().mockResolvedValue(options.first ?? view()),
         move: vi.fn(),
         history: vi.fn().mockResolvedValue([]),
@@ -42,6 +52,8 @@ function setup(options: { first?: DuelView; active?: Partial<DuelSummary>[]; pho
             telegram={resolveTelegram({})}
             openStream={openStream}
             onExit={onExit}
+            {...(options.onRematchSent && { onRematchSent: options.onRematchSent })}
+            {...(options.onDuel && { onDuel: options.onDuel })}
         />,
     );
     return {
@@ -551,5 +563,87 @@ describe('DuelScreen cosmetics and emotes', () => {
         await waitFor(() =>
             expect(screen.getByTestId('pack-bubble').getAttribute('data-rule')).toBe('answer'),
         );
+    });
+});
+
+describe('DuelScreen rematch', () => {
+    const finished = view({
+        version: 40,
+        phase: 'FINISHED',
+        stake: 100,
+        opponent: 'them',
+        outcome: { winner: 'me', loser: 'them', draw: false, reason: 'OPPONENT_OUT_OF_CARDS' },
+    });
+
+    function setupRematch(challenges: ChallengeView[] = []) {
+        const social = {
+            friends: vi.fn().mockResolvedValue([
+                {
+                    playerId: 'them',
+                    username: 'bob',
+                    displayName: 'Боб',
+                    played: 3,
+                    won: 2,
+                    lost: 1,
+                    lastPlayedAt: 'x',
+                },
+            ]),
+            challenge: vi
+                .fn()
+                .mockResolvedValue({ inviteId: 'inv-7', status: 'PENDING', expiresAt: 'x', stake: 100 }),
+            challenges: vi.fn().mockResolvedValue(challenges),
+            acceptInvite: vi.fn().mockResolvedValue(view({ duelId: 'duel-2' })),
+        };
+        const onRematchSent = vi.fn();
+        const onDuel = vi.fn();
+        const utils = setup({ extraApi: social, onRematchSent, onDuel });
+        return { ...utils, social, onRematchSent, onDuel };
+    }
+
+    it('shows the running score and sends a rematch challenge at the same stake', async () => {
+        const { api, nudge, social, onRematchSent } = setupRematch();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockResolvedValueOnce(finished);
+        nudge();
+
+        await waitFor(() => expect(screen.getByTestId('result-record').textContent).toBe('2:1'));
+        fireEvent.click(screen.getByTestId('rematch'));
+
+        await waitFor(() => expect(social.challenge).toHaveBeenCalledWith('them', 100));
+        await waitFor(() =>
+            expect(onRematchSent).toHaveBeenCalledWith(
+                expect.objectContaining({ inviteId: 'inv-7' }),
+                expect.any(String),
+            ),
+        );
+    });
+
+    it("accepts the opponent's rematch straight into the new duel", async () => {
+        const { api, nudge, social, onDuel } = setupRematch([
+            {
+                inviteId: 'inv-9',
+                from: { playerId: 'them', username: 'bob', displayName: 'Боб' },
+                stake: 100,
+                expiresAt: 'x',
+            },
+        ]);
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockResolvedValueOnce(finished);
+        nudge();
+
+        fireEvent.click(await screen.findByTestId('accept-rematch'));
+
+        await waitFor(() => expect(social.acceptInvite).toHaveBeenCalledWith('inv-9'));
+        await waitFor(() => expect(onDuel).toHaveBeenCalledWith('duel-2'));
+    });
+
+    it('offers no rematch to a client without the social calls', async () => {
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        api.duel.mockResolvedValueOnce(finished);
+        nudge();
+
+        await screen.findByTestId('result');
+        expect(screen.queryByTestId('rematch')).toBeNull();
     });
 });

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { DuelEvent, DuelSummary, DuelView, MoveRequest } from '../api/types';
+import type { ChallengeView, DuelEvent, DuelSummary, DuelView, InviteView, MoveRequest } from '../api/types';
 import { audio } from '../audio';
 import type { SignedInPlayer } from '../auth/session';
 import type { LayoutDirective } from '../content/layout';
@@ -17,12 +17,14 @@ import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
+import { Result as ResultScreen } from './Result';
 import { emoteCode, emoteGlyph } from './cosmetics';
-import { CoinAmount } from './kit';
 import type { ClockWarning } from './MoveTimer';
 import { type Participant, Table } from './Table';
 
-export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels' | 'emote'>;
+export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels' | 'emote'> &
+    /** The social calls behind the rematch; a client without them simply shows no rematch. */
+    Partial<Pick<ApiClient, 'friends' | 'challenge' | 'challenges' | 'acceptInvite'>>;
 export type StreamOpener = (
     duelId: string,
     options: Omit<DuelStreamOptions, 'fetchImpl' | 'headers'>,
@@ -35,13 +37,23 @@ interface Props {
     telegram: Telegram;
     openStream: StreamOpener;
     onExit: () => void;
+    /** A rematch challenge went out: the shell shows the waiting screen for it. */
+    onRematchSent?: ((invite: InviteView, opponentName: string) => void) | undefined;
+    /** The opponent's rematch was accepted: the shell moves to that duel. */
+    onDuel?: ((duelId: string) => void) | undefined;
 }
 
 type State =
     | { kind: 'loading' }
     | { kind: 'playing'; view: DuelView }
     /** `coins` is the caller's signed net for a staked duel, undefined for a friendly one. */
-    | { kind: 'over'; result: Result; coins: number | undefined }
+    | {
+          kind: 'over';
+          result: Result;
+          coins: number | undefined;
+          stake: number;
+          opponentId: string | undefined;
+      }
     | { kind: 'gone'; message: string };
 
 /** An emote on screen: who threw it and which one. */
@@ -58,6 +70,8 @@ const EMOTE_MS = 2500;
 const RETRY_MS = 1500;
 /** How many times the history is read for a finished duel before the duel is declared gone. */
 const HISTORY_ATTEMPTS = 4;
+/** How often a finished screen looks for the opponent's rematch challenge. */
+const REMATCH_POLL_MS = 5000;
 
 /** What a finished view moved for the caller: the winner takes the pot (net +stake), a draw refunds both. */
 function coinsOf(view: DuelView, result: Result): number | undefined {
@@ -74,14 +88,6 @@ function participantOf(
     return { name: row.opponentDisplayName ?? row.opponentUsername, photoUrl: row.opponentPhotoUrl };
 }
 
-function explain(result: Result, opponentName: string): string {
-    // Three missed moves end the duel without anyone running out of cards; the usual sentence would be wrong.
-    if (result.reason === 'FORFEIT' && result.result !== 'DRAW') {
-        return result.result === 'WON' ? t('duel.explainForfeit.WON') : t('duel.explainForfeit.LOST');
-    }
-    return t(`duel.explain.${result.result}`, { name: opponentName });
-}
-
 /**
  * One duel, live. The event stream is only a nudge: every event re-fetches the caller's view over REST, and a view
  * older than the one on screen is ignored, so out-of-order answers never move the table backwards.
@@ -89,8 +95,20 @@ function explain(result: Result, opponentName: string): string {
  * <p>The backend deletes a duel the moment it finishes. Whoever did not make the last move therefore gets a 404 on
  * the re-fetch, and the result comes from their history instead.
  */
-export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }: Props) {
+export function DuelScreen({
+    duelId,
+    player,
+    api,
+    telegram,
+    openStream,
+    onExit,
+    onRematchSent,
+    onDuel,
+}: Props) {
     const [state, setState] = useState<State>({ kind: 'loading' });
+    const [record, setRecord] = useState<{ won: number; lost: number }>();
+    const [incoming, setIncoming] = useState<ChallengeView>();
+    const [rematchBusy, setRematchBusy] = useState(false);
     const [opponent, setOpponent] = useState<Participant>({ name: t('duel.opponent') });
     const opponentName = opponent.name;
     // The full view's profile is the freshest; a summary or history row only fills in until one arrives.
@@ -167,6 +185,8 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                         kind: 'over',
                         result: { result: entry.result, reason: entry.endReason },
                         coins: entry.stake > 0 ? entry.coinDelta : undefined,
+                        stake: entry.stake,
+                        opponentId: entry.opponentId,
                     });
                     // This player did not make the last move, so no view carried the finish: react to it here.
                     const finished: TableEvent = { type: 'duel_finished', result: entry.result };
@@ -221,7 +241,13 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             if (view.phase === 'FINISHED') {
                 closeStream.current();
                 const result = resultOf(view);
-                setState({ kind: 'over', result, coins: coinsOf(view, result) });
+                setState({
+                    kind: 'over',
+                    result,
+                    coins: coinsOf(view, result),
+                    stake: view.stake,
+                    opponentId: view.opponent,
+                });
             } else {
                 setState({ kind: 'playing', view });
             }
@@ -451,6 +477,79 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
         onExit();
     };
 
+    // Once over: the running score with this opponent, and a watch for their rematch while the screen is open.
+    const over = state.kind === 'over' ? state : undefined;
+    const overOpponentId = over?.opponentId;
+    useEffect(() => {
+        if (!over || !overOpponentId) {
+            return;
+        }
+        let live = true;
+        if (api.friends) {
+            api.friends()
+                .then((friends) => {
+                    const friend = friends.find((row) => row.playerId === overOpponentId);
+                    if (live && friend) {
+                        setRecord({ won: friend.won, lost: friend.lost });
+                    }
+                })
+                .catch(() => {});
+        }
+        const poll = api.challenges;
+        if (!poll || !api.acceptInvite || !onDuel) {
+            return () => {
+                live = false;
+            };
+        }
+        const check = () =>
+            poll()
+                .then((rows) => {
+                    if (live) {
+                        setIncoming(rows.find((row) => row.from.playerId === overOpponentId));
+                    }
+                })
+                .catch(() => {});
+        void check();
+        const timer = setInterval(() => void check(), REMATCH_POLL_MS);
+        return () => {
+            live = false;
+            clearInterval(timer);
+        };
+    }, [over !== undefined, overOpponentId, api, onDuel]);
+
+    const sendRematch = async () => {
+        if (!over || !overOpponentId || !api.challenge || !onRematchSent) {
+            return;
+        }
+        setRematchBusy(true);
+        try {
+            const invite = await api.challenge(overOpponentId, over.stake);
+            onRematchSent(invite, opponentName);
+        } catch (error) {
+            say(
+                (error instanceof ApiError && reasonMessage(error.reason)) ||
+                    t('duel.errors.rematch', { error: describeError(error) }),
+                error instanceof ApiError ? (error.reason ?? 'generic') : 'network',
+            );
+            setRematchBusy(false);
+        }
+    };
+
+    const acceptRematch = async () => {
+        if (!incoming || !api.acceptInvite || !onDuel) {
+            return;
+        }
+        setRematchBusy(true);
+        try {
+            const view = await api.acceptInvite(incoming.inviteId);
+            onDuel(view.duelId);
+        } catch (error) {
+            say(t('duel.errors.rematch', { error: describeError(error) }), 'generic');
+            setIncoming(undefined);
+            setRematchBusy(false);
+        }
+    };
+
     switch (state.kind) {
         case 'loading':
             return <p class="notice">{t('duel.loading')}</p>;
@@ -467,36 +566,28 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             );
         case 'over':
             return (
-                <section
-                    class={`result ${state.result.result.toLowerCase()}`}
-                    data-testid="result"
-                    data-result={state.result.result}
-                    ref={(el) => {
-                        if (el) {
-                            void animate(el, 'deal', {});
-                        }
-                    }}
-                >
-                    <h1>{t(`duel.result.${state.result.result}`)}</h1>
-                    <p>{explain(state.result, opponentName)}</p>
-                    {state.coins !== undefined && (
-                        <div
-                            class="coin-delta"
-                            data-testid="coin-delta"
-                            data-delta={state.coins}
-                            ref={(el) => {
-                                if (el) {
-                                    void animate(el, 'deal', {});
-                                }
-                            }}
-                        >
-                            <CoinAmount amount={state.coins} signed />
-                        </div>
-                    )}
-                    <button class="primary big" data-testid="back-to-lobby" onClick={exit}>
-                        {t('duel.back')}
-                    </button>
-                </section>
+                <ResultScreen
+                    result={state.result}
+                    coins={state.coins}
+                    stake={state.stake}
+                    opponent={opponent}
+                    record={record}
+                    rematch={
+                        state.opponentId && api.challenge && onRematchSent
+                            ? { busy: rematchBusy, onRematch: () => void sendRematch() }
+                            : undefined
+                    }
+                    incoming={
+                        incoming
+                            ? {
+                                  stake: incoming.stake,
+                                  busy: rematchBusy,
+                                  onAccept: () => void acceptRematch(),
+                              }
+                            : undefined
+                    }
+                    onHome={exit}
+                />
             );
         case 'playing': {
             const mine = loadout.value;

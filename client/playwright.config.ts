@@ -16,5 +16,9 @@ export default defineConfig({
         ...devices['Pixel 7'],
         trace: 'retain-on-failure',
     },
-    projects: [{ name: 'mobile-chromium' }],
+    projects: [
+        { name: 'mobile-chromium' },
+        // Telegram Web's Mini App popup and small phones: the whole hand must still fit (duel.spec checks it).
+        { name: 'narrow', testMatch: /duel\.spec\.ts/, use: { viewport: { width: 320, height: 640 } } },
+    ],
 });
