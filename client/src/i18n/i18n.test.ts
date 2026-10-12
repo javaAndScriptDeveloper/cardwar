@@ -50,6 +50,15 @@ describe('message catalog', () => {
         ...['play', 'friends', 'shop', 'profile'].map((n) => `nav.${n}`),
         ...['decks', 'backs', 'tables', 'frames', 'emotes'].map((id) => `shop.tabs.${id}`),
         ...['sound', 'music', 'haptics', 'swipe', 'reducedMotion'].map((key) => `settings.${key}`),
+        ...[
+            'STARTER',
+            'DAILY_BONUS',
+            'STAKE_ESCROW',
+            'STAKE_PAYOUT',
+            'STAKE_REFUND',
+            'PURCHASE',
+            'LEGACY',
+        ].map((kind) => `profile.tx.${kind}`),
     ];
     dynamic.forEach((key) => used.add(key));
 

@@ -166,7 +166,19 @@
     "settings": "Налаштування",
     "vs": "проти {name}",
     "moves": "{n} {moves}",
-    "movesForms": ["хід", "ходи", "ходів"]
+    "movesForms": ["хід", "ходи", "ходів"],
+    "coins": "Монети",
+    "noTransactions": "Монети ще не рухалися.",
+    "transactionsFailed": "Не вдалося завантажити рух монет.",
+    "tx": {
+      "STARTER": "Стартові",
+      "DAILY_BONUS": "Щоденний бонус",
+      "STAKE_ESCROW": "Ставка",
+      "STAKE_PAYOUT": "Виграш",
+      "STAKE_REFUND": "Повернення ставки",
+      "PURCHASE": "Покупка",
+      "LEGACY": "Перенесено"
+    }
   },
   "settings": {
     "title": "Налаштування",

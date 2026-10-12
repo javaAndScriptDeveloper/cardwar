@@ -1,26 +1,46 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ApiClient } from '../../api/client';
-import type { DuelHistoryEntry } from '../../api/types';
+import type { CoinTransactionView, DuelHistoryEntry } from '../../api/types';
 import type { SignedInPlayer } from '../../auth/session';
 import { forms, plural, t } from '../../i18n';
 import { describeError } from '../errors';
-import { Avatar, Badge, ListRow } from '../kit';
+import { Avatar, Badge, CoinAmount, ListRow } from '../kit';
 
 interface Props {
     player: SignedInPlayer;
-    api: Pick<ApiClient, 'history'>;
+    api: Pick<ApiClient, 'history' | 'transactions'>;
     onOpenSettings: () => void;
 }
 
 type History =
     { kind: 'loading' } | { kind: 'ready'; entries: DuelHistoryEntry[] } | { kind: 'failed'; error: string };
 
+type Transactions = { kind: 'loading' } | { kind: 'ready'; rows: CoinTransactionView[] } | { kind: 'failed' };
+
 const TONE = { WON: 'success', LOST: 'danger', DRAW: 'neutral' } as const;
 
-/** Who you are and how it has been going; coin deltas join the rows with MVP 2. */
+const WHEN = new Intl.DateTimeFormat('uk-UA', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+});
+
+/** Who you are, how it has been going, and where your coins came from and went. */
 export function Profile({ player, api, onOpenSettings }: Props) {
     const [history, setHistory] = useState<History>({ kind: 'loading' });
+    const [transactions, setTransactions] = useState<Transactions>({ kind: 'loading' });
     const name = player.displayName ?? player.username;
+
+    useEffect(() => {
+        let cancelled = false;
+        api.transactions()
+            .then((rows) => !cancelled && setTransactions({ kind: 'ready', rows }))
+            .catch(() => !cancelled && setTransactions({ kind: 'failed' }));
+        return () => {
+            cancelled = true;
+        };
+    }, [api]);
 
     useEffect(() => {
         let cancelled = false;
@@ -85,9 +105,31 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                         n: entry.moveCount,
                         moves: plural(entry.moveCount, forms('profile.movesForms')),
                     })}
-                    trailing={<Badge tone={TONE[entry.result]}>{t(`duel.result.${entry.result}`)}</Badge>}
+                    trailing={
+                        <>
+                            {entry.stake > 0 && (
+                                <CoinAmount amount={entry.coinDelta} signed data-testid="history-delta" />
+                            )}
+                            <Badge tone={TONE[entry.result]}>{t(`duel.result.${entry.result}`)}</Badge>
+                        </>
+                    }
                 />
             ))}
+            <h2>{t('profile.coins')}</h2>
+            {transactions.kind === 'failed' && <p class="notice">{t('profile.transactionsFailed')}</p>}
+            {transactions.kind === 'ready' && transactions.rows.length === 0 && (
+                <p class="notice">{t('profile.noTransactions')}</p>
+            )}
+            {transactions.kind === 'ready' &&
+                transactions.rows.map((row, index) => (
+                    <div key={`${row.createdAt}-${index}`} data-testid="tx-row" data-kind={row.kind}>
+                        <ListRow
+                            title={t(`profile.tx.${row.kind}`)}
+                            subtitle={WHEN.format(new Date(row.createdAt))}
+                            trailing={<CoinAmount amount={row.amount} signed />}
+                        />
+                    </div>
+                ))}
         </section>
     );
 }

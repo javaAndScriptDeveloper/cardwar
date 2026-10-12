@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
-import type { DuelHistoryEntry } from '../../api/types';
+import type { CoinTransactionView, DuelHistoryEntry } from '../../api/types';
 import { t } from '../../i18n';
 import { Profile } from './Profile';
 
@@ -20,12 +20,61 @@ const entry = (overrides: Partial<DuelHistoryEntry>): DuelHistoryEntry => ({
     ...overrides,
 });
 
+const noTransactions = () => vi.fn().mockResolvedValue([]);
+
+const tx = (amount: number, kind: CoinTransactionView['kind']): CoinTransactionView => ({
+    amount,
+    kind,
+    createdAt: '2026-10-12T10:00:00Z',
+});
+
 describe('Profile', () => {
+    it('shows the signed coin delta on staked history rows only', async () => {
+        const api = {
+            history: vi
+                .fn()
+                .mockResolvedValue([
+                    entry({ duelId: 'win', stake: 100, coinDelta: 100 }),
+                    entry({ duelId: 'loss', result: 'LOST', stake: 500, coinDelta: -500 }),
+                    entry({ duelId: 'friendly' }),
+                ]),
+            transactions: noTransactions(),
+        };
+
+        render(<Profile player={player} api={api} onOpenSettings={() => {}} />);
+
+        await waitFor(() => expect(screen.getAllByTestId('history-row')).toHaveLength(3));
+        const deltas = screen.getAllByTestId('history-delta').map((el) => el.getAttribute('data-amount'));
+        expect(deltas).toEqual(['100', '-500']);
+    });
+
+    it('lists the latest coin movements with a Ukrainian label per kind', async () => {
+        const api = {
+            history: vi.fn().mockResolvedValue([]),
+            transactions: vi
+                .fn()
+                .mockResolvedValue([tx(200, 'STAKE_PAYOUT'), tx(-100, 'STAKE_ESCROW'), tx(500, 'STARTER')]),
+        };
+
+        render(<Profile player={player} api={api} onOpenSettings={() => {}} />);
+
+        await waitFor(() => expect(screen.getAllByTestId('tx-row')).toHaveLength(3));
+        const rows = screen.getAllByTestId('tx-row');
+        expect(rows.map((row) => row.getAttribute('data-kind'))).toEqual([
+            'STAKE_PAYOUT',
+            'STAKE_ESCROW',
+            'STARTER',
+        ]);
+        expect(rows[0]?.textContent).toContain(t('profile.tx.STAKE_PAYOUT'));
+        expect(rows[1]?.querySelector('[data-amount]')?.getAttribute('data-amount')).toBe('-100');
+    });
+
     it('shows the player, their record and the recent duels', async () => {
         const api = {
             history: vi
                 .fn()
                 .mockResolvedValue([entry({}), entry({ duelId: 'd2', result: 'LOST', moveCount: 5 })]),
+            transactions: noTransactions(),
         };
 
         render(<Profile player={player} api={api} onOpenSettings={() => {}} />);
@@ -42,7 +91,7 @@ describe('Profile', () => {
         render(
             <Profile
                 player={player}
-                api={{ history: vi.fn().mockResolvedValue([]) }}
+                api={{ history: vi.fn().mockResolvedValue([]), transactions: noTransactions() }}
                 onOpenSettings={() => {}}
             />,
         );
@@ -54,7 +103,10 @@ describe('Profile', () => {
         render(
             <Profile
                 player={player}
-                api={{ history: vi.fn().mockRejectedValue(new Error('boom')) }}
+                api={{
+                    history: vi.fn().mockRejectedValue(new Error('boom')),
+                    transactions: noTransactions(),
+                }}
                 onOpenSettings={() => {}}
             />,
         );
