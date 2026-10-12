@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { DuelView, MoveRequest } from '../api/types';
+import type { DuelEvent, DuelView, MoveRequest } from '../api/types';
 import { audio } from '../audio';
 import type { SignedInPlayer } from '../auth/session';
 import type { LayoutDirective } from '../content/layout';
@@ -10,17 +10,19 @@ import { PackBubbles, PackRuntime } from '../content/runtime';
 import { type Card, cardId, sameCard } from '../game/cards';
 import { contentEvents, type Result, resultOf, type TableEvent } from '../game/diff';
 import { animate, motionEnabled } from '../motion';
+import { loadout } from '../state/loadout';
 import { settings } from '../state/settings';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
 import { t } from '../i18n';
 import type { HapticKind, Telegram } from '../telegram/webapp';
 import { describeError } from './errors';
+import { emoteCode, emoteGlyph } from './cosmetics';
 import { CoinAmount } from './kit';
 import type { ClockWarning } from './MoveTimer';
 import { Table } from './Table';
 
-export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels'>;
+export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels' | 'emote'>;
 export type StreamOpener = (
     duelId: string,
     options: Omit<DuelStreamOptions, 'fetchImpl' | 'headers'>,
@@ -41,6 +43,16 @@ type State =
     /** `coins` is the caller's signed net for a staked duel, undefined for a friendly one. */
     | { kind: 'over'; result: Result; coins: number | undefined }
     | { kind: 'gone'; message: string };
+
+/** An emote on screen: who threw it and which one. */
+interface EmoteBubble {
+    id: number;
+    emote: string;
+    from: 'you' | 'opponent';
+}
+
+/** How long a thrown emote floats over its sender. */
+const EMOTE_MS = 2500;
 
 /** Delay before re-trying a re-fetch that failed (429 or no network). */
 const RETRY_MS = 1500;
@@ -273,11 +285,48 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
             })
             .catch(() => {});
         closeStream.current = openStream(duelId, {
-            onNudge: () => void refresh(),
+            // An emote is not part of the duel state: show it from the event, no re-read needed.
+            onNudge: (event) => (event?.type === 'EMOTE' ? showEmote.current(event) : void refresh()),
             onClosed: () => void refresh(),
         });
         return () => closeStream.current();
     }, [api, duelId, openStream, refresh]);
+
+    const [emotes, setEmotes] = useState<EmoteBubble[]>([]);
+    const nextEmote = useRef(1);
+    const emoteTimers = useRef(new Set<ReturnType<typeof setTimeout>>());
+    useEffect(() => {
+        const timers = emoteTimers.current;
+        return () => timers.forEach((timer) => clearTimeout(timer));
+    }, []);
+    /** Read through a ref so the stream, opened once, always reaches the current view and pack. */
+    const showEmote = useRef<(event: DuelEvent) => void>(() => {});
+    showEmote.current = (event: DuelEvent) => {
+        if (!event.emote) {
+            return;
+        }
+        const you = previousView.current?.you ?? player.playerId;
+        const bubble: EmoteBubble = {
+            id: nextEmote.current++,
+            emote: event.emote,
+            from: event.player === you ? 'you' : 'opponent',
+        };
+        setEmotes((current) => [...current, bubble].slice(-4));
+        const timer = setTimeout(() => {
+            emoteTimers.current.delete(timer);
+            setEmotes((current) => current.filter((other) => other.id !== bubble.id));
+        }, EMOTE_MS);
+        emoteTimers.current.add(timer);
+        const packRuntime = runtimeRef.current;
+        if (packRuntime) {
+            const view = previousView.current;
+            packRuntime.handle([{ type: 'emote_received', emote: bubble.emote, by: bubble.from }], {
+                hand: view?.hand ?? [],
+                phase: view?.phase,
+            });
+            packRuntime.flush(tableRef.current);
+        }
+    };
 
     const [selectedTarget, setSelectedTarget] = useState<Card>();
     const [busy, setBusy] = useState(false);
@@ -291,6 +340,20 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
         toastTimer.current = setTimeout(() => setToast(undefined), 3000);
     };
     useEffect(() => () => clearTimeout(toastTimer.current), []);
+
+    /** Both players see it through the stream, the thrower included, so nothing is shown from here. */
+    const throwEmote = async (emote: string) => {
+        try {
+            await api.emote(duelId, emoteCode(emote));
+        } catch (error) {
+            const reason = error instanceof ApiError ? error.reason : undefined;
+            if (reason === 'EMOTE_TOO_FAST') {
+                say(t('duel.emoteTooFast'), reason);
+            } else {
+                say(describeError(error), reason ?? 'generic');
+            }
+        }
+    };
 
     /** One move in flight at a time; the returned view is the new truth, a rejection leaves the table as it was. */
     const play = async (move: MoveRequest) => {
@@ -414,7 +477,8 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                     </button>
                 </section>
             );
-        case 'playing':
+        case 'playing': {
+            const mine = loadout.value;
             return (
                 <div class="duel" ref={tableRef}>
                     <Table
@@ -430,8 +494,30 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                         onEndAttack={() => void play({ type: 'END_ATTACK' })}
                         onClockWarning={clockWarning}
                         layouts={layouts}
+                        cosmetics={{
+                            table: mine?.table,
+                            back: mine?.cardBack,
+                            frame: mine?.frame,
+                            opponentBack: state.view.opponentCosmetics?.cardBack,
+                            opponentFrame: state.view.opponentCosmetics?.frame,
+                        }}
                     />
                     {runtime && <PackBubbles runtime={runtime} />}
+                    {mine && mine.emotes.length > 0 && (
+                        <EmoteTray emotes={mine.emotes} onThrow={(emote) => void throwEmote(emote)} />
+                    )}
+                    {emotes.map((bubble) => (
+                        <div
+                            key={bubble.id}
+                            class={`emote-bubble from-${bubble.from}`}
+                            data-testid="emote-bubble"
+                            data-emote={bubble.emote}
+                            data-from={bubble.from}
+                            aria-hidden="true"
+                        >
+                            {emoteGlyph(bubble.emote)}
+                        </div>
+                    ))}
                     {toast && (
                         <p class="toast" role="alert" data-reason={toast.reason}>
                             {toast.text}
@@ -439,7 +525,45 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                     )}
                 </div>
             );
+        }
     }
+}
+
+/** A button by the table that opens the owned emotes; picking one throws it and closes the tray. */
+function EmoteTray({ emotes, onThrow }: { emotes: readonly string[]; onThrow: (emote: string) => void }) {
+    const [open, setOpen] = useState(false);
+    return (
+        <div class="emote-tray">
+            {open && (
+                <div class="emote-options" role="menu">
+                    {emotes.map((emote) => (
+                        <button
+                            key={emote}
+                            type="button"
+                            role="menuitem"
+                            data-testid={`emote-${emote}`}
+                            onClick={() => {
+                                setOpen(false);
+                                onThrow(emote);
+                            }}
+                        >
+                            {emoteGlyph(emote)}
+                        </button>
+                    ))}
+                </div>
+            )}
+            <button
+                type="button"
+                class="emote-toggle"
+                aria-expanded={open}
+                aria-label={t('duel.emotes')}
+                data-testid="emote-tray"
+                onClick={() => setOpen(!open)}
+            >
+                🙂
+            </button>
+        </div>
+    );
 }
 
 /** Sounds and haptics for one table event. Cosmetic by contract: nothing here can produce a move. */

@@ -14,6 +14,7 @@ export interface TelegramWebApp {
     ready(): void;
     expand(): void;
     openTelegramLink(url: string): void;
+    openInvoice(url: string, callback?: (status: InvoiceStatus) => void): void;
     HapticFeedback: {
         notificationOccurred(type: 'error' | 'success' | 'warning'): void;
         impactOccurred(style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft'): void;
@@ -35,6 +36,9 @@ export interface TelegramUser {
     photoUrl?: string;
 }
 
+/** How an invoice ended, as Telegram reports it; 'pending' also when the shim opened it in a tab. */
+export type InvoiceStatus = 'paid' | 'cancelled' | 'failed' | 'pending';
+
 export type HapticKind = 'success' | 'error' | 'warning' | 'tap';
 
 export interface Telegram {
@@ -50,6 +54,8 @@ export interface Telegram {
     ready(): void;
     haptic(kind: HapticKind): void;
     openTelegramLink(url: string): void;
+    /** Opens a Stars invoice link; `onStatus` hears once how it ended. */
+    openInvoice(url: string, onStatus: (status: InvoiceStatus) => void): void;
     /** Shows Telegram's own back button wired to `onClick`, or hides it (and unwires the last handler). */
     backButton(visible: boolean, onClick?: () => void): void;
 }
@@ -96,6 +102,9 @@ export function resolveTelegram(host: TelegramHost): Telegram {
             openTelegramLink(url) {
                 webApp.openTelegramLink(url);
             },
+            openInvoice(url, onStatus) {
+                webApp.openInvoice(url, onStatus);
+            },
             backButton(visible, onClick) {
                 if (backHandler) {
                     webApp.BackButton.offClick(backHandler);
@@ -121,6 +130,11 @@ export function resolveTelegram(host: TelegramHost): Telegram {
         haptic() {},
         openTelegramLink(url) {
             host.open?.(url, '_blank');
+        },
+        // A browser cannot pay in Stars and never learns the outcome; the wallet refreshes on the next screen change.
+        openInvoice(url, onStatus) {
+            host.open?.(url, '_blank');
+            onStatus('pending');
         },
         backButton() {},
     };

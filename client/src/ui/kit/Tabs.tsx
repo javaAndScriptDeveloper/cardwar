@@ -14,6 +14,7 @@ export function Tabs({ tabs, active, onChange }: Props) {
                     role="tab"
                     aria-selected={tab.id === active}
                     class={tab.id === active ? 'active' : ''}
+                    data-testid={`tab-${tab.id}`}
                     onClick={() => onChange(tab.id)}
                 >
                     {tab.label}

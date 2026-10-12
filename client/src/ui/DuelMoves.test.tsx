@@ -23,6 +23,7 @@ function setup(start: DuelView) {
         move: vi.fn(),
         history: vi.fn().mockResolvedValue([]),
         activeDuels: vi.fn().mockResolvedValue([{ duelId: 'duel-1', opponentUsername: 'bob' }]),
+        emote: vi.fn().mockResolvedValue(undefined),
     };
     const telegram = { ...resolveTelegram({}), haptic: vi.fn() };
     render(
@@ -285,6 +286,7 @@ describe('moves', () => {
                     },
                 ]),
                 activeDuels: vi.fn().mockResolvedValue([]),
+                emote: vi.fn().mockResolvedValue(undefined),
             };
             const telegram = { ...resolveTelegram({}), haptic: vi.fn() };
             render(

@@ -5,10 +5,14 @@ import type {
     DuelSummary,
     DuelView,
     InviteView,
+    InvoiceView,
+    LoadoutView,
     MatchView,
     MeView,
     MoveRequest,
     ProblemDetail,
+    ShopItemView,
+    ShopView,
     WalletView,
 } from './types';
 import { serverOffset } from '../state/clock';
@@ -101,6 +105,35 @@ export class ApiClient {
 
     leaveMatchmaking(): Promise<void> {
         return this.request('DELETE', '/matchmaking');
+    }
+
+    /** Every cosmetic with the caller's ownership and equipped state, and the coin packs. */
+    shop(): Promise<ShopView> {
+        return this.request('GET', '/shop');
+    }
+
+    /** 400 INSUFFICIENT_COINS, 409 ALREADY_OWNED. */
+    buyItem(code: string): Promise<ShopItemView> {
+        return this.request('POST', `/shop/items/${encodeURIComponent(code)}/buy`);
+    }
+
+    /** 400 NOT_OWNED, or NOT_EQUIPPABLE for emotes. */
+    equipItem(code: string): Promise<LoadoutView> {
+        return this.request('POST', `/shop/items/${encodeURIComponent(code)}/equip`);
+    }
+
+    loadout(): Promise<LoadoutView> {
+        return this.request('GET', '/me/loadout');
+    }
+
+    /** A Telegram Stars invoice link for a coin pack; 503 PAYMENTS_UNAVAILABLE when the bot cannot sell. */
+    starsInvoice(packId: string): Promise<InvoiceView> {
+        return this.request('POST', '/shop/stars/invoice', { packId });
+    }
+
+    /** Throws an owned emote (by item code) at the table; 400 NOT_OWNED or EMOTE_TOO_FAST. */
+    emote(duelId: string, code: string): Promise<void> {
+        return this.request('POST', `/duels/${encodeURIComponent(duelId)}/emotes`, { code });
     }
 
     /** Last measured server-minus-device clock difference in ms (see src/state/clock). */

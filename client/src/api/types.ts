@@ -40,6 +40,8 @@ export interface DuelView {
     toMove?: string;
     /** Missed moves so far; the third forfeits the duel. */
     strikes?: { you: number; opponent: number };
+    /** The opponent's card back and avatar frame; absent from servers without the shop. */
+    opponentCosmetics?: CosmeticsView;
 }
 
 export type MatchStatus = 'WAITING' | 'MATCHED' | 'EXPIRED';
@@ -115,6 +117,7 @@ export type CoinKind =
     | 'STAKE_PAYOUT'
     | 'STAKE_REFUND'
     | 'PURCHASE'
+    | 'STARS_TOPUP'
     | 'LEGACY'
     | 'ADJUSTMENT';
 
@@ -151,8 +154,57 @@ export interface ProblemDetail {
     errors?: Record<string, string>;
 }
 
-/** One SSE event body. Only `type` and `duelId` matter to the client: every event just triggers a re-fetch. */
+/**
+ * One SSE event body. Engine events only nudge a re-fetch, so their other fields are ignored; an `EMOTE` is not
+ * part of the duel state and is shown from the event itself: `player` threw `emote` (a content ref).
+ */
 export interface DuelEvent {
     type: string;
     duelId: string;
+    player?: string;
+    emote?: string;
+}
+
+export type ItemType = 'DECK' | 'CARD_BACK' | 'TABLE' | 'FRAME' | 'EMOTE';
+
+/** One cosmetic: `contentRef` names the pack or built-in style it shows; the price is in coins. */
+export interface ShopItemView {
+    code: string;
+    type: ItemType;
+    contentRef: string;
+    name: string;
+    price: number;
+    owned: boolean;
+    equipped: boolean;
+}
+
+/** Coins sold for Telegram Stars. */
+export interface CoinPackView {
+    id: string;
+    coins: number;
+    stars: number;
+}
+
+export interface ShopView {
+    items: ShopItemView[];
+    coinPacks: CoinPackView[];
+}
+
+/** What a player has equipped, as content refs; `emotes` are all the emotes they own. */
+export interface LoadoutView {
+    deck: string;
+    cardBack: string;
+    table: string;
+    frame?: string;
+    emotes: string[];
+}
+
+export interface InvoiceView {
+    invoiceLink: string;
+}
+
+/** The part of the opponent's loadout visible at the table. */
+export interface CosmeticsView {
+    cardBack: string;
+    frame?: string;
 }

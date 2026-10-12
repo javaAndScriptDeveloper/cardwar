@@ -31,6 +31,7 @@ describe('Session', () => {
                     ready: vi.fn(),
                     expand: vi.fn(),
                     openTelegramLink: vi.fn(),
+                    openInvoice: vi.fn(),
                     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
                     BackButton: { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() },
                 },

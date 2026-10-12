@@ -4,6 +4,8 @@ import { ApiError } from '../api/client';
 import type { DailyBonusView, DuelView, InviteView, MatchView, WalletView } from '../api/types';
 import { t } from '../i18n';
 import { navigate } from '../router';
+import { loadout } from '../state/loadout';
+import { DEFAULT_SETTINGS, settings } from '../state/settings';
 import { wallet } from '../state/wallet';
 import { resolveTelegram, type Telegram } from '../telegram/webapp';
 import { Shell } from './Shell';
@@ -25,6 +27,16 @@ function fakeApi() {
         enterMatchmaking: vi.fn(),
         matchmakingStatus: vi.fn().mockResolvedValue(undefined),
         leaveMatchmaking: vi.fn().mockResolvedValue(undefined),
+        shop: vi.fn().mockResolvedValue({ items: [], coinPacks: [] }),
+        buyItem: vi.fn(),
+        equipItem: vi.fn(),
+        starsInvoice: vi.fn(),
+        loadout: vi.fn().mockResolvedValue({
+            deck: 'classic',
+            cardBack: 'classic',
+            table: 'green',
+            emotes: [],
+        }),
     };
 }
 
@@ -90,6 +102,8 @@ describe('Shell', () => {
     beforeEach(() => {
         window.location.hash = '';
         wallet.value = undefined;
+        loadout.value = undefined;
+        settings.value = DEFAULT_SETTINGS;
     });
 
     describe('coins', () => {
@@ -503,6 +517,21 @@ describe('Shell', () => {
 
         await waitFor(() => expect(screen.getByTestId('invite-code').textContent).toBe('inv-open'));
         expect(api.createInvite).not.toHaveBeenCalled();
+    });
+
+    it("loads the server loadout at sign-in; its deck becomes the device's deck", async () => {
+        const api = fakeApi();
+        api.loadout.mockResolvedValue({
+            deck: 'memes-demo',
+            cardBack: 'trident',
+            table: 'night',
+            emotes: [],
+        });
+
+        renderShell(api);
+
+        await waitFor(() => expect(settings.value.deck).toBe('memes-demo'));
+        expect(loadout.value?.cardBack).toBe('trident');
     });
 
     it('switches tabs through the bottom navigation and hides it in settings', async () => {

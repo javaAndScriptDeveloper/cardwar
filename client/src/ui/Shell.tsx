@@ -7,6 +7,7 @@ import { navigate, TOP_LEVEL, useRoute } from '../router';
 import { inviteLink, shareUrl, type LinkConfig } from '../telegram/links';
 import type { Telegram } from '../telegram/webapp';
 import { reasonMessage } from '../game/reasons';
+import { refreshLoadout } from '../state/loadout';
 import { refreshWallet, wallet } from '../state/wallet';
 import { describeError } from './errors';
 import { Friends } from './friends/Friends';
@@ -34,6 +35,11 @@ export type ShellApi = Pick<
     | 'enterMatchmaking'
     | 'matchmakingStatus'
     | 'leaveMatchmaking'
+    | 'shop'
+    | 'buyItem'
+    | 'equipItem'
+    | 'starsInvoice'
+    | 'loadout'
 >;
 
 interface Props {
@@ -151,6 +157,12 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
             void refreshWallet(api);
         }
     }, [inDuel, api]);
+
+    // The server loadout is the deck's source of truth once signed in; read it once per sign-in, then the shop and
+    // the settings picker keep it current with their equip answers.
+    useEffect(() => {
+        void refreshLoadout(api);
+    }, [api]);
 
     const claimBonus = async () => {
         try {
@@ -288,7 +300,7 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
             case 'friends':
                 return <Friends onInvite={() => openStakePicker('invite')} />;
             case 'shop':
-                return <Shop />;
+                return <Shop api={api} telegram={telegram} />;
             case 'profile':
                 return (
                     <Profile
@@ -298,7 +310,13 @@ export function Shell({ player, api, telegram, invite, links, table, pollMs = 20
                     />
                 );
             case 'settings':
-                return <Settings />;
+                return (
+                    <Settings
+                        api={api}
+                        inTelegram={telegram.inTelegram}
+                        onOpenShop={() => navigate({ name: 'shop' })}
+                    />
+                );
         }
     })();
 

@@ -2,6 +2,8 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { t } from '../i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
+import type { DuelEvent } from '../api/types';
+import { loadout } from '../state/loadout';
 import { equipped } from '../content/loader';
 import { CARD_IDS } from '../content/schema';
 import type { PackManifest } from '../content/types';
@@ -17,6 +19,7 @@ function setup() {
         move: vi.fn(),
         history: vi.fn().mockResolvedValue([]),
         activeDuels: vi.fn().mockResolvedValue([{ duelId: 'duel-1', opponentUsername: 'bob' }]),
+        emote: vi.fn().mockResolvedValue(undefined),
     };
     let stream: StreamCallbacks | undefined;
     const close = vi.fn();
@@ -41,6 +44,7 @@ function setup() {
         close,
         onExit,
         nudge: () => stream?.onNudge(),
+        event: (event: DuelEvent) => stream?.onNudge(event),
         closed: (s: number) => stream?.onClosed?.(s),
         ...utils,
     };
@@ -374,6 +378,108 @@ describe('DuelScreen with a content pack', () => {
 
         await waitFor(() =>
             expect(screen.getByTestId('pack-bubble').getAttribute('data-rule')).toBe('taunt'),
+        );
+    });
+});
+
+describe('DuelScreen cosmetics and emotes', () => {
+    afterEach(() => {
+        loadout.value = undefined;
+        equipped.value = undefined;
+    });
+
+    it("draws your loadout and the opponent's cosmetics at the table", async () => {
+        loadout.value = { deck: 'classic', cardBack: 'sunflower', table: 'night', frame: 'gold', emotes: [] };
+        const { api, nudge } = setup();
+        api.duel.mockResolvedValue(
+            view({ version: 1, opponentCosmetics: { cardBack: 'trident', frame: 'blue-yellow' } }),
+        );
+        nudge();
+
+        await waitFor(() =>
+            expect(screen.getByTestId('opponent-fan').getAttribute('data-back')).toBe('trident'),
+        );
+        expect(screen.getByTestId('felt').getAttribute('data-table')).toBe('night');
+        expect(screen.getByTestId('talon').getAttribute('data-back')).toBe('sunflower');
+        expect(screen.getByTestId('opponent-frame').getAttribute('data-frame')).toBe('blue-yellow');
+        expect(screen.getByTestId('you-frame').getAttribute('data-frame')).toBe('gold');
+    });
+
+    it('throws an owned emote from the tray', async () => {
+        loadout.value = { deck: 'classic', cardBack: 'classic', table: 'green', emotes: ['like', 'fire'] };
+        const { api } = setup();
+
+        fireEvent.click(await screen.findByTestId('emote-tray'));
+        fireEvent.click(screen.getByTestId('emote-fire'));
+
+        await waitFor(() => expect(api.emote).toHaveBeenCalledWith('duel-1', 'emote-fire'));
+        expect(screen.queryByTestId('emote-fire')).toBeNull();
+    });
+
+    it('offers no tray without owned emotes', async () => {
+        setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        expect(screen.queryByTestId('emote-tray')).toBeNull();
+    });
+
+    it('says so when emotes come too fast', async () => {
+        loadout.value = { deck: 'classic', cardBack: 'classic', table: 'green', emotes: ['like'] };
+        const { api } = setup();
+        api.emote.mockRejectedValue(new ApiError(400, { reason: 'EMOTE_TOO_FAST' }));
+
+        fireEvent.click(await screen.findByTestId('emote-tray'));
+        fireEvent.click(screen.getByTestId('emote-like'));
+
+        const toast = await screen.findByRole('alert');
+        expect(toast.getAttribute('data-reason')).toBe('EMOTE_TOO_FAST');
+        expect(toast.textContent).toBe(t('duel.emoteTooFast'));
+    });
+
+    it("floats an incoming emote over its sender's avatar without re-reading the duel", async () => {
+        const { api, event } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        await waitFor(() => expect(api.duel).toHaveBeenCalledTimes(1));
+
+        event({ type: 'EMOTE', duelId: 'duel-1', player: 'them', emote: 'clown' });
+
+        const bubble = await screen.findByTestId('emote-bubble');
+        expect(bubble.getAttribute('data-emote')).toBe('clown');
+        expect(bubble.getAttribute('data-from')).toBe('opponent');
+        expect(bubble.textContent).toBe('🤡');
+        expect(api.duel).toHaveBeenCalledTimes(1);
+
+        event({ type: 'EMOTE', duelId: 'duel-1', player: 'me', emote: 'like' });
+        await waitFor(() =>
+            expect(screen.getAllByTestId('emote-bubble').map((el) => el.getAttribute('data-from'))).toContain(
+                'you',
+            ),
+        );
+    });
+
+    it('feeds emote_received to the equipped pack', async () => {
+        equipped.value = {
+            id: 'demo',
+            version: 1,
+            type: 'DECK',
+            name: { uk: 'Демо' },
+            cards: Object.fromEntries(CARD_IDS.map((id) => [id, { image: `cards/${id}.svg` }])),
+            rules: [
+                {
+                    id: 'answer',
+                    on: 'emote_received',
+                    if: { side: 'opponent' },
+                    do: [{ bubble: { uk: 'Ой!' }, target: 'opponent' }],
+                },
+            ],
+        };
+        const { event } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        event({ type: 'EMOTE', duelId: 'duel-1', player: 'them', emote: 'laugh' });
+
+        await waitFor(() =>
+            expect(screen.getByTestId('pack-bubble').getAttribute('data-rule')).toBe('answer'),
         );
     });
 });

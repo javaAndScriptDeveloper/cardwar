@@ -48,7 +48,7 @@ describe('message catalog', () => {
         ),
         ...['clubs', 'diamonds', 'hearts', 'spades'].map((s) => `card.suit.${s}`),
         ...['play', 'friends', 'shop', 'profile'].map((n) => `nav.${n}`),
-        ...['decks', 'backs', 'tables', 'frames', 'emotes'].map((id) => `shop.tabs.${id}`),
+        ...['decks', 'backs', 'tables', 'frames', 'emotes', 'coins'].map((id) => `shop.tabs.${id}`),
         ...['sound', 'music', 'haptics', 'swipe', 'reducedMotion'].map((key) => `settings.${key}`),
         ...[
             'STARTER',
@@ -57,6 +57,7 @@ describe('message catalog', () => {
             'STAKE_PAYOUT',
             'STAKE_REFUND',
             'PURCHASE',
+            'STARS_TOPUP',
             'LEGACY',
             'ADJUSTMENT',
         ].map((kind) => `profile.tx.${kind}`),

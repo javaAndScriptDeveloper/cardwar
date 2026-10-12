@@ -6,7 +6,7 @@ export interface Settings {
     haptics: boolean;
     swipe: boolean;
     reducedMotion: boolean;
-    /** Id of the equipped content pack (a folder under /app/packs/). Local until the shop's loadout exists. */
+    /** Id of the equipped content pack (a folder under /app/packs/); mirrors the server loadout once signed in. */
     deck: string;
 }
 

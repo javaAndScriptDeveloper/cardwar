@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ShopItemView } from '../../api/types';
 import type { PackIndexEntry } from '../../content/types';
+import { loadout } from '../../state/loadout';
 import { DEFAULT_SETTINGS, settings } from '../../state/settings';
 import { Settings } from './Settings';
 
@@ -66,6 +68,80 @@ describe('Settings', () => {
             await waitFor(() =>
                 expect(screen.getByTestId('deck-memes-demo').getAttribute('aria-checked')).toBe('true'),
             );
+        });
+
+        describe('signed in with a shop', () => {
+            const deckItem = (contentRef: string, owned: boolean): ShopItemView => ({
+                code: `deck-${contentRef}`,
+                type: 'DECK',
+                contentRef,
+                name: contentRef,
+                price: owned ? 0 : 1000,
+                owned,
+                equipped: contentRef === 'classic',
+            });
+            const shopApi = (memesOwned: boolean) => ({
+                shop: vi.fn().mockResolvedValue({
+                    items: [deckItem('classic', true), deckItem('memes-demo', memesOwned)],
+                    coinPacks: [],
+                }),
+                equipItem: vi.fn().mockResolvedValue({
+                    deck: 'memes-demo',
+                    cardBack: 'classic',
+                    table: 'green',
+                    emotes: [],
+                }),
+            });
+
+            beforeEach(() => {
+                loadout.value = undefined;
+            });
+
+            it('equips an owned deck through the shop, which also moves the device deck', async () => {
+                const api = shopApi(true);
+                render(<Settings loadIndex={() => Promise.resolve(index)} api={api} inTelegram />);
+
+                await waitFor(() =>
+                    expect(screen.getByTestId('deck-memes-demo').getAttribute('data-owned')).toBe('true'),
+                );
+                fireEvent.click(screen.getByTestId('deck-memes-demo'));
+
+                await waitFor(() => expect(settings.value.deck).toBe('memes-demo'));
+                expect(api.equipItem).toHaveBeenCalledWith('deck-memes-demo');
+                expect(loadout.value?.deck).toBe('memes-demo');
+            });
+
+            it('sends an unowned deck to the shop inside Telegram instead of equipping it', async () => {
+                const api = shopApi(false);
+                const onOpenShop = vi.fn();
+                render(
+                    <Settings
+                        loadIndex={() => Promise.resolve(index)}
+                        api={api}
+                        inTelegram
+                        onOpenShop={onOpenShop}
+                    />,
+                );
+
+                fireEvent.click(await screen.findByTestId('deck-shop-memes-demo'));
+                fireEvent.click(screen.getByTestId('deck-memes-demo'));
+
+                // Both the link and the deck itself lead to the shop.
+                expect(onOpenShop).toHaveBeenCalledTimes(2);
+                expect(api.equipItem).not.toHaveBeenCalled();
+                expect(settings.value.deck).toBe('classic');
+            });
+
+            it('lets the dev shim try an unowned deck on locally', async () => {
+                const api = shopApi(false);
+                render(<Settings loadIndex={() => Promise.resolve(index)} api={api} inTelegram={false} />);
+
+                await screen.findByTestId('deck-shop-memes-demo');
+                fireEvent.click(screen.getByTestId('deck-memes-demo'));
+
+                expect(settings.value.deck).toBe('memes-demo');
+                expect(api.equipItem).not.toHaveBeenCalled();
+            });
         });
 
         it('says so when the list cannot load, keeping the other settings usable', async () => {

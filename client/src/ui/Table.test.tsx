@@ -238,3 +238,43 @@ describe('Table', () => {
         expect(screen.getByTestId('you-avatar').textContent).toBe('Я');
     });
 });
+
+describe('Table cosmetics', () => {
+    const cosmetics = {
+        table: 'night',
+        back: 'sunflower',
+        frame: 'gold',
+        opponentBack: 'trident',
+        opponentFrame: 'blue-yellow',
+    };
+
+    it('draws the equipped table style on the felt', () => {
+        renderTable({ cosmetics });
+
+        expect(screen.getByTestId('felt').getAttribute('data-table')).toBe('night');
+        expect(screen.getByTestId('felt').classList.contains('table-night')).toBe(true);
+    });
+
+    it("draws your back on the talon and the opponent's back on their fan", () => {
+        const { container } = renderTable({ cosmetics });
+
+        expect(screen.getByTestId('opponent-fan').getAttribute('data-back')).toBe('trident');
+        expect(container.querySelectorAll('.fan [data-back="trident"]')).toHaveLength(6);
+        expect(screen.getByTestId('talon').getAttribute('data-back')).toBe('sunflower');
+    });
+
+    it('frames both avatars', () => {
+        renderTable({ cosmetics });
+
+        expect(screen.getByTestId('opponent-frame').getAttribute('data-frame')).toBe('blue-yellow');
+        expect(screen.getByTestId('you-frame').getAttribute('data-frame')).toBe('gold');
+    });
+
+    it('uses the classic back, the green felt and no frame by default', () => {
+        renderTable();
+
+        expect(screen.getByTestId('felt').getAttribute('data-table')).toBe('green');
+        expect(screen.getByTestId('opponent-fan').getAttribute('data-back')).toBe('classic');
+        expect(screen.queryByTestId('you-frame')).toBeNull();
+    });
+});

@@ -866,3 +866,232 @@ button:disabled {
     align-self: center;
     font-size: var(--font-xl);
 }
+
+/* ---- Shop and cosmetics (MVP 5) ---------------------------------------------------------------------------- */
+
+.shop-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-3);
+}
+
+.shop-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border: 2px solid transparent;
+    border-radius: var(--radius-l);
+    background: var(--surface);
+    text-align: center;
+}
+
+.shop-item.equipped {
+    border-color: var(--accent);
+}
+
+.shop-item .name {
+    font-weight: 600;
+    font-size: var(--font-m);
+}
+
+.shop-item .btn {
+    width: 100%;
+}
+
+.shop-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 72px;
+}
+
+.coin-stack .coin-glyph {
+    width: 48px;
+    height: 48px;
+}
+
+.emote-glyph {
+    font-size: 2.6rem;
+    line-height: 1;
+}
+
+.deck-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.deck-row .deck-option {
+    flex: 1;
+}
+
+button.link {
+    padding: var(--space-1) var(--space-2);
+    border: none;
+    background: none;
+    color: var(--accent);
+    font-size: var(--font-s);
+    text-decoration: underline;
+}
+
+/* Card backs: the classic one is the deck's own image; these are drawn, so any deck can show them. */
+.card-back-style {
+    display: block;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgb(0 0 0 / 30%);
+    background-color: #1e3a8a;
+}
+
+.back-classic {
+    background: repeating-linear-gradient(45deg, #1d4ed8 0 4px, #1e3a8a 4px 8px);
+}
+
+.back-trident {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 28'%3E%3Cpath fill='%23ffd500' d='M9 3h2v16H9zM3 6h2v10q0 3 3 3v2q-5 0-5-5zM15 6h2v10q0 5-5 5v-2q3 0 3-3zM8 21h4l-2 4z'/%3E%3C/svg%3E")
+            center / 62% no-repeat,
+        radial-gradient(circle at 50% 40%, #1f6fd1, #0057b7 60%, #003f86);
+}
+
+.back-sunflower {
+    background:
+        radial-gradient(circle, #4a2c0a 0 16%, #ffc400 17% 34%, transparent 35%) 0 0 / 50% 36%,
+        linear-gradient(#2f6fd6, #0f3f8f);
+}
+
+/* Tables: the felt and its shop swatch share one background per style. */
+.table-swatch {
+    display: block;
+    width: 96px;
+    height: 64px;
+    border-radius: var(--radius-m);
+    box-shadow: inset 0 0 18px rgb(0 0 0 / 40%);
+}
+
+.table-swatch.table-green,
+.felt.table-green {
+    background: radial-gradient(circle at 50% 40%, var(--felt-glow), var(--felt));
+}
+
+.table-swatch.table-night,
+.felt.table-night {
+    background:
+        radial-gradient(ellipse at 50% 115%, rgb(245 197 66 / 30%), transparent 55%),
+        radial-gradient(circle at 20% 15%, rgb(255 255 255 / 10%) 0 1px, transparent 2px) 0 0 / 28px 28px,
+        radial-gradient(circle at 50% 35%, #22306a, #0b1026);
+}
+
+.table-swatch.table-borscht,
+.felt.table-borscht {
+    background:
+        radial-gradient(circle at 70% 30%, rgb(255 250 240 / 22%) 0 6%, transparent 7%),
+        radial-gradient(circle at 50% 40%, #b3253a, #6b0f23);
+}
+
+/* Avatar frames: a ring drawn behind the avatar. */
+.avatar-frame {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 50%;
+    flex: none;
+}
+
+.avatar-frame .avatar {
+    border: 2px solid var(--bg);
+}
+
+.frame-gold {
+    background: conic-gradient(from 30deg, #fff3b0, var(--gold), #b8891a, var(--gold), #fff3b0);
+}
+
+.frame-blue-yellow {
+    background: linear-gradient(#0057b7 50%, #ffd500 50%);
+}
+
+.frame-sample {
+    width: 40px;
+    height: 40px;
+}
+
+/* Emotes at the table: a tray by the hand and a big glyph floating over whoever threw it. */
+.emote-tray {
+    position: absolute;
+    right: 8px;
+    bottom: 132px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-2);
+    z-index: 3;
+}
+
+.emote-toggle,
+.emote-options button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    font-size: 1.5rem;
+}
+
+.emote-options {
+    display: flex;
+    gap: var(--space-2);
+    padding: var(--space-1);
+    border-radius: 999px;
+    background: var(--surface-2);
+}
+
+.emote-bubble {
+    position: absolute;
+    left: 12px;
+    font-size: 3.5rem;
+    line-height: 1;
+    pointer-events: none;
+    z-index: 4;
+    animation: emote-float 2.5s ease-out forwards;
+}
+
+.emote-bubble.from-opponent {
+    top: 0;
+}
+
+.emote-bubble.from-you {
+    bottom: 120px;
+}
+
+@keyframes emote-float {
+    0% {
+        opacity: 0;
+        transform: scale(0.4);
+    }
+
+    15% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+
+    25% {
+        transform: scale(1);
+    }
+
+    80% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-24px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .emote-bubble {
+        animation: none;
+    }
+}

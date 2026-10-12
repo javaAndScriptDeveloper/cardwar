@@ -8,6 +8,7 @@ const telegramWebApp = (initData: string, startParam?: string) => ({
     ready: vi.fn(),
     expand: vi.fn(),
     openTelegramLink: vi.fn(),
+    openInvoice: vi.fn(),
     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
     BackButton: { show: vi.fn(), hide: vi.fn(), onClick: vi.fn(), offClick: vi.fn() },
 });
@@ -58,6 +59,26 @@ describe('resolveTelegram', () => {
         const open = vi.fn();
         resolveTelegram({ open }).openTelegramLink('https://t.me/share/url?url=x');
         expect(open).toHaveBeenCalledWith('https://t.me/share/url?url=x', '_blank');
+    });
+
+    it('opens invoices through Telegram and reports their status', () => {
+        const webApp = telegramWebApp('x=1');
+        const onStatus = vi.fn();
+        resolveTelegram({ Telegram: { WebApp: webApp } }).openInvoice('https://t.me/$abc', onStatus);
+
+        expect(webApp.openInvoice).toHaveBeenCalledWith('https://t.me/$abc', expect.any(Function));
+        const callback = webApp.openInvoice.mock.calls[0]?.[1] as (status: string) => void;
+        callback('paid');
+        expect(onStatus).toHaveBeenCalledWith('paid');
+    });
+
+    it('opens an invoice in a new tab in the shim and reports it pending', () => {
+        const open = vi.fn();
+        const onStatus = vi.fn();
+        resolveTelegram({ open }).openInvoice('https://t.me/$abc', onStatus);
+
+        expect(open).toHaveBeenCalledWith('https://t.me/$abc', '_blank');
+        expect(onStatus).toHaveBeenCalledWith('pending');
     });
 
     it('exposes the user, the colour scheme and drives the BackButton inside Telegram', () => {

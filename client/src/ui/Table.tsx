@@ -1,3 +1,4 @@
+import type { ComponentChildren } from 'preact';
 import { useRef } from 'preact/hooks';
 import type { DuelView } from '../api/types';
 import { arrange, type LayoutDirective } from '../content/layout';
@@ -5,12 +6,22 @@ import { type Card, cardId, sameCard } from '../game/cards';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { cardLabel, t } from '../i18n';
 import { CardBack, CardImage } from './CardImage';
+import { styleRef } from './cosmetics';
 import { Avatar, CoinAmount } from './kit';
 import { type ClockWarning, MoveTimer } from './MoveTimer';
 
 export interface Participant {
     name: string;
     photoUrl?: string | undefined;
+}
+
+/** Content refs of the cosmetics at the table: yours from the loadout, the opponent's from their view. */
+export interface TableCosmetics {
+    table?: string | undefined;
+    back?: string | undefined;
+    frame?: string | undefined;
+    opponentBack?: string | undefined;
+    opponentFrame?: string | undefined;
 }
 
 export interface TableProps {
@@ -30,6 +41,7 @@ export interface TableProps {
     onClockWarning?: ((warning: ClockWarning) => void) | undefined;
     /** The equipped pack's hand layouts; they only change the order cards are drawn in. */
     layouts?: readonly LayoutDirective[] | undefined;
+    cosmetics?: TableCosmetics | undefined;
 }
 
 /** Strikes that forfeit the duel; one dot each. */
@@ -58,34 +70,44 @@ export function Table({
     onEndAttack,
     onClockWarning,
     layouts = [],
+    cosmetics = {},
 }: TableProps) {
+    const tableStyle = styleRef(cosmetics.table, 'green');
+    const opponentBack = styleRef(cosmetics.opponentBack, 'classic');
+    const yourBack = styleRef(cosmetics.back, 'classic');
     const usable = playable(view);
     const isUsable = (card: Card) => usable.some((candidate) => sameCard(candidate, card));
 
     return (
         <section class="table">
             <header class="opponent">
-                <Avatar
-                    name={opponent.name}
-                    photoUrl={opponent.photoUrl}
-                    size={36}
-                    data-testid="opponent-avatar"
-                />
+                <Framed frame={cosmetics.opponentFrame} data-testid="opponent-frame">
+                    <Avatar
+                        name={opponent.name}
+                        photoUrl={opponent.photoUrl}
+                        size={36}
+                        data-testid="opponent-avatar"
+                    />
+                </Framed>
                 <span class="name">{opponent.name}</span>
                 <Strikes side="opponent" count={view.strikes?.opponent} />
                 <span class="count" data-testid="opponent-count">
                     {view.opponentHandCount}
                 </span>
-                <div class="fan">
+                <div class="fan" data-testid="opponent-fan" data-back={opponentBack}>
                     {Array.from({ length: view.opponentHandCount }, (_, index) => (
-                        <CardBack key={index} class="card small" />
+                        <CardBack key={index} class="card small" back={opponentBack} />
                     ))}
                 </div>
             </header>
 
-            <div class="felt" data-testid="felt">
-                <div class="deck">
-                    {view.talonCount > 0 ? <CardBack class="card small" /> : <div class="card small empty" />}
+            <div class={`felt table-${tableStyle}`} data-testid="felt" data-table={tableStyle}>
+                <div class="deck" data-testid="talon" data-back={yourBack}>
+                    {view.talonCount > 0 ? (
+                        <CardBack class="card small" back={yourBack} />
+                    ) : (
+                        <div class="card small empty" />
+                    )}
                     <span class="count" data-testid="talon-count">
                         {view.talonCount}
                     </span>
@@ -160,7 +182,9 @@ export function Table({
             </div>
 
             <footer class="you">
-                <Avatar name={you.name} photoUrl={you.photoUrl} size={28} data-testid="you-avatar" />
+                <Framed frame={cosmetics.frame} data-testid="you-frame">
+                    <Avatar name={you.name} photoUrl={you.photoUrl} size={28} data-testid="you-avatar" />
+                </Framed>
                 <span class="name">{you.name}</span>
                 <Strikes side="you" count={view.strikes?.you} />
                 <span class="count">{view.hand.length}</span>
@@ -178,6 +202,27 @@ export function Table({
                 ))}
             </div>
         </section>
+    );
+}
+
+/** An avatar in its shop frame; without a frame the avatar stands alone. */
+function Framed({
+    frame,
+    'data-testid': testId,
+    children,
+}: {
+    frame: string | undefined;
+    'data-testid': string;
+    children: ComponentChildren;
+}) {
+    if (frame === undefined) {
+        return <>{children}</>;
+    }
+    const ref = styleRef(frame, 'none');
+    return (
+        <span class={`avatar-frame frame-${ref}`} data-frame={ref} data-testid={testId}>
+            {children}
+        </span>
     );
 }
 

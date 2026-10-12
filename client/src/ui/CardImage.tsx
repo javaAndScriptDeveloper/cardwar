@@ -2,6 +2,7 @@ import { assetUrl, equipped } from '../content/loader';
 import type { PackManifest } from '../content/types';
 import { type Card, cardId } from '../game/cards';
 import { cardLabel, t } from '../i18n';
+import { styleRef } from './cosmetics';
 
 /**
  * The one place a card becomes an image, so nothing else should build card URLs. Faces come from the equipped
@@ -40,6 +41,35 @@ export function CardImage({
     );
 }
 
-export function CardBack({ class: className }: { class?: string }) {
-    return <img class={className ?? 'card'} src={backUrl()} alt={t('card.back')} draggable={false} />;
+/**
+ * A card back. The classic back is the equipped pack's own back image; any other (a shop card back) is a built-in
+ * CSS style, so it needs no asset and looks the same whatever deck the viewer has equipped.
+ */
+export function CardBack({
+    class: className,
+    back = 'classic',
+}: {
+    class?: string;
+    back?: string | undefined;
+}) {
+    const ref = styleRef(back, 'classic');
+    if (ref !== 'classic') {
+        return (
+            <span
+                class={`${className ?? 'card'} card-back-style back-${ref}`}
+                role="img"
+                aria-label={t('card.back')}
+                data-back={ref}
+            />
+        );
+    }
+    return (
+        <img
+            class={className ?? 'card'}
+            src={backUrl()}
+            alt={t('card.back')}
+            draggable={false}
+            data-back="classic"
+        />
+    );
 }

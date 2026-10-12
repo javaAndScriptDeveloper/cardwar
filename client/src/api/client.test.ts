@@ -133,6 +133,33 @@ describe('ApiClient', () => {
         ]);
     });
 
+    it('reaches the shop, loadout, Stars and emote endpoints', async () => {
+        const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.shop();
+        await api.buyItem('back-trident');
+        await api.equipItem('back-trident');
+        await api.loadout();
+        await api.starsInvoice('coins-1000');
+        await api.emote('d1', 'emote-like');
+
+        const calls = fetchMock.mock.calls.map(
+            ([url, init]) => `${(init as RequestInit).method ?? 'GET'} ${url}`,
+        );
+        expect(calls).toEqual([
+            'GET /api/v1/shop',
+            'POST /api/v1/shop/items/back-trident/buy',
+            'POST /api/v1/shop/items/back-trident/equip',
+            'GET /api/v1/me/loadout',
+            'POST /api/v1/shop/stars/invoice',
+            'POST /api/v1/duels/d1/emotes',
+        ]);
+        const bodies = fetchMock.mock.calls.map(([, init]) => (init as RequestInit).body);
+        expect(bodies[4]).toBe('{"packId":"coins-1000"}');
+        expect(bodies[5]).toBe('{"code":"emote-like"}');
+    });
+
     it('sends the stake when creating an invite with one, and no body without', async () => {
         const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
         const api = new ApiClient(fetchMock, () => 't');
