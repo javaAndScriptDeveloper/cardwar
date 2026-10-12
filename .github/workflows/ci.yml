@@ -107,7 +107,8 @@ jobs:
         run: npm run e2e
 
       - name: API smoke test
-        run: scripts/smoke.sh
+        # The E2E specs sign in several times; the auth bucket is 10 per minute per address, so let it refill first.
+        run: sleep 65 && scripts/smoke.sh
 
       - name: Stack logs
         if: failure()
