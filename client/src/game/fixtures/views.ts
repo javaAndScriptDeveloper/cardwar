@@ -25,6 +25,7 @@ export function view(overrides: Partial<DuelView> = {}): DuelView {
         attacker: 'me',
         phase: 'ATTACK',
         version: 0,
+        stake: 0,
         ...overrides,
     };
 }

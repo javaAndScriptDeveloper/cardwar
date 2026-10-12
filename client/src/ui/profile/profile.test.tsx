@@ -15,6 +15,8 @@ const entry = (overrides: Partial<DuelHistoryEntry>): DuelHistoryEntry => ({
     startedAt: '2026-10-12T10:00:00Z',
     finishedAt: '2026-10-12T10:05:00Z',
     moveCount: 21,
+    stake: 0,
+    coinDelta: 0,
     ...overrides,
 });
 

@@ -25,6 +25,7 @@ const pending = (inviteId: string): InviteView => ({
     inviteId,
     status: 'PENDING',
     expiresAt: '2099-01-01T00:00:00Z',
+    stake: 0,
 });
 const duelView = (duelId: string) => ({ duelId }) as DuelView;
 

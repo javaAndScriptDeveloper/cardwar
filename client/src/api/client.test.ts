@@ -113,4 +113,34 @@ describe('ApiClient', () => {
             'GET /api/v1/duels/d1',
         ]);
     });
+
+    it('reaches the wallet endpoints', async () => {
+        const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.wallet();
+        await api.claimDailyBonus();
+        await api.transactions();
+
+        const calls = fetchMock.mock.calls.map(
+            ([url, init]) => `${(init as RequestInit).method ?? 'GET'} ${url}`,
+        );
+        expect(calls).toEqual([
+            'GET /api/v1/wallet',
+            'POST /api/v1/wallet/daily-bonus',
+            'GET /api/v1/wallet/transactions',
+        ]);
+    });
+
+    it('sends the stake when creating an invite with one, and no body without', async () => {
+        const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await api.createInvite(500);
+        await api.createInvite(0);
+        await api.createInvite();
+
+        const bodies = fetchMock.mock.calls.map(([, init]) => (init as RequestInit).body);
+        expect(bodies).toEqual(['{"stake":500}', '{"stake":0}', undefined]);
+    });
 });

@@ -31,6 +31,8 @@ export interface DuelView {
     phase: DuelPhase;
     outcome?: OutcomeView;
     version: number;
+    /** Coins each player put in; 0 is a friendly duel. The pot is twice this. */
+    stake: number;
 }
 
 export interface AuthResponse {
@@ -47,6 +49,7 @@ export interface InviteView {
     status: InviteStatus;
     duelId?: string;
     expiresAt: string;
+    stake: number;
 }
 
 export interface DuelSummary {
@@ -56,6 +59,7 @@ export interface DuelSummary {
     attacker: string;
     phase: DuelPhase;
     version: number;
+    stake: number;
 }
 
 export type DuelResult = 'WON' | 'LOST' | 'DRAW';
@@ -69,6 +73,32 @@ export interface DuelHistoryEntry {
     startedAt: string;
     finishedAt: string;
     moveCount: number;
+    stake: number;
+    /** Signed net coins for the caller: +stake on a win, -stake on a loss, 0 on a draw or a friendly duel. */
+    coinDelta: number;
+}
+
+export interface DailyBonusView {
+    available: boolean;
+    amount: number;
+    streakDay: number;
+    /** ISO instant of the next Kyiv midnight when the bonus is not available. */
+    nextAt: string;
+}
+
+export interface WalletView {
+    balance: number;
+    dailyBonus: DailyBonusView;
+}
+
+export type CoinKind =
+    'STARTER' | 'DAILY_BONUS' | 'STAKE_ESCROW' | 'STAKE_PAYOUT' | 'STAKE_REFUND' | 'PURCHASE' | 'LEGACY';
+
+export interface CoinTransactionView {
+    /** Signed: credits positive, debits negative. */
+    amount: number;
+    kind: CoinKind;
+    createdAt: string;
 }
 
 export interface PlayerSummary {

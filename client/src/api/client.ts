@@ -1,5 +1,6 @@
 import type {
     AuthResponse,
+    CoinTransactionView,
     DuelHistoryEntry,
     DuelSummary,
     DuelView,
@@ -7,6 +8,7 @@ import type {
     MeView,
     MoveRequest,
     ProblemDetail,
+    WalletView,
 } from './types';
 
 export const API_BASE = '/api/v1';
@@ -65,8 +67,23 @@ export class ApiClient {
         return this.request('GET', '/me/duels');
     }
 
-    createInvite(): Promise<InviteView> {
-        return this.request('POST', '/duels/invites');
+    /** Without a stake the body is empty, which the server reads as a friendly duel. */
+    createInvite(stake?: number): Promise<InviteView> {
+        return this.request('POST', '/duels/invites', stake === undefined ? undefined : { stake });
+    }
+
+    wallet(): Promise<WalletView> {
+        return this.request('GET', '/wallet');
+    }
+
+    /** 409 with reason BONUS_ALREADY_CLAIMED when today's bonus is already taken (another tap or device). */
+    claimDailyBonus(): Promise<WalletView> {
+        return this.request('POST', '/wallet/daily-bonus');
+    }
+
+    /** Newest first, at most 50. */
+    transactions(): Promise<CoinTransactionView[]> {
+        return this.request('GET', '/wallet/transactions');
     }
 
     /** The caller's invite nobody has accepted yet; the server answers 204 when there is none. */
