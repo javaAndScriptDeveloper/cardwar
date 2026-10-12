@@ -1,8 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/preact';
 import { t } from '../i18n';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from '../api/client';
-import { view } from '../game/fixtures/views';
+import { equipped } from '../content/loader';
+import { CARD_IDS } from '../content/schema';
+import type { PackManifest } from '../content/types';
+import { c, view } from '../game/fixtures/views';
 import { resolveTelegram } from '../telegram/webapp';
 import { DuelScreen, type StreamOpener } from './DuelScreen';
 
@@ -290,6 +293,87 @@ describe('DuelScreen', () => {
             {
                 timeout: 4000,
             },
+        );
+    });
+});
+
+describe('DuelScreen with a content pack', () => {
+    const KS = c('KING', 'SPADES');
+    const JS = c('JACK', 'SPADES');
+    const SIX = c('SIX', 'CLUBS');
+    const pack: PackManifest = {
+        id: 'demo',
+        version: 1,
+        type: 'DECK',
+        name: { uk: 'Демо' },
+        cards: Object.fromEntries(CARD_IDS.map((id) => [id, { image: `cards/${id}.svg` }])),
+        rules: [
+            {
+                id: 'sticky',
+                on: 'hand_changed',
+                if: { handHas: ['KING_OF_SPADES', 'JACK_OF_SPADES'] },
+                do: [{ layout: 'stick_together', cards: ['KING_OF_SPADES', 'JACK_OF_SPADES'] }],
+            },
+            {
+                id: 'taunt',
+                on: 'card_played',
+                if: { side: 'opponent' },
+                do: [{ bubble: { uk: 'Тримай!' }, target: 'opponent' }],
+            },
+        ],
+    };
+    const handOrder = () =>
+        [...document.querySelectorAll('.hand-card')].map((el) => el.getAttribute('data-card'));
+    afterEach(() => {
+        equipped.value = undefined;
+    });
+
+    it('lays out the hand by the equipped pack rules', async () => {
+        equipped.value = pack;
+        const { api, nudge } = setup();
+        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, JS] }));
+        nudge();
+
+        await waitFor(() =>
+            expect(handOrder()).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']),
+        );
+        expect(document.querySelector('.hand-card img')?.getAttribute('src')).toContain('/packs/demo/cards/');
+    });
+
+    it('applies a pack that finishes loading mid-duel to the hand already on screen', async () => {
+        const { api, nudge } = setup();
+        api.duel.mockResolvedValue(view({ version: 1, hand: [KS, SIX, JS] }));
+        nudge();
+        await waitFor(() =>
+            expect(handOrder()).toEqual(['KING_OF_SPADES', 'SIX_OF_CLUBS', 'JACK_OF_SPADES']),
+        );
+
+        equipped.value = pack;
+
+        await waitFor(() =>
+            expect(handOrder()).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']),
+        );
+    });
+
+    it('shows a pack bubble when its rule fires', async () => {
+        equipped.value = pack;
+        const { api, nudge } = setup();
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+
+        api.duel.mockResolvedValue(view({ version: 1, attacker: 'them' }));
+        nudge();
+        await waitFor(() =>
+            expect(screen.getByRole('status').getAttribute('data-state')).toBe('waiting-attack'),
+        );
+        expect(screen.queryByTestId('pack-bubble')).toBeNull();
+
+        api.duel.mockResolvedValue(
+            view({ version: 2, attacker: 'them', phase: 'DEFEND', table: [{ attack: SIX }] }),
+        );
+        nudge();
+
+        await waitFor(() =>
+            expect(screen.getByTestId('pack-bubble').getAttribute('data-rule')).toBe('taunt'),
         );
     });
 });

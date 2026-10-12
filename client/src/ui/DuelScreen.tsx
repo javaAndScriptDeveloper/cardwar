@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
 import type { DuelView, MoveRequest } from '../api/types';
 import { audio } from '../audio';
 import type { SignedInPlayer } from '../auth/session';
+import type { LayoutDirective } from '../content/layout';
+import { equipped } from '../content/loader';
+import { PackBubbles, PackRuntime } from '../content/runtime';
 import { type Card, cardId, sameCard } from '../game/cards';
-import { diffViews, type Result, resultOf, type TableEvent } from '../game/diff';
-import { animate } from '../motion';
+import { contentEvents, type Result, resultOf, type TableEvent } from '../game/diff';
+import { animate, motionEnabled } from '../motion';
 import { settings } from '../state/settings';
 import { reasonMessage } from '../game/reasons';
 import { role, targetsFor, undefendedAttacks } from '../game/selectors';
@@ -100,6 +103,25 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
         [buzz],
     );
     const [lastEvents, setLastEvents] = useState<TableEvent[]>([]);
+    // Only the pack equipped on this device runs, on events from this player's own view.
+    const pack = equipped.value;
+    const runtime = useMemo(
+        () =>
+            pack &&
+            new PackRuntime(pack, {
+                audio,
+                haptic: buzz,
+                animate: (el, primitive) => animate(el, primitive),
+                motionEnabled,
+                now: () => performance.now(),
+                random: Math.random,
+            }),
+        [pack, buzz],
+    );
+    const runtimeRef = useRef(runtime);
+    runtimeRef.current = runtime;
+    useEffect(() => () => runtime?.dispose(), [runtime]);
+    const [layouts, setLayouts] = useState<readonly LayoutDirective[]>([]);
     const tableRef = useRef<HTMLDivElement>(null);
     const closeStream = useRef<() => void>(() => {});
 
@@ -123,7 +145,9 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                         coins: entry.stake > 0 ? entry.coinDelta : undefined,
                     });
                     // This player did not make the last move, so no view carried the finish: react to it here.
-                    react({ type: 'duel_finished', result: entry.result }, buzz);
+                    const finished: TableEvent = { type: 'duel_finished', result: entry.result };
+                    react(finished, buzz);
+                    runtimeRef.current?.handle([finished], { hand: [], phase: 'FINISHED' });
                     return;
                 }
                 if (attempt >= HISTORY_ATTEMPTS) {
@@ -149,11 +173,16 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                 return;
             }
             version.current = view.version;
-            const events = diffViews(previousView.current, view);
+            const events = contentEvents(previousView.current, view);
             previousView.current = view;
             // Sounds and haptics need no element, so they fire here; animations wait for the render (see below).
             for (const event of events) {
                 react(event, buzz);
+            }
+            const packRuntime = runtimeRef.current;
+            if (packRuntime) {
+                packRuntime.handle(events, view);
+                setLayouts(packRuntime.layouts);
             }
             setLastEvents(events);
             if (view.phase === 'FINISHED') {
@@ -167,9 +196,19 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
         [buzz],
     );
 
+    // A pack equipped (or finished loading) mid-duel lays out the hand already on screen; none means no layout.
+    useEffect(() => {
+        const view = previousView.current;
+        if (runtime && view) {
+            runtime.handle([{ type: 'hand_changed', hand: view.hand }], view);
+        }
+        setLayouts(runtime?.layouts ?? []);
+    }, [runtime]);
+
     // Animate what the last view changed, once its elements exist.
     useEffect(() => {
         const root = tableRef.current;
+        runtimeRef.current?.flush(root);
         if (!root || lastEvents.length === 0) {
             return;
         }
@@ -390,7 +429,9 @@ export function DuelScreen({ duelId, player, api, telegram, openStream, onExit }
                         onTake={() => void play({ type: 'TAKE' })}
                         onEndAttack={() => void play({ type: 'END_ATTACK' })}
                         onClockWarning={clockWarning}
+                        layouts={layouts}
                     />
+                    {runtime && <PackBubbles runtime={runtime} />}
                     {toast && (
                         <p class="toast" role="alert" data-reason={toast.reason}>
                             {toast.text}
@@ -435,6 +476,8 @@ function react(event: TableEvent, haptic: (kind: HapticKind) => void): void {
             break;
         case 'duel_started':
         case 'attack_ended':
+        case 'hand_changed':
+        case 'emote_received':
             break;
     }
 }
@@ -481,6 +524,8 @@ async function animateEvent(root: HTMLElement, event: TableEvent): Promise<void>
         case 'duel_started':
         case 'attack_ended':
         case 'duel_finished':
+        case 'hand_changed':
+        case 'emote_received':
             break;
     }
 }

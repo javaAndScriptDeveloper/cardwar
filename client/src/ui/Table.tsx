@@ -1,5 +1,6 @@
 import { useRef } from 'preact/hooks';
 import type { DuelView } from '../api/types';
+import { arrange, type LayoutDirective } from '../content/layout';
 import { type Card, cardId, sameCard } from '../game/cards';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
 import { cardLabel, t } from '../i18n';
@@ -27,6 +28,8 @@ export interface TableProps {
     onEndAttack: () => void;
     /** Your own move clock reached ten or five seconds (sound and haptics live in the duel screen). */
     onClockWarning?: ((warning: ClockWarning) => void) | undefined;
+    /** The equipped pack's hand layouts; they only change the order cards are drawn in. */
+    layouts?: readonly LayoutDirective[] | undefined;
 }
 
 /** Strikes that forfeit the duel; one dot each. */
@@ -54,6 +57,7 @@ export function Table({
     onTake,
     onEndAttack,
     onClockWarning,
+    layouts = [],
 }: TableProps) {
     const usable = playable(view);
     const isUsable = (card: Card) => usable.some((candidate) => sameCard(candidate, card));
@@ -162,7 +166,7 @@ export function Table({
                 <span class="count">{view.hand.length}</span>
             </footer>
             <div class="hand" data-testid="hand">
-                {view.hand.map((card) => (
+                {arrange(view.hand, layouts).map((card) => (
                     <HandCard
                         key={cardId(card)}
                         card={card}

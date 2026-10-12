@@ -28,6 +28,28 @@ const defending = view({
     table: [{ attack: c('SEVEN', 'SPADES'), defence: c('EIGHT', 'SPADES') }, { attack: c('SEVEN', 'CLUBS') }],
 });
 
+describe('Table hand layout', () => {
+    const handOrder = (container: Element) =>
+        [...container.querySelectorAll('.hand-card')].map((el) => el.getAttribute('data-card'));
+
+    it('draws the hand in the order the pack layouts give, cards unchanged', () => {
+        const hand = [c('KING', 'SPADES'), c('SIX', 'CLUBS'), c('JACK', 'SPADES')];
+        const { container } = renderTable({
+            view: view({ hand }),
+            layouts: [{ layout: 'stick_together', cards: ['KING_OF_SPADES', 'JACK_OF_SPADES'] }],
+        });
+
+        expect(handOrder(container)).toEqual(['KING_OF_SPADES', 'JACK_OF_SPADES', 'SIX_OF_CLUBS']);
+    });
+
+    it('keeps the server order without layouts', () => {
+        const hand = [c('KING', 'SPADES'), c('SIX', 'CLUBS'), c('JACK', 'SPADES')];
+        const { container } = renderTable({ view: view({ hand }) });
+
+        expect(handOrder(container)).toEqual(['KING_OF_SPADES', 'SIX_OF_CLUBS', 'JACK_OF_SPADES']);
+    });
+});
+
 describe('Table', () => {
     it('renders a stored view deterministically', () => {
         const { container } = renderTable({ view: defending });
