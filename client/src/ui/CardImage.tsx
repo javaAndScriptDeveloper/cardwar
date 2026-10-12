@@ -29,6 +29,7 @@ export function CardImage({
     class?: string;
     'data-testid'?: string;
     'data-card'?: string;
+    'data-suit'?: string;
 }) {
     return (
         <img

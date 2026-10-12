@@ -123,7 +123,7 @@ async function act(page: Page): Promise<boolean> {
             await page.getByTestId('end-attack').click();
         }
     } else if (state === 'defend') {
-        const trump = parse((await page.getByTestId('trump').getAttribute('data-card')) ?? '').suit;
+        const trump = (await page.getByTestId('trump').getAttribute('data-suit')) ?? '';
         const open = await openAttacks(page);
         const target = parse(open[0] ?? '');
         const defence = (await attrs(handButtons(page), 'data-card'))

@@ -135,9 +135,19 @@ describe('Table', () => {
         expect(pairs[0]?.getAttribute('data-defence')).toBe('EIGHT_OF_SPADES');
         expect(pairs[1]?.getAttribute('data-defence')).toBeNull();
         expect(screen.getByTestId('trump').getAttribute('data-card')).toBe('TEN_OF_HEARTS');
+        expect(screen.getByTestId('trump').getAttribute('data-suit')).toBe('HEARTS');
         expect(document.querySelector('.hand-card')?.getAttribute('data-card')).toBe('SIX_OF_CLUBS');
         expect(screen.getByTestId('take')).toBeTruthy();
         expect(screen.getByTestId('end-attack')).toBeTruthy();
+    });
+
+    it('shows only the trump suit once the talon is empty, since the trump card itself has been drawn', () => {
+        renderTable({ view: view({ talonCount: 0 }) });
+
+        const trump = screen.getByTestId('trump');
+        expect(trump.getAttribute('data-suit')).toBe('HEARTS');
+        expect(trump.getAttribute('data-card')).toBeNull();
+        expect(document.querySelector('.deck img[alt="Десятка чирв"]')).toBeNull();
     });
 
     it('highlights the selected defence target', () => {

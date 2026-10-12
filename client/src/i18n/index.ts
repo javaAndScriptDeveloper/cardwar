@@ -75,6 +75,11 @@ const SUIT_KEY: Record<Suit, string> = {
 };
 
 /** "Сімка пік": rank as a noun, suit in the genitive. */
+/** A suit's name in the genitive, as Ukrainian names a suit on its own ("чирв"). */
+export function suitLabel(suit: Suit): string {
+    return t(`card.suit.${SUIT_KEY[suit]}`);
+}
+
 export function cardLabel(card: Card): string {
     return `${t(`card.rank.${RANK_KEY[card.rank]}`)} ${t(`card.suit.${SUIT_KEY[card.suit]}`)}`;
 }

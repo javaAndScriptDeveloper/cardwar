@@ -2,9 +2,9 @@ import type { ComponentChildren } from 'preact';
 import { useRef } from 'preact/hooks';
 import type { DuelView } from '../api/types';
 import { arrange, type LayoutDirective } from '../content/layout';
-import { type Card, cardId, sameCard } from '../game/cards';
+import { type Card, cardId, sameCard, type Suit } from '../game/cards';
 import { canEndAttack, canTake, playable, status, statusState } from '../game/selectors';
-import { cardLabel, t } from '../i18n';
+import { cardLabel, suitLabel, t } from '../i18n';
 import { CardBack, CardImage } from './CardImage';
 import { styleRef } from './cosmetics';
 import { Avatar, CoinAmount } from './kit';
@@ -43,6 +43,8 @@ export interface TableProps {
     layouts?: readonly LayoutDirective[] | undefined;
     cosmetics?: TableCosmetics | undefined;
 }
+
+const SUIT_SYMBOL: Record<Suit, string> = { CLUBS: '♣', DIAMONDS: '♦', HEARTS: '♥', SPADES: '♠' };
 
 /** Strikes that forfeit the duel; one dot each. */
 const STRIKES_TO_FORFEIT = 3;
@@ -111,12 +113,26 @@ export function Table({
                     <span class="count" data-testid="talon-count">
                         {view.talonCount}
                     </span>
-                    <CardImage
-                        card={view.trumpCard}
-                        class="card small trump"
-                        data-testid="trump"
-                        data-card={cardId(view.trumpCard)}
-                    />
+                    {view.talonCount > 0 ? (
+                        <CardImage
+                            card={view.trumpCard}
+                            class="card small trump"
+                            data-testid="trump"
+                            data-card={cardId(view.trumpCard)}
+                            data-suit={view.trumpSuit}
+                        />
+                    ) : (
+                        // The trump card was the last one drawn; only its suit is still in play.
+                        <span
+                            class={`trump-suit suit-${view.trumpSuit.toLowerCase()}`}
+                            data-testid="trump"
+                            data-suit={view.trumpSuit}
+                            role="img"
+                            aria-label={`${t('duel.trump')}: ${suitLabel(view.trumpSuit)}`}
+                        >
+                            {SUIT_SYMBOL[view.trumpSuit]}
+                        </span>
+                    )}
                     <span class="hint">{t('duel.trump')}</span>
                     {view.stake > 0 && (
                         <span class="pot" data-testid="pot" data-pot={2 * view.stake} title={t('duel.pot')}>

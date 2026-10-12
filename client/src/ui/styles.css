@@ -1129,3 +1129,21 @@ button.link {
         animation: none;
     }
 }
+
+/* The trump suit alone, once the trump card has left the talon. */
+.trump-suit {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    aspect-ratio: 5 / 7;
+    border-radius: 6px;
+    background: rgb(255 255 255 / 85%);
+    color: #1d1d1f;
+    font-size: 1.6rem;
+    line-height: 1;
+}
+
+.trump-suit.suit-hearts,
+.trump-suit.suit-diamonds {
+    color: #d32f2f;
+}
