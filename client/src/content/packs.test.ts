@@ -149,7 +149,8 @@ describe('shipped packs', () => {
         it('draws every face from paths and text alone, marked as satire, with corner indices', () => {
             for (const cardId of CARD_IDS) {
                 const svg = face(id, cardId);
-                expect(svg).not.toMatch(/<image|href=|url\(|data:/);
+                // Nothing fetched from anywhere: no bitmaps, no links; url(#…) only points at the card's own defs.
+                expect(svg).not.toMatch(/<image|href=|url\((?!#)|data:/);
                 expect(svg).toContain('САТИРА');
                 const [rank = '', , suit = ''] = cardId.split('_');
                 expect(svg).toContain(`>${LABELS[rank]}<`);

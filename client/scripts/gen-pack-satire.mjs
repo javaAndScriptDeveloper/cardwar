@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
-import { RANKS, SUITS, face } from './lib/poster.mjs';
+import { BEARD, CLOTHES, GLASSES, HAIR, RANKS, SUITS, face } from './lib/poster.mjs';
 import { wav } from './lib/wav.mjs';
 
 const id = process.argv[2];
@@ -25,6 +25,15 @@ if (roster.id !== id) {
 }
 const OUT = join(here, '..', 'public', 'packs', id);
 
+const LOOKS = { hair: HAIR, beard: BEARD, glasses: GLASSES, clothes: CLOTHES };
+for (const persona of roster.personas) {
+    for (const [field, allowed] of Object.entries(LOOKS)) {
+        const value = persona.look?.[field];
+        if (value !== undefined && !allowed.includes(value)) {
+            throw new Error(`roster ${id}: ${persona.name} has an unknown ${field} "${value}"`);
+        }
+    }
+}
 const byRank = new Map(roster.personas.map((persona) => [persona.rank, persona]));
 for (const [rank] of RANKS) {
     if (!byRank.has(rank)) {

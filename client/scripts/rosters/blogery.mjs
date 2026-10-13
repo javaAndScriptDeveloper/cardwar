@@ -15,6 +15,7 @@ const personas = [
         emoji: '✍️',
         colour: '#283593',
         tag: 'lachen',
+        look: { hair: 'short', glasses: 'round', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Лачен пише… І дописати не може.',
             DIAMONDS: 'Терміново: нічого не сталося. Деталі далі.',
@@ -29,6 +30,7 @@ const personas = [
         emoji: '🎙️',
         colour: '#ad1457',
         tag: 'ramina',
+        look: { hair: 'long', hairColour: '#2a1a12', clothes: 'dress' },
         quotes: {
             CLUBS: 'Це мій контент. І ваша карта — теж.',
             DIAMONDS: "Інтерв'ю на три години. Питання — одне.",
@@ -43,6 +45,7 @@ const personas = [
         emoji: '👀',
         colour: '#4527a0',
         tag: 'durnev',
+        look: { hair: 'short', glasses: 'square', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Дурнєв дивиться на тебе. Не моргай.',
             DIAMONDS: 'Плюс один. Мінус карта.',
@@ -57,6 +60,7 @@ const personas = [
         emoji: '🛸',
         colour: '#00695c',
         tag: 'sternenko',
+        look: { hair: 'short', beard: 'full', clothes: 'tee' },
         quotes: {
             CLUBS: 'Дрони вже летять. Карта — вслід.',
             DIAMONDS: 'Збір на цей хід закрив ще вчора.',
@@ -71,6 +75,7 @@ const personas = [
         emoji: '🫙',
         colour: '#ef6c00',
         tag: 'prytula',
+        look: { hair: 'short', beard: 'full', clothes: 'tee' },
         quotes: {
             CLUBS: 'Збір закрито за дві години. Знову.',
             DIAMONDS: 'Друзі, ми це зробили. Що саме — потім.',
@@ -85,6 +90,7 @@ const personas = [
         emoji: '🎧',
         colour: '#212121',
         tag: 'petya',
+        look: { hair: 'curly', glasses: 'sun', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Йоу. Це був хід. Йоу.',
             DIAMONDS: 'Рима на карту: карта.',
@@ -99,6 +105,7 @@ const personas = [
         emoji: '📺',
         colour: '#c62828',
         tag: 'nikitiuk',
+        look: { hair: 'bob', hairColour: '#2a1a12', clothes: 'dress' },
         quotes: {
             CLUBS: 'Хто зверху? Поки що не ти.',
             DIAMONDS: 'Орел чи решка? Карта!',
@@ -113,6 +120,7 @@ const personas = [
         emoji: '🐈',
         colour: '#37474f',
         tag: 'horokhovskyi',
+        look: { hair: 'short', glasses: 'round', clothes: 'suit' },
         quotes: {
             CLUBS: 'Мінус гроші. Плюс досвід.',
             DIAMONDS: 'Кіт схвалив. Кешбек — ні.',
@@ -127,6 +135,7 @@ const personas = [
         emoji: '🥇',
         colour: '#f9a825',
         tag: 'usyk',
+        look: { hair: 'buzz', beard: 'full', clothes: 'tee' },
         quotes: {
             CLUBS: "I'm feel. I'm very feel.",
             DIAMONDS: 'Не пушай коней. Пушай карти.',

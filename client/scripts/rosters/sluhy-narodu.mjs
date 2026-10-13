@@ -15,6 +15,7 @@ const personas = [
         emoji: '📱',
         colour: '#7b1fa2',
         tag: 'bezuhla',
+        look: { hair: 'long', hairColour: '#6b4a2b', clothes: 'suit' },
         quotes: {
             CLUBS: 'Вимагаю звільнити цю карту. І наступну теж.',
             DIAMONDS: 'Пост о третій ночі. Тема: винні всі.',
@@ -29,6 +30,7 @@ const personas = [
         emoji: '🤝',
         colour: '#00796b',
         tag: 'arakhamia',
+        look: { hair: 'short', beard: 'full', clothes: 'suit' },
         quotes: {
             CLUBS: 'Це був ситуативний союз із вашою картою.',
             DIAMONDS: 'Монобільшість — це коли більшість моно.',
@@ -43,6 +45,7 @@ const personas = [
         emoji: '⚡',
         colour: '#e65100',
         tag: 'honcharenko',
+        look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: '⚡ Термінове звернення. Кінець звернення.',
             DIAMONDS: 'Знімаю тікток із засідання. Засідання — фон.',
@@ -57,6 +60,7 @@ const personas = [
         emoji: '🎀',
         colour: '#c2185b',
         tag: 'tymoshenko',
+        look: { hair: 'braid', hairColour: '#d9b86a', clothes: 'dress' },
         quotes: {
             CLUBS: 'Коса — сила. Решта — деталі.',
             DIAMONDS: 'Я повернулась. Я, власне, і не йшла.',
@@ -71,6 +75,7 @@ const personas = [
         emoji: '🥊',
         colour: '#1565c0',
         tag: 'klychko',
+        look: { hair: 'buzz', clothes: 'suit' },
         quotes: {
             CLUBS: 'Сьогодні в завтрашній день не всі можуть дивитися.',
             DIAMONDS: 'Київ готовий. До чого — уточнюємо.',
@@ -85,6 +90,7 @@ const personas = [
         emoji: '🍬',
         colour: '#b71c1c',
         tag: 'poroshenko',
+        look: { hair: 'short', hairColour: '#8a8a90', clothes: 'suit' },
         quotes: {
             CLUBS: 'Армія! Мова! Віра! Карта!',
             DIAMONDS: 'Томос на кожну карту. І цукерку.',
@@ -99,6 +105,7 @@ const personas = [
         emoji: '🗂️',
         colour: '#37474f',
         tag: 'yermak',
+        look: { hair: 'buzz', hairColour: '#6b6b70', beard: 'stubble', clothes: 'suit' },
         quotes: {
             CLUBS: 'Офіс не коментує. Офіс грає.',
             DIAMONDS: 'Мене нема на фото, але я поруч. Завжди.',
@@ -113,6 +120,7 @@ const personas = [
         emoji: '🛡️',
         colour: '#556b2f',
         tag: 'zaluzhnyi',
+        look: { hair: 'buzz', clothes: 'uniform' },
         quotes: {
             CLUBS: 'Залізний. Без коментарів.',
             DIAMONDS: 'Спокійно. Я бачив гірші розклади.',
@@ -127,6 +135,7 @@ const personas = [
         emoji: '🎤',
         colour: '#1b5e20',
         tag: 'zelenskyi',
+        look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: 'Доброго вечора. Ми з козирями.',
             DIAMONDS: 'Я тут. І карта тут. Усі тут.',
