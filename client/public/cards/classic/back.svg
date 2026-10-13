@@ -1,10 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
 <defs>
-<pattern id="lattice" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-<rect width="16" height="16" fill="#1e4f9c"/><path d="M0 8 H16 M8 0 V16" stroke="#3f74c9" stroke-width="3"/>
+<pattern id="lattice" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+<rect width="14" height="14" fill="#143f8c"/><path d="M0 7 H14 M7 0 V14" stroke="#2a63c4" stroke-width="1.5"/>
 </pattern>
+<radialGradient id="shine" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#ffffff" stop-opacity="0.16"/><stop offset="1" stop-color="#000000" stop-opacity="0.25"/></radialGradient>
 </defs>
-<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
-<rect x="16" y="16" width="208" height="304" rx="10" fill="url(#lattice)"/>
-<rect x="16" y="16" width="208" height="304" rx="10" fill="none" stroke="#163c78" stroke-width="4"/>
+<rect x="1.5" y="1.5" width="237" height="333" rx="18" fill="#fbf7ee" stroke="#cdbf9c" stroke-width="3"/><rect x="9" y="9" width="222" height="318" rx="12" fill="none" stroke="#c9a24a" stroke-opacity="0.45" stroke-width="1"/>
+<rect x="14" y="14" width="212" height="308" rx="10" fill="url(#lattice)"/>
+<rect x="14" y="14" width="212" height="308" rx="10" fill="url(#shine)"/>
+<rect x="14" y="14" width="212" height="308" rx="10" fill="none" stroke="#c9a24a" stroke-width="2"/>
+<rect x="22" y="22" width="196" height="292" rx="7" fill="none" stroke="#c9a24a" stroke-opacity="0.6" stroke-width="1"/>
+<g id="medallion">
+<circle cx="120" cy="168" r="46" fill="#0f2f6b" stroke="#c9a24a" stroke-width="3"/>
+<circle cx="120" cy="168" r="38" fill="none" stroke="#c9a24a" stroke-opacity="0.5" stroke-width="1"/>
+<g fill="#c9a24a" transform="translate(94 140) scale(0.52)"><path d="M50 3 C68 25 96 40 96 61 C96 75 86 83 74 83 C66 83 59 79 55 72 C56 83 61 90 70 97 L30 97 C39 90 44 83 45 72 C41 79 34 83 26 83 C14 83 4 75 4 61 C4 40 32 25 50 3 Z"/></g>
+</g>
 </svg>
