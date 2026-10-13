@@ -102,9 +102,9 @@ Seed (names are the shop copy; refs are CSS/pack ids):
 
 - Decks: `deck-sluhy-narodu` 1500 coins; `deck-blogery` WIN_STREAK 3 (earned, the one people grind for).
 - Backs: `back-bayraktar` 400, `back-palianytsia` 300, `back-ukrzaliznytsia` 300, `back-bavovna` 500
-  (drop slot 0).
+  (drop slot 0), `back-chornobaivka` 450 (drop slot 2).
 - Tables: `table-blackout` 600 («Хрещатик при блекауті», dark with window lights), `table-bukovel` 600,
-  `table-kabmin` 800 (drop slot 1).
+  `table-kabmin` 800 (drop slot 1), `table-metro` 700 (drop slot 3). Every week slot has a drop.
 - Frames: `frame-tryzub-gold` 900, `frame-vyshyvanka` 700, `frame-kozak` WIN_STREAK 5.
 - Emotes (phrase emotes: glyph + text bubble): `emote-minus-money` «Мінус гроші» 150,
   `emote-chumachecha` «Чумачеча осінь» 150, `emote-ty-sho` «Ти шо, Кличко?» 200,
