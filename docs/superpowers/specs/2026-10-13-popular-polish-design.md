@@ -186,3 +186,26 @@ prod E2E and smoke after deploy. Specs under `openspec/specs/` updated with the 
 (shop, wallet, social, player-account).
 
 Out of scope now: bots as opponents, Stars refunds UI, locales, admin UI, real art and voices.
+
+## 7. Visual identity (MVP 12, 2026-10-14)
+
+Owner feedback after MVP 8–11: «design looks little weak». One branded, always-dark look replaces the
+Telegram-theme-driven flat UI:
+
+- Palette «нічний Хрещатик»: ink `#0b0d12` with a faint dot lattice, gold for money and the main action, azure for
+  the secondary action, emerald felt with a wood-and-gold rim. The app no longer reads `--tg-theme-*`; Telegram's
+  header and background are painted in the ink (`setHeaderColor`/`setBackgroundColor`).
+- Type: Unbounded (display, numbers, wordmark) and Manrope (body), self-hosted under `client/public/fonts`
+  (OFL, cyrillic + latin variable subsets, ~125 KB); `kit/fonts.css`, checked by a test.
+- Components: panels with a lit edge, buttons with a solid bottom edge that sink on press (gold primary, azure
+  secondary), glass bottom bar, gold status pill when it is your move, fanned hand (tilt capped so a full hand still
+  fits 320 px), lobby brand strip + one felt play panel, profile hero, shop cards with fanned previews.
+- Classic deck v2 (`scripts/gen-cards.mjs`): cream paper, redrawn pips, court cards as mirrored flat figures,
+  ornament aces, medallion back. File names unchanged.
+- Satire posters v2 (`scripts/lib/poster.mjs`): a `look` per persona (hair, beard, glasses, clothes; emoji badge)
+  renders a generic cartoon bust, on a gradient-and-halftone panel with a tilted «САТИРА» stamp. Boundaries in §2
+  unchanged: no likeness, no photos; recognition comes from the name and the badge.
+- Cosmetics: drawn backs get gloss and a bigger shop sample, table swatches wear the felt's rim, frames cast a shadow.
+
+Real illustrated art and recorded voices remain the owner's call; the slots are unchanged.
+
