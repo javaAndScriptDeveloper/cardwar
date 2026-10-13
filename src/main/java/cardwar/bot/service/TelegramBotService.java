@@ -122,6 +122,26 @@ public class TelegramBotService {
         metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
     }
 
+    /** Tells a player their daily-bonus streak lapses at midnight, with a button into the app. Best effort. */
+    public void notifyStreak(long chatId, int streakDays) {
+        String text = "🔥 Серія " + streakDays + " " + days(streakDays) + " згорить опівночі. Забери бонус";
+        boolean sent = api.sendMessage(chatId, text, "Грати", properties.miniAppUrl());
+        metrics.botUpdate(sent ? BotOutcome.REPLIED : BotOutcome.FAILED);
+    }
+
+    /** Ukrainian plural of «день»: 1 день, 2–4 дні, 5+ днів, with the 11–14 exception. */
+    static String days(int n) {
+        int mod10 = n % 10;
+        int mod100 = n % 100;
+        if (mod10 == 1 && mod100 != 11) {
+            return "день";
+        }
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+            return "дні";
+        }
+        return "днів";
+    }
+
     /** Telegram waits for this answer before charging: only an invoice we signed, at its own price, goes through. */
     private void answerCheckout(JsonNode query) {
         StarsService payments = stars.getIfAvailable();

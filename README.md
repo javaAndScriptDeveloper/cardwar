@@ -187,6 +187,11 @@ Two Telegram accounts open the Mini App from the bot, one invites the other, and
 4. Optional: a named app from `/newapp` (set `TELEGRAM_APP_NAME` to its short name) makes invite links
    `t.me/<bot>/<app>?startapp=<invite>`, which open the app directly without the bot chat in between.
 
+The bot also writes first: a friend's challenge arrives as a DM with an accept button, and every evening at 19:00
+Kyiv a player with a daily-bonus streak of two or more days who has not claimed yet gets «🔥 Серія N днів згорить
+опівночі. Забери бонус» with a Play button, once per day (`streak_reminder` records the send, so a restart does
+not repeat it). Both need nothing beyond the token.
+
 ### Deploy
 
 Telegram only opens Mini Apps over a valid public certificate, so this needs a server with a domain.
@@ -261,7 +266,7 @@ src/main/java/cardwar
 ├── wallet/         # Coins: append-only ledger, wallet balance, daily bonus, stake escrow and settlement.
 ├── metrics/        # GameMetrics: the business counters behind the Grafana business dashboard.
 ├── security/       # JWT issue/verify, PrincipalResolver/PlayerIdentity, filter chain, rate limiting.
-├── bot/            # Telegram bot webhook: answers /start with a Play button, or a Join button for an invite.
+├── bot/            # Telegram bot: answers /start (Play / Join buttons), DMs challenges and streak reminders.
 ├── api/            # Cross-cutting web concerns: ProblemDetail handler, the /me aggregate.
 ├── config/         # Beans: engine, cache, Redis listener container, OpenAPI.
 └── exception/      # ApplicationException and its HTTP-mapped subclasses.

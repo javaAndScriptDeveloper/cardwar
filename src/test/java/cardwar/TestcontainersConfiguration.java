@@ -2,6 +2,7 @@ package cardwar;
 
 import cardwar.monetization.grant.StreakSource;
 import cardwar.support.MutableClock;
+import cardwar.support.RecordingTelegramBotApi;
 import cardwar.support.StubStreakSource;
 import com.redis.testcontainers.RedisContainer;
 import org.springframework.beans.factory.ObjectProvider;
@@ -17,8 +18,9 @@ import org.testcontainers.utility.DockerImageName;
  * in-progress duel state and the event channel. The {@link ServiceConnection} annotation wires each container's
  * connection details into Spring Boot automatically — no manual {@code spring.datasource.*} needed.
  *
- * <p>Also the two knobs the shared context exposes to tests, so that time- and streak-dependent rules can be driven
- * without a second context: a clock a test can pin, and a streak source a test can set per player.
+ * <p>Also the knobs the shared context exposes to tests, so that time- and streak-dependent rules can be driven
+ * without a second context: a clock a test can pin, a streak source a test can set per player, and a Bot API that
+ * records what the app would have sent to Telegram.
  */
 @TestConfiguration(proxyBeanMethods = false)
 public class TestcontainersConfiguration {
@@ -27,6 +29,12 @@ public class TestcontainersConfiguration {
     @Primary
     MutableClock testClock() {
         return new MutableClock();
+    }
+
+    @Bean
+    @Primary
+    RecordingTelegramBotApi recordingTelegramBotApi() {
+        return new RecordingTelegramBotApi();
     }
 
     @Bean

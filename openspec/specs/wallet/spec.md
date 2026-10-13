@@ -36,6 +36,19 @@ amount and streak day, and when the next one becomes available.
 - **WHEN** a player claims the bonus twice on one Kyiv day, from one or several devices
 - **THEN** exactly one claim pays and the other responds with 409 and reason `BONUS_ALREADY_CLAIMED`
 
+### Requirement: Streak reminder
+Daily at 19:00 Europe/Kyiv the service SHALL send one Telegram message to every player whose bonus claim yesterday
+reached a streak of at least 2 and who has not claimed today: «🔥 Серія {n} дні/днів згорить опівночі. Забери бонус»
+(Ukrainian plural of the day count) with a button that opens the Mini App. A player who claimed today, whose streak
+is 1, who skipped yesterday or who has no Telegram account SHALL get nothing. A sent reminder SHALL be recorded per
+player and Kyiv day before it goes out, so a restart or a repeated run SHALL never send it twice. The wallet SHALL
+reach Telegram only through a port implemented by the bot module, and the message SHALL fail silently: a Telegram
+error never fails the run. Logs carry player ids and counts, never names.
+
+#### Scenario: Evening run
+- **WHEN** the job runs for a day on which Ann (streak 2, no claim today) and Bob (claimed today) both have streaks
+- **THEN** Ann gets exactly one message naming 2 days and Bob none, and a second run that evening sends nothing
+
 ### Requirement: Staked duels
 An invite SHALL carry a stake of 0, 100, 500, 1000 or 5000 coins (0 is a friendly duel); any other value is 400
 `INVALID_STAKE`, and a creator who cannot afford the stake gets 400 `INSUFFICIENT_COINS`. When the invite is accepted

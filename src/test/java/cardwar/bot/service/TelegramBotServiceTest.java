@@ -81,6 +81,21 @@ class TelegramBotServiceTest {
     }
 
     @Test
+    void aStreakReminderNamesTheDaysAtStakeAndOpensTheApp() {
+        bot.notifyStreak(42, 3);
+        bot.notifyStreak(43, 5);
+        bot.notifyStreak(44, 21);
+
+        assertThat(sent).hasSize(3);
+        assertThat(sent.get(0).chatId()).isEqualTo(42);
+        assertThat(sent.get(0).text()).isEqualTo("🔥 Серія 3 дні згорить опівночі. Забери бонус");
+        assertThat(sent.get(0).buttonText()).isEqualTo("Грати");
+        assertThat(sent.get(0).buttonUrl()).isEqualTo("https://cardwar.example/app/");
+        assertThat(sent.get(1).text()).startsWith("🔥 Серія 5 днів згорить");
+        assertThat(sent.get(2).text()).startsWith("🔥 Серія 21 день згорить");
+    }
+
+    @Test
     void groupsAndNonMessageUpdatesAreIgnored() {
         bot.handle(update("group", "/start"));
         bot.handle(JsonMapper.builder().build().readTree("{\"update_id\": 2, \"my_chat_member\": {}}"));
