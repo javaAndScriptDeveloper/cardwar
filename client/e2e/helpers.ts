@@ -27,7 +27,9 @@ export async function submitDevLogin(page: Page, username: string): Promise<void
         const outcome = await Promise.race([signedIn.then(() => 'in'), refused.then(() => 'refused')]).catch(
             () => 'in',
         );
-        if (outcome === 'in' || attempt >= 3) {
+        // An alert can appear in the same tick the login form leaves (a table toast on a joined duel), so a
+        // "refusal" only counts while the form is still there to retry.
+        if (outcome === 'in' || attempt >= 3 || (await page.getByTestId('dev-sign-in').count()) === 0) {
             return;
         }
         await page.waitForTimeout(61_000);
