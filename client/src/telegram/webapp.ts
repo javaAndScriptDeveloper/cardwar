@@ -13,6 +13,8 @@ export interface TelegramWebApp {
     colorScheme: 'light' | 'dark';
     ready(): void;
     expand(): void;
+    setHeaderColor(color: string): void;
+    setBackgroundColor(color: string): void;
     openTelegramLink(url: string): void;
     openInvoice(url: string, callback?: (status: InvoiceStatus) => void): void;
     HapticFeedback: {
@@ -35,6 +37,9 @@ export interface TelegramUser {
     username?: string;
     photoUrl?: string;
 }
+
+/** The app's ink background (kit/tokens.css --ink); Telegram paints its header and body in it so the chrome matches. */
+export const BRAND_INK = '#0b0d12';
 
 /** How an invoice ended, as Telegram reports it; 'pending' also when the shim opened it in a tab. */
 export type InvoiceStatus = 'paid' | 'cancelled' | 'failed' | 'pending';
@@ -91,6 +96,8 @@ export function resolveTelegram(host: TelegramHost): Telegram {
             ready() {
                 webApp.ready();
                 webApp.expand();
+                webApp.setHeaderColor(BRAND_INK);
+                webApp.setBackgroundColor(BRAND_INK);
             },
             haptic(kind) {
                 if (kind === 'tap') {

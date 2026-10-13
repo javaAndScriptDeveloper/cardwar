@@ -1,26 +1,45 @@
 /*
- * Design tokens. Dark is the default look of the game; Telegram's theme variables (--tg-theme-*) override the
- * surfaces and accent so the app sits naturally in whatever theme the client runs. main.tsx sets
- * data-scheme on <html> from the Telegram colour scheme (or prefers-color-scheme in the dev shim).
+ * Design tokens: «нічний Хрещатик». One branded, always-dark look. The app deliberately does not take the
+ * Telegram theme colours (--tg-theme-*): a card table should look the same in every client theme, and the brand
+ * palette (ink, gold for money and the main action, azure for the secondary one, emerald felt) is the product.
+ * main.tsx still records data-scheme on <html>; nothing reads it for colours any more.
  */
 :root {
     --hand-card-max: 58px;
-    --bg: var(--tg-theme-bg-color, #121317);
-    --surface: var(--tg-theme-secondary-bg-color, #1c1e25);
-    --surface-2: #262932;
-    --text: var(--tg-theme-text-color, #f2f2f6);
-    --hint: var(--tg-theme-hint-color, #8f93a3);
-    --accent: var(--tg-theme-button-color, #3b82f6);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --success: #35c26b;
-    --danger: var(--tg-theme-destructive-text-color, #ef4444);
-    --gold: #f5c542;
-    --felt: #1f6b45;
-    --felt-glow: #2a8a5a;
 
-    --radius-s: 8px;
-    --radius-m: 12px;
-    --radius-l: 18px;
+    --ink: #0b0d12;
+    --bg: var(--ink);
+    --surface: #141823;
+    --surface-2: #1d2231;
+    --surface-3: #272d3f;
+    --line: rgb(255 255 255 / 7%);
+    --line-strong: rgb(255 255 255 / 14%);
+    --text: #f5f2ea;
+    --hint: #949bb0;
+
+    --gold: #f2c14e;
+    --gold-light: #ffd978;
+    --gold-deep: #c8961f;
+    --gold-shadow: #7d5a0e;
+    --gold-text: #1a1203;
+    --azure: #3f8cff;
+    --azure-deep: #2563eb;
+    --azure-shadow: #163b8f;
+
+    --accent: var(--gold);
+    --accent-text: var(--gold-text);
+    --success: #3ccf7a;
+    --danger: #ff5a5f;
+    --felt: #1b5e3f;
+    --felt-glow: #2a8a5a;
+    --felt-rim: #4a3317;
+
+    --font-display: 'Unbounded', 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --font-body: 'Manrope', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+    --radius-s: 10px;
+    --radius-m: 16px;
+    --radius-l: 22px;
 
     --space-1: 4px;
     --space-2: 8px;
@@ -33,19 +52,12 @@
     --font-l: 1.15rem;
     --font-xl: 1.6rem;
 
-    --shadow: 0 6px 20px rgb(0 0 0 / 35%);
-    --nav-h: 60px;
+    --shadow: 0 12px 32px rgb(0 0 0 / 45%);
+    --shadow-s: 0 4px 14px rgb(0 0 0 / 35%);
+    --glow-gold: 0 0 28px rgb(242 193 78 / 30%);
+    --glow-azure: 0 0 28px rgb(63 140 255 / 35%);
+    --nav-h: 62px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
 
     color-scheme: dark;
-}
-
-:root[data-scheme='light'] {
-    --bg: var(--tg-theme-bg-color, #f6f7fb);
-    --surface: var(--tg-theme-secondary-bg-color, #ffffff);
-    --surface-2: #eef0f5;
-    --text: var(--tg-theme-text-color, #15161b);
-    --hint: var(--tg-theme-hint-color, #6f7382);
-    --shadow: 0 6px 20px rgb(0 0 0 / 12%);
-    color-scheme: light;
 }

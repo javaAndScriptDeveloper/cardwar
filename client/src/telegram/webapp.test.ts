@@ -7,6 +7,8 @@ const telegramWebApp = (initData: string, startParam?: string) => ({
     colorScheme: 'light' as const,
     ready: vi.fn(),
     expand: vi.fn(),
+    setHeaderColor: vi.fn(),
+    setBackgroundColor: vi.fn(),
     openTelegramLink: vi.fn(),
     openInvoice: vi.fn(),
     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
@@ -25,6 +27,15 @@ describe('resolveTelegram', () => {
         telegram.ready();
         expect(webApp.ready).toHaveBeenCalled();
         expect(webApp.expand).toHaveBeenCalled();
+    });
+
+    it('paints the Telegram header and background in the brand ink so the chrome matches the app', () => {
+        const webApp = telegramWebApp('query_id=1&hash=abc');
+
+        resolveTelegram({ Telegram: { WebApp: webApp } }).ready();
+
+        expect(webApp.setHeaderColor).toHaveBeenCalledWith('#0b0d12');
+        expect(webApp.setBackgroundColor).toHaveBeenCalledWith('#0b0d12');
     });
 
     it('falls back to the dev shim in a plain browser, where the SDK loads with empty initData', () => {

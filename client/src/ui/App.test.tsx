@@ -12,6 +12,8 @@ const webApp = (initData: string): TelegramWebApp => ({
     colorScheme: 'light',
     ready: vi.fn(),
     expand: vi.fn(),
+    setHeaderColor: vi.fn(),
+    setBackgroundColor: vi.fn(),
     openTelegramLink: vi.fn(),
     openInvoice: vi.fn(),
     HapticFeedback: { notificationOccurred: vi.fn(), impactOccurred: vi.fn() },
