@@ -8,7 +8,7 @@ import { t } from '../../i18n';
 import { applyLoadout, refreshLoadout } from '../../state/loadout';
 import { awaitCredit, refreshWallet, wallet } from '../../state/wallet';
 import type { Telegram } from '../../telegram/webapp';
-import { BackSwatch, emoteGlyph, emotePhrase, FrameSwatch, TableSwatch } from '../cosmetics';
+import { BackSwatch, emoteGlyph, FrameSwatch, TableSwatch } from '../cosmetics';
 import { describeError } from '../errors';
 import { Badge, Button, CoinAmount, Tabs, Toast } from '../kit';
 
@@ -378,18 +378,12 @@ function Preview({ item, images }: { item: ShopItemView; images: string[] | unde
             return <TableSwatch table={item.contentRef} />;
         case 'FRAME':
             return <FrameSwatch frame={item.contentRef} />;
-        case 'EMOTE': {
-            const phrase = emotePhrase(item.contentRef);
+        case 'EMOTE':
+            // The item's name already is the phrase, so the preview shows the glyph alone.
             return (
-                <span
-                    class={phrase ? 'emote-phrase' : undefined}
-                    data-emote={item.contentRef}
-                    aria-hidden="true"
-                >
-                    <span class="emote-glyph">{emoteGlyph(item.contentRef)}</span>
-                    {phrase && <span class="emote-text">{phrase}</span>}
+                <span class="emote-glyph" data-emote={item.contentRef} aria-hidden="true">
+                    {emoteGlyph(item.contentRef)}
                 </span>
             );
-        }
     }
 }

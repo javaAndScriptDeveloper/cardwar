@@ -36,7 +36,7 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
     /** Monday 2027-03-29 00:00 in Kyiv, already EEST (UTC+3). A naive "+7 days" from the week's start is an hour off. */
     private static final Instant SLOT_0_WEEK_ENDS = Instant.parse("2027-03-28T21:00:00Z");
 
-    /** ISO week 42, 2026 (42 % 4 == 2): no drop on sale. */
+    /** ISO week 42, 2026 (42 % 4 == 2): slot 0 is off sale and slot 2 (Чорнобаївка) is the week's drop. */
     private static final Instant OFF_WEEK = Instant.parse("2026-10-13T10:00:00Z");
 
     @Autowired
@@ -171,7 +171,9 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
 
         clock.pin(OFF_WEEK);
         shop(alice)
-                .andExpect(jsonPath("$.drops").isEmpty())
+                // Every week has a drop: the four slots are all seeded.
+                .andExpect(jsonPath("$.drops.length()").value(1))
+                .andExpect(jsonPath("$.drops[0].code").value("back-chornobaivka"))
                 .andExpect(
                         jsonPath("$.items[?(@.code == 'back-bavovna')].owned").value(true))
                 .andExpect(jsonPath("$.items[?(@.code == 'back-bavovna')].unlock.met")

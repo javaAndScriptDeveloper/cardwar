@@ -8,8 +8,17 @@ import { BackSwatch, EMOTE_PHRASES, emoteGlyph, emotePhrase, FrameSwatch, TableS
 const css = readFileSync(resolve('src/ui/styles.css'), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
 
 /** Every ref the shop seeds (changesets 010 and 013); each needs a drawn style or it renders as nothing. */
-const BACKS = ['classic', 'trident', 'sunflower', 'bayraktar', 'palianytsia', 'ukrzaliznytsia', 'bavovna'];
-const TABLES = ['green', 'night', 'borscht', 'blackout', 'bukovel', 'kabmin'];
+const BACKS = [
+    'classic',
+    'trident',
+    'sunflower',
+    'bayraktar',
+    'palianytsia',
+    'ukrzaliznytsia',
+    'bavovna',
+    'chornobaivka',
+];
+const TABLES = ['green', 'night', 'borscht', 'blackout', 'bukovel', 'kabmin', 'metro'];
 const FRAMES = ['gold', 'blue-yellow', 'tryzub-gold', 'vyshyvanka', 'kozak'];
 const PHRASES = ['minus-money', 'chumachecha', 'ty-sho', 'palianytsia', 'bavovna', 'dobroho-vechora'];
 
