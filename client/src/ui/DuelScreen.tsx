@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { ApiError, type ApiClient } from '../api/client';
 import type { DuelStreamOptions } from '../api/events';
-import type { ChallengeView, DuelEvent, DuelSummary, DuelView, InviteView, MoveRequest } from '../api/types';
+import type {
+    ChallengeView,
+    DuelEvent,
+    DuelSummary,
+    DuelView,
+    InviteView,
+    MissionView,
+    MoveRequest,
+    ProgressView,
+} from '../api/types';
 import { audio } from '../audio';
 import { speech } from '../audio/speech';
 import type { SignedInPlayer } from '../auth/session';
@@ -21,11 +30,20 @@ import { describeError } from './errors';
 import { Result as ResultScreen } from './Result';
 import { emoteCode, emoteGlyph, emotePhrase } from './cosmetics';
 import type { ClockWarning } from './MoveTimer';
+import { ProgressLines } from './profile/ProgressLines';
 import { type Participant, Table } from './Table';
 
 export type DuelApi = Pick<ApiClient, 'duel' | 'move' | 'history' | 'activeDuels' | 'emote'> &
     /** The social calls behind the rematch; a client without them simply shows no rematch. */
-    Partial<Pick<ApiClient, 'friends' | 'challenge' | 'challenges' | 'acceptInvite'>>;
+    Partial<Pick<ApiClient, 'friends' | 'challenge' | 'challenges' | 'acceptInvite'>> &
+    /** Progress and missions for the result screen's lines; a client without them shows none. */
+    Partial<Pick<ApiClient, 'progress' | 'missions'>>;
+
+/** Progress and missions as read at one moment; the result screen shows the difference between two. */
+interface Retention {
+    progress: ProgressView;
+    missions: MissionView[] | undefined;
+}
 export type StreamOpener = (
     duelId: string,
     options: Omit<DuelStreamOptions, 'fetchImpl' | 'headers'>,
@@ -129,6 +147,30 @@ export function DuelScreen({
     const [record, setRecord] = useState<{ won: number; lost: number }>();
     const [incoming, setIncoming] = useState<ChallengeView>();
     const [rematchBusy, setRematchBusy] = useState(false);
+    const [retentionBefore, setRetentionBefore] = useState<Retention>();
+    const [retentionAfter, setRetentionAfter] = useState<Retention>();
+
+    /** Progress (and missions, when the client has them) right now; undefined on a client without the calls. */
+    const readRetention = useCallback(async (): Promise<Retention | undefined> => {
+        if (!api.progress) {
+            return undefined;
+        }
+        try {
+            const [progress, missions] = await Promise.all([api.progress(), api.missions?.()]);
+            return { progress, missions };
+        } catch {
+            return undefined;
+        }
+    }, [api]);
+
+    // Read once at the start so the result can say what this duel changed.
+    useEffect(() => {
+        let live = true;
+        void readRetention().then((snapshot) => live && snapshot && setRetentionBefore(snapshot));
+        return () => {
+            live = false;
+        };
+    }, [readRetention]);
     const [opponent, setOpponent] = useState<Participant>({ name: t('duel.opponent') });
     const opponentName = opponent.name;
     // The full view's profile is the freshest; a summary or history row only fills in until one arrives.
@@ -518,6 +560,7 @@ export function DuelScreen({
             return;
         }
         let live = true;
+        void readRetention().then((snapshot) => live && snapshot && setRetentionAfter(snapshot));
         if (api.friends) {
             api.friends()
                 .then((friends) => {
@@ -548,7 +591,7 @@ export function DuelScreen({
             live = false;
             clearInterval(timer);
         };
-    }, [over !== undefined, overOpponentId, api, onDuel]);
+    }, [over !== undefined, overOpponentId, api, onDuel, readRetention]);
 
     const sendRematch = async () => {
         if (!over || !overOpponentId || !api.challenge || !onRematchSent) {
@@ -605,6 +648,16 @@ export function DuelScreen({
                     stake={state.stake}
                     opponent={opponent}
                     record={record}
+                    progress={
+                        retentionAfter && (
+                            <ProgressLines
+                                before={retentionBefore?.progress}
+                                after={retentionAfter.progress}
+                                missionsBefore={retentionBefore?.missions}
+                                missionsAfter={retentionAfter.missions}
+                            />
+                        )
+                    }
                     rematch={
                         state.opponentId && api.challenge && onRematchSent
                             ? { busy: rematchBusy, onRematch: () => void sendRematch() }

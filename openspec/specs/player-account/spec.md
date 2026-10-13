@@ -100,6 +100,9 @@ from 700, `LEHENDA` from 1500. `GET /api/v1/me/progress` SHALL answer the caller
 `winStreak`, `bestWinStreak`, `xp`, `rank`, `nextRankXp` (null at the top rank) and `streakBonusPercent`
 (`10 × min(winStreak, 5)`, the bonus the next staked win pays); the same fields SHALL appear under `progress` in
 `GET /api/v1/me`. The best win streak SHALL be readable by the monetization module through its `StreakSource` port.
+The profile screen SHALL show the rank as a badge (Дурак, Підкидний, Козир, Шулер, Легенда) and an XP bar towards
+`nextRankXp` (full at the top rank); the result screen SHALL show the XP the duel added and «Новий ранг: …» when a
+threshold was crossed, comparing the progress read before the duel with the one read after it.
 
 #### Scenario: Two wins then a loss
 - **WHEN** a player wins two friendly duels in a row and then loses one

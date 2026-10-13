@@ -8,6 +8,7 @@ import { inviteLink, shareUrl, type LinkConfig } from '../telegram/links';
 import type { Telegram } from '../telegram/webapp';
 import { reasonMessage } from '../game/reasons';
 import { refreshLoadout } from '../state/loadout';
+import { missions, progress, refreshMissions, refreshProgress } from '../state/progress';
 import { refreshWallet, wallet } from '../state/wallet';
 import { describeError } from './errors';
 import { Friends } from './friends/Friends';
@@ -21,7 +22,13 @@ import { Profile } from './profile/Profile';
 import { Settings } from './settings/Settings';
 import { Shop } from './shop/Shop';
 import { useLaunch } from './useLaunch';
-import type { ChallengeView, FriendView, OutgoingChallengeView, InviteView } from '../api/types';
+import type {
+    ChallengeView,
+    FriendView,
+    OutgoingChallengeView,
+    InviteView,
+    ShopItemView,
+} from '../api/types';
 
 export type ShellApi = Pick<
     ApiClient,
@@ -47,6 +54,10 @@ export type ShellApi = Pick<
     | 'challenges'
     | 'outgoingChallenges'
     | 'declineInvite'
+    | 'progress'
+    | 'missions'
+    | 'claimMission'
+    | 'leaderboard'
 >;
 
 interface Props {
@@ -192,8 +203,39 @@ export function Shell({
     useEffect(() => {
         if (!inDuel) {
             void refreshWallet(api);
+            // The streak and the missions move with every duel too, and are read on the same occasions.
+            void refreshProgress(api);
+            void refreshMissions(api);
         }
     }, [inDuel, api]);
+
+    // This week's drop for the lobby teaser: the shop's own answer, read once per sign-in.
+    const [drop, setDrop] = useState<ShopItemView>();
+    useEffect(() => {
+        let cancelled = false;
+        api.shop()
+            .then((view) => !cancelled && setDrop(view.drops[0]))
+            .catch(() => {
+                // No teaser then; the shop screen explains its own failures.
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [api]);
+
+    const claimMission = async (code: string) => {
+        try {
+            wallet.value = await api.claimMission(code);
+            setLobbyError(undefined);
+        } catch (error) {
+            // 409: collected already (a double tap, another device). The fresh list says so; nothing to explain.
+            if (!(error instanceof ApiError && error.status === 409)) {
+                setLobbyError(t('lobby.errors.claimMission', { error: describeError(error) }));
+            }
+            await refreshWallet(api);
+        }
+        await refreshMissions(api);
+    };
 
     // The server loadout is the deck's source of truth once signed in; read it once per sign-in, then the shop and
     // the settings picker keep it current with their equip answers.
@@ -421,6 +463,11 @@ export function Shell({
                         player={player}
                         error={lobbyError}
                         wallet={wallet.value}
+                        progress={progress.value}
+                        missions={missions.value}
+                        drop={drop}
+                        onClaimMission={claimMission}
+                        onOpenShop={() => navigate({ name: 'shop' })}
                         creating={creating}
                         onInvite={() => openStakePicker('invite')}
                         onQuickMatch={() => openStakePicker('match')}

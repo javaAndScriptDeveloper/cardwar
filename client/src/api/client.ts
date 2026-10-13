@@ -8,12 +8,15 @@ import type {
     FriendView,
     InviteView,
     InvoiceView,
+    LeaderboardEntry,
     LoadoutView,
     MatchView,
     MeView,
+    MissionView,
     MoveRequest,
     OutgoingChallengeView,
     ProblemDetail,
+    ProgressView,
     ShopItemView,
     ShopView,
     WalletView,
@@ -109,6 +112,26 @@ export class ApiClient {
 
     leaveMatchmaking(): Promise<void> {
         return this.request('DELETE', '/matchmaking');
+    }
+
+    /** Win streak, XP and rank; the bonus percent is what the next staked win pays. */
+    progress(): Promise<ProgressView> {
+        return this.request('GET', '/me/progress');
+    }
+
+    /** Today's three missions, in the server's order. */
+    missions(): Promise<MissionView[]> {
+        return this.request('GET', '/me/missions');
+    }
+
+    /** 400 MISSION_INCOMPLETE, 409 ALREADY_CLAIMED; answers the wallet with the reward in it. */
+    claimMission(code: string): Promise<WalletView> {
+        return this.request('POST', `/me/missions/${encodeURIComponent(code)}/claim`);
+    }
+
+    /** The caller and their friends by coins won this week, at most 20. */
+    leaderboard(): Promise<LeaderboardEntry[]> {
+        return this.request('GET', '/friends/leaderboard');
     }
 
     /** Everybody the caller has finished a duel against, most recent first, at most 50. */

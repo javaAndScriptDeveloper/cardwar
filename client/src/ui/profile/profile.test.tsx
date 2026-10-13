@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
-import type { CoinTransactionView, DuelHistoryEntry } from '../../api/types';
+import type { CoinTransactionView, DuelHistoryEntry, LeaderboardEntry, ProgressView } from '../../api/types';
 import { t } from '../../i18n';
 import { Profile } from './Profile';
 
@@ -22,6 +22,25 @@ const entry = (overrides: Partial<DuelHistoryEntry>): DuelHistoryEntry => ({
 
 const noTransactions = () => vi.fn().mockResolvedValue([]);
 
+const progressView = (overrides: Partial<ProgressView> = {}): ProgressView => ({
+    duelsPlayed: 4,
+    duelsWon: 2,
+    currencyBalance: 500,
+    winStreak: 1,
+    bestWinStreak: 2,
+    xp: 120,
+    rank: 'PIDKYDNYI',
+    nextRankXp: 300,
+    streakBonusPercent: 10,
+    ...overrides,
+});
+
+/** The progress and leaderboard every profile reads; a test overrides the one it is about. */
+const retention = () => ({
+    progress: vi.fn().mockResolvedValue(progressView()),
+    leaderboard: vi.fn().mockResolvedValue([] as LeaderboardEntry[]),
+});
+
 const tx = (amount: number, kind: CoinTransactionView['kind']): CoinTransactionView => ({
     amount,
     kind,
@@ -34,6 +53,7 @@ describe('Profile', () => {
             <Profile
                 player={player}
                 api={{
+                    ...retention(),
                     history: vi.fn().mockResolvedValue([
                         entry({
                             opponentUsername: 'tg_7',
@@ -56,6 +76,7 @@ describe('Profile', () => {
 
     it('shows the signed coin delta on staked history rows only', async () => {
         const api = {
+            ...retention(),
             history: vi
                 .fn()
                 .mockResolvedValue([
@@ -75,6 +96,7 @@ describe('Profile', () => {
 
     it('lists the latest coin movements with a Ukrainian label per kind', async () => {
         const api = {
+            ...retention(),
             history: vi.fn().mockResolvedValue([]),
             transactions: vi
                 .fn()
@@ -96,6 +118,7 @@ describe('Profile', () => {
 
     it('shows the player, their record and the recent duels', async () => {
         const api = {
+            ...retention(),
             history: vi
                 .fn()
                 .mockResolvedValue([entry({}), entry({ duelId: 'd2', result: 'LOST', moveCount: 5 })]),
@@ -114,6 +137,7 @@ describe('Profile', () => {
 
     it('sums up games, wins, the win rate and the coins won', async () => {
         const api = {
+            ...retention(),
             history: vi
                 .fn()
                 .mockResolvedValue([
@@ -140,7 +164,11 @@ describe('Profile', () => {
         render(
             <Profile
                 player={player}
-                api={{ history: vi.fn().mockResolvedValue([]), transactions: noTransactions() }}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                }}
                 onOpenSettings={() => {}}
             />,
         );
@@ -153,7 +181,11 @@ describe('Profile', () => {
         render(
             <Profile
                 player={player}
-                api={{ history: vi.fn().mockResolvedValue([]), transactions: noTransactions() }}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                }}
                 onOpenSettings={() => {}}
             />,
         );
@@ -166,6 +198,7 @@ describe('Profile', () => {
             <Profile
                 player={player}
                 api={{
+                    ...retention(),
                     history: vi.fn().mockRejectedValue(new Error('boom')),
                     transactions: noTransactions(),
                 }}
@@ -176,8 +209,108 @@ describe('Profile', () => {
         await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('boom'));
     });
 
+    it('shows the rank badge and how far the XP bar is to the next rank', async () => {
+        render(
+            <Profile
+                player={player}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                    progress: vi.fn().mockResolvedValue(progressView({ xp: 120, nextRankXp: 300 })),
+                }}
+                onOpenSettings={() => {}}
+            />,
+        );
+
+        const badge = await screen.findByTestId('rank-badge');
+        expect(badge.getAttribute('data-rank')).toBe('PIDKYDNYI');
+        expect(badge.textContent).toBe(t('progress.rank.PIDKYDNYI'));
+        const bar = screen.getByTestId('xp-bar');
+        expect(bar.getAttribute('data-xp')).toBe('120');
+        expect(bar.getAttribute('data-next')).toBe('300');
+        expect((bar.querySelector('.fill') as HTMLElement).style.width).toBe('40%');
+        expect(bar.textContent).toContain(t('progress.xpBar', { xp: 120, next: 300 }));
+    });
+
+    it('fills the XP bar at the top rank', async () => {
+        render(
+            <Profile
+                player={player}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                    progress: vi
+                        .fn()
+                        .mockResolvedValue(progressView({ xp: 1700, rank: 'LEHENDA', nextRankXp: null })),
+                }}
+                onOpenSettings={() => {}}
+            />,
+        );
+
+        const bar = await screen.findByTestId('xp-bar');
+        expect((bar.querySelector('.fill') as HTMLElement).style.width).toBe('100%');
+        expect(bar.textContent).toContain(t('progress.xpMax', { xp: 1700 }));
+    });
+
+    it('lists the friends leaderboard with the caller marked, or says it is empty', async () => {
+        const row = (
+            playerId: string,
+            displayName: string,
+            coinsWon: number,
+            you = false,
+        ): LeaderboardEntry => ({
+            playerId,
+            player: { username: playerId, displayName },
+            wins: 2,
+            coinsWon,
+            you,
+        });
+        const { unmount } = render(
+            <Profile
+                player={player}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                    leaderboard: vi
+                        .fn()
+                        .mockResolvedValue([row('p2', 'Оля', 600), row('me', 'Аліса', 100, true)]),
+                }}
+                onOpenSettings={() => {}}
+            />,
+        );
+
+        await waitFor(() => expect(screen.getAllByTestId('leaderboard-row')).toHaveLength(2));
+        const rows = screen.getAllByTestId('leaderboard-row');
+        expect(rows.map((el) => el.getAttribute('data-player'))).toEqual(['p2', 'me']);
+        expect(rows.map((el) => el.getAttribute('data-you'))).toEqual(['false', 'true']);
+        expect(rows[0]?.textContent).toContain('Оля');
+        expect(rows[0]?.querySelector('[data-amount]')?.getAttribute('data-amount')).toBe('600');
+        expect(rows[0]?.textContent).toContain(t('leaderboard.wins', { n: 2, wins: 'перемоги' }));
+        unmount();
+
+        render(
+            <Profile
+                player={player}
+                api={{
+                    ...retention(),
+                    history: vi.fn().mockResolvedValue([]),
+                    transactions: noTransactions(),
+                }}
+                onOpenSettings={() => {}}
+            />,
+        );
+        expect(await screen.findByText(t('leaderboard.empty'))).toBeTruthy();
+    });
+
     it('shows the Telegram handle when there is one and never the internal tg_ username', () => {
-        const api = { history: vi.fn().mockResolvedValue([]), transactions: noTransactions() };
+        const api = {
+            ...retention(),
+            history: vi.fn().mockResolvedValue([]),
+            transactions: noTransactions(),
+        };
         const { unmount } = render(
             <Profile
                 player={{ playerId: 'me', username: 'tg_7', displayName: 'Оля' }}

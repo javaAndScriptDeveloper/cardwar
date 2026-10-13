@@ -205,6 +205,31 @@ describe('ApiClient', () => {
         expect((fetchMock.mock.calls[1]?.[1] as RequestInit).body).toBe('{"stake":100}');
     });
 
+    it('reaches the progress, mission and leaderboard endpoints', async () => {
+        const fetchMock = vi
+            .fn()
+            .mockResolvedValueOnce(respond(200, { xp: 40, rank: 'DURAK' }))
+            .mockResolvedValueOnce(respond(200, []))
+            .mockResolvedValueOnce(respond(200, { balance: 560 }))
+            .mockResolvedValueOnce(respond(200, []));
+        const api = new ApiClient(fetchMock, () => 't');
+
+        await expect(api.progress()).resolves.toMatchObject({ rank: 'DURAK' });
+        await api.missions();
+        await expect(api.claimMission('PLAY_3')).resolves.toMatchObject({ balance: 560 });
+        await api.leaderboard();
+
+        const calls = fetchMock.mock.calls.map(
+            ([url, init]) => `${(init as RequestInit).method ?? 'GET'} ${url}`,
+        );
+        expect(calls).toEqual([
+            'GET /api/v1/me/progress',
+            'GET /api/v1/me/missions',
+            'POST /api/v1/me/missions/PLAY_3/claim',
+            'GET /api/v1/friends/leaderboard',
+        ]);
+    });
+
     it('sends the stake when creating an invite with one, and no body without', async () => {
         const fetchMock = vi.fn().mockImplementation(() => Promise.resolve(respond(200, {})));
         const api = new ApiClient(fetchMock, () => 't');

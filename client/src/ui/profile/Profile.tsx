@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { ApiClient } from '../../api/client';
-import type { CoinTransactionView, DuelHistoryEntry } from '../../api/types';
+import type { CoinTransactionView, DuelHistoryEntry, LeaderboardEntry, ProgressView } from '../../api/types';
 import type { SignedInPlayer } from '../../auth/session';
 import { forms, plural, t } from '../../i18n';
 import { describeError } from '../errors';
 import { Avatar, Badge, CoinAmount, ListRow } from '../kit';
+import { Leaderboard } from './Leaderboard';
+import { RankBadge, XpBar } from './RankBadge';
 
 interface Props {
     player: SignedInPlayer;
-    api: Pick<ApiClient, 'history' | 'transactions'>;
+    api: Pick<ApiClient, 'history' | 'transactions' | 'progress' | 'leaderboard'>;
     onOpenSettings: () => void;
 }
 
@@ -16,6 +18,8 @@ type History =
     { kind: 'loading' } | { kind: 'ready'; entries: DuelHistoryEntry[] } | { kind: 'failed'; error: string };
 
 type Transactions = { kind: 'loading' } | { kind: 'ready'; rows: CoinTransactionView[] } | { kind: 'failed' };
+
+type Board = { kind: 'loading' } | { kind: 'ready'; entries: LeaderboardEntry[] } | { kind: 'failed' };
 
 const TONE = { WON: 'success', LOST: 'danger', DRAW: 'neutral' } as const;
 
@@ -30,7 +34,24 @@ const WHEN = new Intl.DateTimeFormat('uk-UA', {
 export function Profile({ player, api, onOpenSettings }: Props) {
     const [history, setHistory] = useState<History>({ kind: 'loading' });
     const [transactions, setTransactions] = useState<Transactions>({ kind: 'loading' });
+    const [progress, setProgress] = useState<ProgressView>();
+    const [board, setBoard] = useState<Board>({ kind: 'loading' });
     const name = player.displayName ?? player.username;
+
+    useEffect(() => {
+        let cancelled = false;
+        api.progress()
+            .then((view) => !cancelled && setProgress(view))
+            .catch(() => {
+                // Without progress the header simply has no badge; the numbers below still load.
+            });
+        api.leaderboard()
+            .then((entries) => !cancelled && setBoard({ kind: 'ready', entries }))
+            .catch(() => !cancelled && setBoard({ kind: 'failed' }));
+        return () => {
+            cancelled = true;
+        };
+    }, [api]);
 
     useEffect(() => {
         let cancelled = false;
@@ -67,8 +88,10 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                 <div>
                     <h1>{name}</h1>
                     {player.handle && <p class="notice">@{player.handle}</p>}
+                    {progress && <RankBadge progress={progress} />}
                 </div>
             </header>
+            {progress && <XpBar progress={progress} />}
             <div class="stats">
                 <div class="stat">
                     <span class="value" data-testid="stat-games">
@@ -100,6 +123,10 @@ export function Profile({ player, api, onOpenSettings }: Props) {
                 trailing="›"
                 onClick={onOpenSettings}
                 data-testid="open-settings"
+            />
+            <Leaderboard
+                entries={board.kind === 'ready' ? board.entries : undefined}
+                failed={board.kind === 'failed'}
             />
             <h2>{t('profile.history')}</h2>
             {history.kind === 'failed' && (

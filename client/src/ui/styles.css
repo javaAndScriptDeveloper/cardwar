@@ -1585,3 +1585,108 @@ button.link {
         repeating-linear-gradient(0deg, rgb(255 255 255 / 4%) 0 1px, transparent 1px 18px),
         linear-gradient(#374151, #111827);
 }
+
+/* --- retention: streak chip, missions, drop teaser, rank and XP, leaderboard, result lines --- */
+
+.streak-chip {
+    align-self: flex-start;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: var(--font-s);
+}
+
+.bar {
+    height: 6px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    overflow: hidden;
+}
+
+.bar .fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--accent);
+    transition: width 400ms ease-out;
+}
+
+.mission-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.mission-row.claimed {
+    opacity: 0.7;
+}
+
+.mission-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.mission-title {
+    font-weight: 600;
+}
+
+.mission-reward {
+    color: var(--hint);
+}
+
+.drop-teaser {
+    background: linear-gradient(135deg, rgb(245 197 66 / 18%), transparent 60%), var(--surface);
+}
+
+.drop-teaser .row {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drop-name {
+    font-weight: 600;
+}
+
+.rank-badge {
+    margin-top: 4px;
+}
+
+.xp-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.leaderboard .place {
+    width: 1.4em;
+    text-align: center;
+    font-weight: 700;
+    color: var(--hint);
+}
+
+.leaderboard-row.you .list-row {
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    border-radius: var(--radius-m);
+}
+
+.progress-lines {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--font-m);
+}
+
+.progress-lines .rank-up {
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.progress-lines .broken {
+    color: var(--hint);
+}

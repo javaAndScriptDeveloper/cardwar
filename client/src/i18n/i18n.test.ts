@@ -56,11 +56,15 @@ describe('message catalog', () => {
             'STAKE_ESCROW',
             'STAKE_PAYOUT',
             'STAKE_REFUND',
+            'STREAK_BONUS',
+            'MISSION_REWARD',
             'PURCHASE',
             'STARS_TOPUP',
             'LEGACY',
             'ADJUSTMENT',
         ].map((kind) => `profile.tx.${kind}`),
+        ...['DURAK', 'PIDKYDNYI', 'KOZYR', 'SHULER', 'LEHENDA'].map((rank) => `progress.rank.${rank}`),
+        ...['PLAY_3', 'WIN_2', 'STAKED_WIN_1'].map((code) => `missions.${code}`),
     ];
     dynamic.forEach((key) => used.add(key));
 

@@ -71,7 +71,8 @@ When a staked duel is settled for a winner who was already on a win streak, the 
 `stake × 10% × min(streak before this win, 5)` from the house, as a `STREAK_BONUS` ledger row under the reference
 `duel:<duelId>:streak`, in the same transaction and behind the same already-settled guard as the pot, so a repeated
 settlement pays neither again. A draw and a friendly duel SHALL pay no bonus. A history entry's net coins SHALL
-include the bonus.
+include the bonus. The lobby SHALL show a streak chip («Серія N · +P% до виграшу») whenever the streak is at least
+1, and the result screen the streak as it stands («Серія N 🔥») or that it broke («Серію перервано»).
 
 #### Scenario: Second staked win in a row
 - **WHEN** a player who won their previous duel wins a 100-coin duel
@@ -90,7 +91,9 @@ not won. `GET /api/v1/me/missions` SHALL list the three in that order as `{code,
 with zero progress on a day without duels. `POST /api/v1/me/missions/{code}/claim` SHALL pay the reward once as a
 `MISSION_REWARD` ledger row under `mission:<day>:<code>` and answer the wallet view; an incomplete mission is 400
 `MISSION_INCOMPLETE`, a second claim 409 `ALREADY_CLAIMED`, an unknown code 404. A new Kyiv day SHALL start every
-mission over.
+mission over. The lobby SHALL show the three missions with their progress and a «Забрати» button only on a
+completed, unclaimed one; a claim SHALL refresh the balance and the list. The result screen SHALL list the missions
+the duel just moved.
 
 #### Scenario: Progress from a day's duels
 - **WHEN** a player wins a friendly duel, draws one and wins a 100-coin one on the same Kyiv day

@@ -657,6 +657,48 @@ describe('DuelScreen rematch', () => {
         await waitFor(() => expect(onDuel).toHaveBeenCalledWith('duel-2'));
     });
 
+    it('shows what the duel did to the streak, XP and missions, read before and after', async () => {
+        const progressView = (winStreak: number, xp: number) => ({
+            duelsPlayed: 5,
+            duelsWon: 3,
+            currencyBalance: 500,
+            winStreak,
+            bestWinStreak: 3,
+            xp,
+            rank: 'DURAK',
+            nextRankXp: 100,
+            streakBonusPercent: 10 * winStreak,
+        });
+        const missionView = (progress: number) => ({
+            code: 'WIN_2',
+            target: 2,
+            progress,
+            reward: 120,
+            claimed: false,
+        });
+        const retention = {
+            progress: vi
+                .fn()
+                .mockResolvedValueOnce(progressView(1, 60))
+                .mockResolvedValueOnce(progressView(2, 100)),
+            missions: vi
+                .fn()
+                .mockResolvedValueOnce([missionView(0)])
+                .mockResolvedValueOnce([missionView(1)]),
+        };
+        const { api, nudge } = setup({ extraApi: retention });
+        await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());
+        await waitFor(() => expect(retention.progress).toHaveBeenCalledTimes(1));
+        api.duel.mockResolvedValueOnce(finished);
+        nudge();
+
+        await screen.findByTestId('result');
+        await waitFor(() => expect(screen.getByTestId('streak-line').getAttribute('data-streak')).toBe('2'));
+        expect(screen.getByTestId('xp-line').getAttribute('data-gained')).toBe('40');
+        expect(screen.getByTestId('mission-line').getAttribute('data-code')).toBe('WIN_2');
+        expect(retention.progress).toHaveBeenCalledTimes(2);
+    });
+
     it('offers no rematch to a client without the social calls', async () => {
         const { api, nudge } = setup();
         await waitFor(() => expect(screen.getByRole('status')).toBeTruthy());

@@ -167,10 +167,49 @@ export type CoinKind =
     | 'STAKE_ESCROW'
     | 'STAKE_PAYOUT'
     | 'STAKE_REFUND'
+    | 'STREAK_BONUS'
+    | 'MISSION_REWARD'
     | 'PURCHASE'
     | 'STARS_TOPUP'
     | 'LEGACY'
     | 'ADJUSTMENT';
+
+/** XP ranks, lowest first; the client maps each to its Ukrainian name. */
+export type Rank = 'DURAK' | 'PIDKYDNYI' | 'KOZYR' | 'SHULER' | 'LEHENDA';
+
+/** The caller's progress: streaks, XP and rank. `nextRankXp` is null at the top rank. */
+export interface ProgressView {
+    duelsPlayed: number;
+    duelsWon: number;
+    currencyBalance: number;
+    winStreak: number;
+    bestWinStreak: number;
+    xp: number;
+    rank: Rank;
+    nextRankXp: number | null;
+    /** What the next staked win pays on top of the pot: 10% per streak win, capped at 50%. */
+    streakBonusPercent: number;
+}
+
+export type MissionCode = 'PLAY_3' | 'WIN_2' | 'STAKED_WIN_1';
+
+/** One of today's missions: how far along, what it pays, whether that was collected. */
+export interface MissionView {
+    code: MissionCode | string;
+    target: number;
+    progress: number;
+    reward: number;
+    claimed: boolean;
+}
+
+/** One row of the friends leaderboard; `you` marks the caller's own row. */
+export interface LeaderboardEntry {
+    playerId: string;
+    player: PlayerProfile;
+    wins: number;
+    coinsWon: number;
+    you: boolean;
+}
 
 export interface CoinTransactionView {
     /** Signed: credits positive, debits negative. */

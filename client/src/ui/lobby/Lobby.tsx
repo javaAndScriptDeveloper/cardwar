@@ -1,16 +1,27 @@
 import { useState } from 'preact/hooks';
-import type { WalletView } from '../../api/types';
+import type { MissionView, ProgressView, ShopItemView, WalletView } from '../../api/types';
 import type { SignedInPlayer } from '../../auth/session';
 import { t } from '../../i18n';
 import { Avatar, Button, CoinAmount } from '../kit';
 import { DailyBonus } from './DailyBonus';
+import { DropTeaser } from './DropTeaser';
 import { JoinByCode } from './JoinByCode';
+import { Missions } from './Missions';
+import { StreakChip } from './StreakChip';
 
 interface Props {
     player: SignedInPlayer;
     error: string | undefined;
     /** Undefined until the first load; the chip and the bonus card wait for it. */
     wallet: WalletView | undefined;
+    /** Streak and rank; undefined until loaded, and the chip waits for it. */
+    progress?: ProgressView | undefined;
+    /** Today's missions; undefined until loaded. */
+    missions?: MissionView[] | undefined;
+    /** This week's drop, when the shop has one on sale. */
+    drop?: ShopItemView | undefined;
+    onClaimMission?: ((code: string) => Promise<void>) | undefined;
+    onOpenShop?: (() => void) | undefined;
     /** An invite is being created (after a stake was picked). */
     creating: boolean;
     /** Opens the stake picker; the invite itself is created once a stake is chosen. */
@@ -27,6 +38,11 @@ export function Lobby({
     player,
     error,
     wallet,
+    progress,
+    missions,
+    drop,
+    onClaimMission,
+    onOpenShop,
     creating,
     onInvite,
     onQuickMatch,
@@ -64,6 +80,7 @@ export function Lobby({
                     </span>
                 )}
             </header>
+            {progress && <StreakChip progress={progress} />}
             {error && (
                 <p class="error" role="alert">
                     {error}
@@ -80,6 +97,8 @@ export function Lobby({
                 {t('lobby.invite')}
             </Button>
             {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
+            {missions && onClaimMission && <Missions missions={missions} onClaim={onClaimMission} />}
+            {drop && onOpenShop && <DropTeaser drop={drop} onOpenShop={onOpenShop} />}
             <div class="panel quick-match">
                 <Button
                     variant="primary"

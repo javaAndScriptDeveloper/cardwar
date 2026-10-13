@@ -241,7 +241,10 @@ reduced-motion; `src/audio` owns one AudioContext and the default sound pack (`n
 placeholders). `src/game/diff.ts` turns consecutive duel views into table events, which drive animations, sounds and
 haptics now and the content rule engine later. `src/ui/kit` is the component kit on the tokens in `tokens.css`;
 screens live in `src/ui/{lobby,friends,shop,profile,settings}` under `Shell`. Tests and the Playwright run read
-`data-testid` / `data-*` attributes, never copy.
+`data-testid` / `data-*` attributes, never copy. Retention lives in `src/state/progress.ts` (progress and missions
+signals, refreshed with the wallet whenever the player is outside a duel): the lobby shows the streak chip, the
+missions card and this week's drop; the profile the rank badge, the XP bar and «Топ друзів»; the result screen
+`ProgressLines` (streak, XP, rank-up, moved missions) from progress read before and after the duel.
 
 ### End-to-end test
 

@@ -8,6 +8,9 @@ import type {
     FriendView,
     InviteView,
     MatchView,
+    MissionView,
+    ProgressView,
+    ShopItemView,
     WalletView,
 } from '../api/types';
 import { t } from '../i18n';
@@ -51,7 +54,35 @@ function fakeApi() {
             table: 'green',
             emotes: [],
         }),
+        progress: vi.fn().mockResolvedValue(progressView(2)),
+        missions: vi
+            .fn()
+            .mockResolvedValue([
+                missionView('PLAY_3', 3, 3),
+                missionView('WIN_2', 1, 2),
+                missionView('STAKED_WIN_1', 0, 1),
+            ]),
+        claimMission: vi.fn(),
+        leaderboard: vi.fn().mockResolvedValue([]),
     };
+}
+
+function progressView(winStreak: number): ProgressView {
+    return {
+        duelsPlayed: 5,
+        duelsWon: 3,
+        currencyBalance: 500,
+        winStreak,
+        bestWinStreak: 3,
+        xp: 80,
+        rank: 'DURAK',
+        nextRankXp: 100,
+        streakBonusPercent: 10 * Math.min(winStreak, 5),
+    };
+}
+
+function missionView(code: string, progress: number, target: number, claimed = false): MissionView {
+    return { code, target, progress, reward: 60, claimed };
 }
 
 const match = (status: MatchView['status'], stake = 0, duelId?: string): MatchView => ({
@@ -272,6 +303,77 @@ describe('Shell', () => {
             await waitFor(() =>
                 expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('600'),
             );
+        });
+    });
+
+    describe('retention', () => {
+        it('shows the streak chip and the missions in the lobby', async () => {
+            renderShell(fakeApi());
+
+            const chip = await screen.findByTestId('streak-chip');
+            expect(chip.getAttribute('data-streak')).toBe('2');
+            await waitFor(() => expect(screen.getAllByTestId('mission-row')).toHaveLength(3));
+            expect(screen.getByTestId('claim-PLAY_3')).toBeTruthy();
+            expect(screen.queryByTestId('claim-WIN_2')).toBeNull();
+        });
+
+        it('claims a mission, shows the new balance and the mission as collected', async () => {
+            const api = fakeApi();
+            api.claimMission.mockResolvedValue(walletView(560));
+            api.missions
+                .mockResolvedValueOnce([missionView('PLAY_3', 3, 3), missionView('WIN_2', 1, 2)])
+                .mockResolvedValue([missionView('PLAY_3', 3, 3, true), missionView('WIN_2', 1, 2)]);
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('claim-PLAY_3'));
+
+            await waitFor(() =>
+                expect(screen.getByTestId('balance').getAttribute('data-balance')).toBe('560'),
+            );
+            expect(api.claimMission).toHaveBeenCalledWith('PLAY_3');
+            await waitFor(() =>
+                expect(screen.getAllByTestId('mission-row')[0]?.getAttribute('data-claimed')).toBe('true'),
+            );
+            expect(screen.queryByTestId('claim-PLAY_3')).toBeNull();
+        });
+
+        it('explains a refused mission claim', async () => {
+            const api = fakeApi();
+            api.claimMission.mockRejectedValue(new ApiError(400, { reason: 'MISSION_INCOMPLETE' }));
+
+            renderShell(api);
+            fireEvent.click(await screen.findByTestId('claim-PLAY_3'));
+
+            await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+        });
+
+        it("teases this week's drop in the lobby and opens the shop from it", async () => {
+            const api = fakeApi();
+            const drop: ShopItemView = {
+                code: 'back-bavovna',
+                type: 'CARD_BACK',
+                contentRef: 'bavovna',
+                name: 'Бавовна',
+                price: 900,
+                owned: false,
+                equipped: false,
+                availableUntil: '2099-01-01T00:00:00Z',
+            };
+            api.shop.mockResolvedValue({ items: [drop], drops: [drop], coinPacks: [] });
+
+            renderShell(api);
+            const teaser = await screen.findByTestId('drop-teaser');
+            expect(teaser.getAttribute('data-code')).toBe('back-bavovna');
+            fireEvent.click(screen.getByTestId('open-shop'));
+
+            await screen.findByTestId('shop-screen');
+        });
+
+        it('shows no drop teaser when nothing is on sale', async () => {
+            renderShell(fakeApi());
+
+            await screen.findByTestId('streak-chip');
+            expect(screen.queryByTestId('drop-teaser')).toBeNull();
         });
     });
 
