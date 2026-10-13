@@ -313,4 +313,55 @@ describe('ApiClient', () => {
 
         expect(api.serverOffsetMs()).toBeLessThan(-29_000);
     });
+
+    describe('an expired token', () => {
+        it('signs in again once and retries the call, so a long-open app does not die at the token lifetime', async () => {
+            let token = 'old';
+            const fetchMock = vi
+                .fn()
+                .mockResolvedValueOnce(respond(401, { title: 'Unauthorized' }))
+                .mockResolvedValueOnce(respond(200, { balance: 7 }));
+            const api = new ApiClient(fetchMock, () => token);
+            const reauth = vi.fn(async () => {
+                token = 'fresh';
+                return true;
+            });
+            api.onUnauthorized(reauth);
+
+            await expect(api.wallet()).resolves.toEqual({ balance: 7 });
+
+            expect(reauth).toHaveBeenCalledTimes(1);
+            const [, retry] = fetchMock.mock.calls[1] as [string, RequestInit];
+            expect(new Headers(retry.headers).get('Authorization')).toBe('Bearer fresh');
+        });
+
+        it('shares one sign-in between calls that fail together and gives up when it cannot sign in', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(respond(401, { title: 'Unauthorized' }));
+            const api = new ApiClient(fetchMock, () => 'old');
+            let resolve: (ok: boolean) => void = () => {};
+            const reauth = vi.fn(() => new Promise<boolean>((r) => (resolve = r)));
+            api.onUnauthorized(reauth);
+
+            const first = api.wallet();
+            const second = api.friends();
+            await new Promise((r) => setTimeout(r, 0));
+            expect(reauth).toHaveBeenCalledTimes(1);
+            resolve(false);
+
+            await expect(first).rejects.toMatchObject({ status: 401 });
+            await expect(second).rejects.toMatchObject({ status: 401 });
+            // Two originals, no retries: a failed sign-in is not worth repeating the calls.
+            expect(fetchMock).toHaveBeenCalledTimes(2);
+        });
+
+        it('never tries to sign in again from the sign-in calls themselves', async () => {
+            const fetchMock = vi.fn().mockResolvedValue(respond(401, { title: 'Unauthorized' }));
+            const api = new ApiClient(fetchMock, () => undefined);
+            const reauth = vi.fn(async () => true);
+            api.onUnauthorized(reauth);
+
+            await expect(api.telegramSignIn('data')).rejects.toMatchObject({ status: 401 });
+            expect(reauth).not.toHaveBeenCalled();
+        });
+    });
 });

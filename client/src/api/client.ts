@@ -52,9 +52,34 @@ export class ApiClient {
     private readonly token: () => string | undefined;
     private offsetMs = 0;
 
+    /** Signs the player in again after a 401; resolves false when that is impossible (no Telegram, or refused). */
+    private reauthenticate: (() => Promise<boolean>) | undefined;
+    private reauthenticating: Promise<boolean> | undefined;
+
     constructor(fetchImpl: FetchLike, token: () => string | undefined) {
         this.fetchImpl = fetchImpl;
         this.token = token;
+    }
+
+    /**
+     * A token outlives nothing: it expires after a couple of hours while a Mini App left open in Telegram lives on.
+     * With a handler installed, the first 401 of any call signs in again (once, shared by calls failing together)
+     * and the call is retried with the new token; the sign-in calls themselves are never retried this way.
+     */
+    onUnauthorized(handler: () => Promise<boolean>): void {
+        this.reauthenticate = handler;
+    }
+
+    private signInAgain(): Promise<boolean> {
+        if (!this.reauthenticate) {
+            return Promise.resolve(false);
+        }
+        this.reauthenticating ??= this.reauthenticate()
+            .catch(() => false)
+            .finally(() => {
+                this.reauthenticating = undefined;
+            });
+        return this.reauthenticating;
     }
 
     passwordLogin(username: string, password: string): Promise<AuthResponse> {
@@ -239,7 +264,12 @@ export class ApiClient {
         serverOffset.value = this.offsetMs;
     }
 
-    private async request<T>(method: 'GET' | 'POST' | 'DELETE', path: string, body?: unknown): Promise<T> {
+    private async request<T>(
+        method: 'GET' | 'POST' | 'DELETE',
+        path: string,
+        body?: unknown,
+        retried = false,
+    ): Promise<T> {
         const headers = this.authHeaders();
         headers.set('Accept', 'application/json');
         const init: RequestInit = { method, headers };
@@ -257,6 +287,9 @@ export class ApiClient {
         // Any answer, an error status included, means the server is reachable.
         reportRequest(true);
         this.measureClock(response);
+        if (response.status === 401 && !retried && !path.startsWith('/auth/') && (await this.signInAgain())) {
+            return this.request(method, path, body, true);
+        }
         if (!response.ok) {
             throw new ApiError(response.status, await problemOf(response));
         }

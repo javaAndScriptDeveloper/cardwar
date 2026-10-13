@@ -33,6 +33,15 @@ const api = new ApiClient(
     (input, init) => fetch(input, init),
     () => session.token(),
 );
+// Inside Telegram a fresh sign-in costs one request, so an expired token mid-session just renews itself.
+api.onUnauthorized(() =>
+    telegram.inTelegram
+        ? session.signInWithTelegram(api, telegram).then(
+              () => true,
+              () => false,
+          )
+        : Promise.resolve(false),
+);
 // A named-app link hands the invite over as start_param; the bot's Join button and the dev shim use ?invite=.
 const invite = telegram.startParam ?? new URLSearchParams(window.location.search).get('invite') ?? undefined;
 const links = linkConfigFromEnv(window.location.origin);
