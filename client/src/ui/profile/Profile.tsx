@@ -83,15 +83,17 @@ export function Profile({ player, api, onOpenSettings }: Props) {
 
     return (
         <section class="lobby" data-testid="profile-screen">
-            <header class="lobby-header">
-                <Avatar name={name} photoUrl={player.photoUrl} size={56} data-testid="profile-avatar" />
-                <div>
-                    <h1>{name}</h1>
-                    {player.handle && <p class="notice">@{player.handle}</p>}
-                    {progress && <RankBadge progress={progress} />}
-                </div>
-            </header>
-            {progress && <XpBar progress={progress} />}
+            <div class="panel profile-hero">
+                <header class="lobby-header">
+                    <Avatar name={name} photoUrl={player.photoUrl} size={64} data-testid="profile-avatar" />
+                    <div>
+                        <h1>{name}</h1>
+                        {player.handle && <p class="notice">@{player.handle}</p>}
+                        {progress && <RankBadge progress={progress} />}
+                    </div>
+                </header>
+                {progress && <XpBar progress={progress} />}
+            </div>
             <div class="stats">
                 <div class="stat">
                     <span class="value" data-testid="stat-games">

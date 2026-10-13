@@ -57,26 +57,28 @@ export function DailyBonus({ bonus, onClaim, onDue, now = Date.now }: Props) {
             data-streak={bonus.streakDay}
         >
             <div class="row">
-                <span class="title">{t('lobby.bonus.title')}</span>
-                <span class="notice">{t('lobby.bonus.day', { n: bonus.streakDay })}</span>
+                <span class="mission-text">
+                    <span class="title">{t('lobby.bonus.title')}</span>
+                    <span class="notice">{t('lobby.bonus.day', { n: bonus.streakDay })}</span>
+                </span>
+                <Button
+                    variant={bonus.available ? 'primary' : 'ghost'}
+                    busy={busy}
+                    disabled={!bonus.available}
+                    onClick={() => void claim()}
+                    data-testid="claim-bonus"
+                >
+                    {bonus.available ? (
+                        <>
+                            {t('lobby.bonus.claim')} <CoinAmount amount={bonus.amount} signed />
+                        </>
+                    ) : (
+                        <span data-testid="bonus-countdown">
+                            {t('lobby.bonus.next', { time: countdown(remaining) })}
+                        </span>
+                    )}
+                </Button>
             </div>
-            <Button
-                variant={bonus.available ? 'primary' : 'secondary'}
-                busy={busy}
-                disabled={!bonus.available}
-                onClick={() => void claim()}
-                data-testid="claim-bonus"
-            >
-                {bonus.available ? (
-                    <>
-                        {t('lobby.bonus.claim')} <CoinAmount amount={bonus.amount} signed />
-                    </>
-                ) : (
-                    <span data-testid="bonus-countdown">
-                        {t('lobby.bonus.next', { time: countdown(remaining) })}
-                    </span>
-                )}
-            </Button>
         </div>
     );
 }

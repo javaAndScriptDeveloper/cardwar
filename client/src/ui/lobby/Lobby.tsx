@@ -63,12 +63,8 @@ export function Lobby({
 
     return (
         <section class="lobby" data-testid="lobby-screen">
-            <header class="lobby-header">
-                <Avatar name={name} photoUrl={player.photoUrl} size={48} data-testid="lobby-avatar" />
-                <div>
-                    <h1>{t('lobby.greeting', { name })}</h1>
-                    <p class="notice">{t('lobby.tagline')}</p>
-                </div>
+            <header class="brand-strip" data-testid="brand-strip">
+                <span class="wordmark">{t('app.title')}</span>
                 {wallet && (
                     <span
                         class="balance-chip"
@@ -80,26 +76,20 @@ export function Lobby({
                     </span>
                 )}
             </header>
+            <div class="greeting">
+                <Avatar name={name} photoUrl={player.photoUrl} size={48} data-testid="lobby-avatar" />
+                <div>
+                    <h1>{t('lobby.greeting', { name })}</h1>
+                    <p class="notice">{t('lobby.tagline')}</p>
+                </div>
+            </div>
             {progress && <StreakChip progress={progress} />}
             {error && (
                 <p class="error" role="alert">
                     {error}
                 </p>
             )}
-            <Button
-                variant="primary"
-                size="lg"
-                busy={creating}
-                disabled={busy}
-                onClick={onInvite}
-                data-testid="invite"
-            >
-                {t('lobby.invite')}
-            </Button>
-            {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
-            {missions && onClaimMission && <Missions missions={missions} onClaim={onClaimMission} />}
-            {drop && onOpenShop && <DropTeaser drop={drop} onOpenShop={onOpenShop} />}
-            <div class="panel quick-match">
+            <div class="panel play-panel" data-testid="play-panel">
                 <Button
                     variant="primary"
                     size="lg"
@@ -109,8 +99,21 @@ export function Lobby({
                 >
                     {t('lobby.quickMatch')}
                 </Button>
+                <Button
+                    variant="secondary"
+                    size="lg"
+                    busy={creating}
+                    disabled={busy}
+                    onClick={onInvite}
+                    data-testid="invite"
+                >
+                    {t('lobby.invite')}
+                </Button>
                 <span class="notice">{t('lobby.quickMatchHint')}</span>
             </div>
+            {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
+            {missions && onClaimMission && <Missions missions={missions} onClaim={onClaimMission} />}
+            {drop && onOpenShop && <DropTeaser drop={drop} onOpenShop={onOpenShop} />}
             <JoinByCode busy={busy} onJoin={(code) => run(() => onJoin(code))()} />
             <ol class="how-to">
                 <li>{t('lobby.howTo1')}</li>
