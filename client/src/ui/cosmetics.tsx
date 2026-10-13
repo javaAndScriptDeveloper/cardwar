@@ -45,9 +45,24 @@ export function emoteCode(ref: string): string {
     return `emote-${ref}`;
 }
 
-/** A small card-back sample, for the shop and anywhere a back is shown without a card. */
+/**
+ * A small card-back sample, for the shop and anywhere a back is shown without a card. The classic back is the
+ * classic deck's own image (what a buyer gets by default); every other back is drawn in CSS.
+ */
 export function BackSwatch({ back }: { back: string }) {
     const ref = styleRef(back, 'classic');
+    if (ref === 'classic') {
+        return (
+            <img
+                class="card small"
+                src={`${import.meta.env.BASE_URL}cards/classic/back.svg`}
+                alt=""
+                draggable={false}
+                data-back={ref}
+                aria-hidden="true"
+            />
+        );
+    }
     return <span class={`card small card-back-style back-${ref}`} data-back={ref} aria-hidden="true" />;
 }
 
