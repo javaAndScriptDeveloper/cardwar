@@ -249,10 +249,11 @@ export function Table({
                 <span class="count">{view.hand.length}</span>
             </footer>
             <div class="hand" data-testid="hand" style={{ '--cards': view.hand.length }}>
-                {arrange(sortHand(view.hand, view.trumpSuit), layouts).map((card) => (
+                {arrange(sortHand(view.hand, view.trumpSuit), layouts).map((card, index) => (
                     <HandCard
                         key={cardId(card)}
                         card={card}
+                        index={index}
                         usable={isUsable(card)}
                         busy={busy}
                         swipe={swipe}
@@ -306,6 +307,8 @@ function Strikes({ side, count }: { side: 'you' | 'opponent'; count: number | un
 
 interface HandCardProps {
     card: Card;
+    /** Position in the hand, so the stylesheet can fan the cards (--i against the hand's --cards). */
+    index: number;
     usable: boolean;
     busy: boolean;
     swipe: boolean;
@@ -316,7 +319,7 @@ interface HandCardProps {
  * One card in the hand. A tap is a plain click (so keyboards and assistive tech work); with swipe on, dragging it
  * upward past the threshold plays it from pointer-up and the click the browser sends afterwards is swallowed.
  */
-function HandCard({ card, usable, busy, swipe, onPlay }: HandCardProps) {
+function HandCard({ card, index, usable, busy, swipe, onPlay }: HandCardProps) {
     const el = useRef<HTMLButtonElement>(null);
     const start = useRef<{ x: number; y: number } | null>(null);
     const moved = useRef(false);
@@ -377,6 +380,7 @@ function HandCard({ card, usable, busy, swipe, onPlay }: HandCardProps) {
         <button
             ref={el}
             class={`hand-card${usable ? ' usable' : ''}`}
+            style={{ '--i': index }}
             aria-label={cardLabel(card)}
             data-card={cardId(card)}
             data-playable={String(usable)}

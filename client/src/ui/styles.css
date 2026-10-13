@@ -749,8 +749,11 @@ button:disabled {
     display: block;
     width: 52px;
     aspect-ratio: 5 / 7;
-    border-radius: 6px;
+    border-radius: 7px;
     user-select: none;
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 25%),
+        0 4px 10px rgb(0 0 0 / 40%);
 }
 
 .card.small {
@@ -758,7 +761,8 @@ button:disabled {
 }
 
 .card.empty {
-    border: 2px dashed color-mix(in srgb, var(--hint) 50%, transparent);
+    border: 2px dashed rgb(255 255 255 / 35%);
+    box-shadow: none;
 }
 
 .duel {
@@ -822,7 +826,9 @@ button:disabled {
 }
 
 .you .name {
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8rem;
     color: var(--text);
 }
 
@@ -834,7 +840,9 @@ button:disabled {
 }
 
 .opponent .name {
-    font-weight: 600;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.8rem;
 }
 
 .strikes {
@@ -855,9 +863,10 @@ button:disabled {
 }
 
 .move-timer {
-    height: 6px;
+    height: 7px;
     border-radius: 999px;
-    background: var(--surface);
+    background: var(--ink);
+    border: 1px solid var(--line);
     overflow: hidden;
 }
 
@@ -869,7 +878,8 @@ button:disabled {
 }
 
 .move-timer.you .move-timer-fill {
-    background: var(--accent);
+    background: linear-gradient(90deg, var(--gold-deep), var(--gold-light));
+    box-shadow: 0 0 10px rgb(242 193 78 / 55%);
 }
 
 .move-timer.urgent .move-timer-fill {
@@ -897,11 +907,15 @@ button:disabled {
 }
 
 .count {
-    font-size: 0.8rem;
-    padding: 2px 8px;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 9px;
     border-radius: 999px;
-    background: var(--surface);
-    color: var(--hint);
+    background: rgb(0 0 0 / 35%);
+    border: 1px solid var(--line-strong);
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
 }
 
 .fan {
@@ -913,19 +927,65 @@ button:disabled {
     margin-left: -26px;
 }
 
+/*
+ * The felt: a lit centre falling to a dark edge, a fine weave, and a rim of dark wood with a gold bead, drawn as
+ * shadow rings so a table style (`.felt.table-<ref>`) only has to supply the cloth.
+ */
 .felt {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    margin: 6px 6px 8px;
     padding: 12px;
     border-radius: var(--radius-l);
-    background: radial-gradient(circle at 50% 40%, var(--felt-glow), var(--felt));
+    background: radial-gradient(ellipse 80% 70% at 50% 40%, var(--felt-glow), var(--felt) 70%, #103b28);
     box-shadow:
-        inset 0 0 60px rgb(0 0 0 / 35%),
+        inset 0 0 70px rgb(0 0 0 / 45%),
+        inset 0 1px 0 rgb(255 255 255 / 10%),
+        0 0 0 2px rgb(242 193 78 / 55%),
+        0 0 0 7px var(--felt-rim),
+        0 0 0 8px rgb(0 0 0 / 55%),
         var(--shadow);
     color: #e9f5ee;
     min-height: 220px;
+}
+
+.felt::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background:
+        repeating-linear-gradient(45deg, rgb(255 255 255 / 2.5%) 0 1px, transparent 1px 4px),
+        repeating-linear-gradient(-45deg, rgb(0 0 0 / 3%) 0 1px, transparent 1px 4px);
+    pointer-events: none;
+}
+
+.felt > * {
+    position: relative;
+}
+
+/* A ghost of the brand in the cloth, as a casino weaves its name into the baize; it fades under the first pair. */
+.pairs::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 46%;
+    aspect-ratio: 1;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23fff' d='M50 3 C68 25 96 40 96 61 C96 75 86 83 74 83 C66 83 59 79 55 72 C56 83 61 90 69 96 L31 96 C39 90 44 83 45 72 C41 79 34 83 26 83 C14 83 4 75 4 61 C4 40 32 25 50 3 Z'/%3E%3C/svg%3E")
+        center / contain no-repeat;
+    opacity: 0.07;
+    pointer-events: none;
+}
+
+.pairs {
+    position: relative;
+}
+
+.pairs:has(.pair)::before {
+    opacity: 0.035;
 }
 
 .deck {
@@ -957,32 +1017,52 @@ button:disabled {
     position: relative;
     padding: 0;
     background: none;
+    border: none;
+    box-shadow: none;
     border-radius: 8px;
     width: 52px;
     height: 90px;
 }
 
+.pair:active:not(:disabled) {
+    transform: none;
+}
+
 .pair .defence {
     position: absolute;
-    left: 12px;
-    top: 16px;
-    transform: rotate(8deg);
-    box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+    left: 14px;
+    top: 18px;
+    transform: rotate(10deg);
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 25%),
+        -2px 6px 12px rgb(0 0 0 / 50%);
 }
 
 .pair.selected {
-    outline: 3px solid #ffd54a;
+    outline: 3px solid var(--gold);
     outline-offset: 2px;
+    filter: drop-shadow(0 0 10px rgb(242 193 78 / 60%));
 }
 
 .status {
     margin: 0 auto;
-    padding: 6px 14px;
+    padding: 7px 16px;
     border-radius: 999px;
-    background: var(--surface-2);
+    background: linear-gradient(180deg, var(--surface-3), var(--surface-2));
+    border: 1px solid var(--line-strong);
+    box-shadow: var(--shadow-s);
     text-align: center;
-    font-weight: 600;
+    font-weight: 700;
     font-size: var(--font-m);
+}
+
+/* It is your move: the pill picks up the gold. */
+.status[data-state='your-attack'],
+.status[data-state='throw-in'],
+.status[data-state='defend'] {
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+    color: var(--gold-light);
+    box-shadow: var(--glow-gold);
 }
 
 .actions {
@@ -1020,7 +1100,18 @@ button:disabled {
     min-width: 0;
     padding: 0;
     background: none;
+    border: none;
+    box-shadow: none;
     border-radius: 8px;
+    /*
+     * A gentle fan: each card turns a little about its own centre, the middle one standing straight. The turn is
+     * capped so the end cards of a big hand widen by a few pixels at most and the whole hand still fits the screen
+     * (the E2E measures that).
+     */
+    --tilt: clamp(-5deg, (var(--i, 0) - (var(--cards, 1) - 1) / 2) * 1.5deg, 5deg);
+    --lift: 0px;
+    transform: rotate(var(--tilt)) translateY(var(--lift));
+    transform-origin: 50% 50%;
     transition: transform 120ms;
 }
 
@@ -1031,11 +1122,24 @@ button:disabled {
 .hand-card .card {
     width: var(--hand-card-width);
     max-width: none;
-    box-shadow: -1px 2px 6px rgb(0 0 0 / 30%);
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 25%),
+        -3px 4px 10px rgb(0 0 0 / 45%);
 }
 
 .hand-card.usable {
-    transform: translateY(-10px);
+    --lift: -12px;
+}
+
+.hand-card.usable .card {
+    box-shadow:
+        0 1px 0 rgb(255 255 255 / 25%),
+        -3px 8px 16px rgb(0 0 0 / 50%),
+        0 0 0 2px rgb(242 193 78 / 70%);
+}
+
+.hand-card:active:not(:disabled) {
+    transform: rotate(var(--tilt)) translateY(var(--lift));
 }
 
 .result {
@@ -1046,7 +1150,10 @@ button:disabled {
     padding: 20vh var(--space-4) var(--space-5);
     margin: auto 0;
     border-radius: var(--radius-l);
-    background: var(--surface);
+    background:
+        radial-gradient(ellipse 90% 50% at 50% 0%, rgb(242 193 78 / 16%), transparent 70%),
+        linear-gradient(180deg, var(--surface-2), var(--surface) 60%);
+    border: 1px solid var(--line-strong);
     box-shadow: var(--shadow);
 }
 
@@ -1071,8 +1178,10 @@ button:disabled {
     max-width: calc(100vw - 32px);
     margin: 0;
     padding: 10px 14px;
-    border-radius: 10px;
-    background: rgb(20 20 24 / 90%);
+    border-radius: 12px;
+    background: rgb(20 23 32 / 92%);
+    border: 1px solid var(--line-strong);
+    backdrop-filter: blur(8px);
     color: #fff;
     font-size: 0.9rem;
     text-align: center;
