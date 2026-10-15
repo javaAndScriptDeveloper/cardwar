@@ -1,0 +1,272 @@
+[
+  {
+    "pack": "blogery",
+    "tag": "lachen",
+    "trigger": "cw_lachen",
+    "name": "Лачен",
+    "role": "пише",
+    "colour": "#283593",
+    "rank": "SIX",
+    "cards": [
+      "SIX_OF_CLUBS",
+      "SIX_OF_DIAMONDS",
+      "SIX_OF_HEARTS",
+      "SIX_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "ramina",
+    "trigger": "cw_ramina",
+    "name": "Раміна",
+    "role": "контент",
+    "colour": "#ad1457",
+    "rank": "SEVEN",
+    "cards": [
+      "SEVEN_OF_CLUBS",
+      "SEVEN_OF_DIAMONDS",
+      "SEVEN_OF_HEARTS",
+      "SEVEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "durnev",
+    "trigger": "cw_durnev",
+    "name": "Дурнєв",
+    "role": "дивиться",
+    "colour": "#4527a0",
+    "rank": "EIGHT",
+    "cards": [
+      "EIGHT_OF_CLUBS",
+      "EIGHT_OF_DIAMONDS",
+      "EIGHT_OF_HEARTS",
+      "EIGHT_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "sternenko",
+    "trigger": "cw_sternenko",
+    "name": "Стерненко",
+    "role": "дрони",
+    "colour": "#00695c",
+    "rank": "NINE",
+    "cards": [
+      "NINE_OF_CLUBS",
+      "NINE_OF_DIAMONDS",
+      "NINE_OF_HEARTS",
+      "NINE_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "prytula",
+    "trigger": "cw_prytula",
+    "name": "Притула",
+    "role": "збір",
+    "colour": "#ef6c00",
+    "rank": "TEN",
+    "cards": [
+      "TEN_OF_CLUBS",
+      "TEN_OF_DIAMONDS",
+      "TEN_OF_HEARTS",
+      "TEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "petya",
+    "trigger": "cw_petya",
+    "name": "MC Петя",
+    "role": "реп",
+    "colour": "#212121",
+    "rank": "JACK",
+    "cards": [
+      "JACK_OF_CLUBS",
+      "JACK_OF_DIAMONDS",
+      "JACK_OF_HEARTS",
+      "JACK_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "nikitiuk",
+    "trigger": "cw_nikitiuk",
+    "name": "Леся Нікітюк",
+    "role": "хто зверху",
+    "colour": "#c62828",
+    "rank": "QUEEN",
+    "cards": [
+      "QUEEN_OF_CLUBS",
+      "QUEEN_OF_DIAMONDS",
+      "QUEEN_OF_HEARTS",
+      "QUEEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "horokhovskyi",
+    "trigger": "cw_horokhovskyi",
+    "name": "Гороховський",
+    "role": "банк",
+    "colour": "#37474f",
+    "rank": "KING",
+    "cards": [
+      "KING_OF_CLUBS",
+      "KING_OF_DIAMONDS",
+      "KING_OF_HEARTS",
+      "KING_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "blogery",
+    "tag": "usyk",
+    "trigger": "cw_usyk",
+    "name": "Усик",
+    "role": "I'm very feel",
+    "colour": "#f9a825",
+    "rank": "ACE",
+    "cards": [
+      "ACE_OF_CLUBS",
+      "ACE_OF_DIAMONDS",
+      "ACE_OF_HEARTS",
+      "ACE_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "bezuhla",
+    "trigger": "cw_bezuhla",
+    "name": "Безугла",
+    "role": "народна депутатка",
+    "colour": "#7b1fa2",
+    "rank": "SIX",
+    "cards": [
+      "SIX_OF_CLUBS",
+      "SIX_OF_DIAMONDS",
+      "SIX_OF_HEARTS",
+      "SIX_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "arakhamia",
+    "trigger": "cw_arakhamia",
+    "name": "Арахамія",
+    "role": "голова фракції",
+    "colour": "#00796b",
+    "rank": "SEVEN",
+    "cards": [
+      "SEVEN_OF_CLUBS",
+      "SEVEN_OF_DIAMONDS",
+      "SEVEN_OF_HEARTS",
+      "SEVEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "honcharenko",
+    "trigger": "cw_honcharenko",
+    "name": "Гончаренко",
+    "role": "термінове звернення",
+    "colour": "#e65100",
+    "rank": "EIGHT",
+    "cards": [
+      "EIGHT_OF_CLUBS",
+      "EIGHT_OF_DIAMONDS",
+      "EIGHT_OF_HEARTS",
+      "EIGHT_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "tymoshenko",
+    "trigger": "cw_tymoshenko",
+    "name": "Тимошенко",
+    "role": "коса",
+    "colour": "#c2185b",
+    "rank": "NINE",
+    "cards": [
+      "NINE_OF_CLUBS",
+      "NINE_OF_DIAMONDS",
+      "NINE_OF_HEARTS",
+      "NINE_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "klychko",
+    "trigger": "cw_klychko",
+    "name": "Кличко",
+    "role": "мер",
+    "colour": "#1565c0",
+    "rank": "TEN",
+    "cards": [
+      "TEN_OF_CLUBS",
+      "TEN_OF_DIAMONDS",
+      "TEN_OF_HEARTS",
+      "TEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "poroshenko",
+    "trigger": "cw_poroshenko",
+    "name": "Порошенко",
+    "role": "армія, мова, віра",
+    "colour": "#b71c1c",
+    "rank": "JACK",
+    "cards": [
+      "JACK_OF_CLUBS",
+      "JACK_OF_DIAMONDS",
+      "JACK_OF_HEARTS",
+      "JACK_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "yermak",
+    "trigger": "cw_yermak",
+    "name": "Єрмак",
+    "role": "офіс",
+    "colour": "#37474f",
+    "rank": "QUEEN",
+    "cards": [
+      "QUEEN_OF_CLUBS",
+      "QUEEN_OF_DIAMONDS",
+      "QUEEN_OF_HEARTS",
+      "QUEEN_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "zaluzhnyi",
+    "trigger": "cw_zaluzhnyi",
+    "name": "Залужний",
+    "role": "залізний генерал",
+    "colour": "#556b2f",
+    "rank": "KING",
+    "cards": [
+      "KING_OF_CLUBS",
+      "KING_OF_DIAMONDS",
+      "KING_OF_HEARTS",
+      "KING_OF_SPADES"
+    ]
+  },
+  {
+    "pack": "sluhy-narodu",
+    "tag": "zelenskyi",
+    "trigger": "cw_zelenskyi",
+    "name": "Зеленський",
+    "role": "президент",
+    "colour": "#1b5e20",
+    "rank": "ACE",
+    "cards": [
+      "ACE_OF_CLUBS",
+      "ACE_OF_DIAMONDS",
+      "ACE_OF_HEARTS",
+      "ACE_OF_SPADES"
+    ]
+  }
+]

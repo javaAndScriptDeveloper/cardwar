@@ -1,0 +1,12 @@
+# Training photos, trained LoRAs and renders encode real people's likeness and the photos' copyright: they stay on
+# the owner's machine and the RunPod volume, never in this public repository.
+dataset/
+out/
+pod/configs/
+*.safetensors
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.heic
+__pycache__/

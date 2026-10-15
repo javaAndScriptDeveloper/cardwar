@@ -1,0 +1,68 @@
+{
+  "1": {
+    "class_type": "UNETLoader",
+    "_meta": { "title": "Flux dev (fp8)" },
+    "inputs": { "unet_name": "flux1-dev.safetensors", "weight_dtype": "fp8_e4m3fn" }
+  },
+  "2": {
+    "class_type": "DualCLIPLoader",
+    "_meta": { "title": "text encoders" },
+    "inputs": { "clip_name1": "t5xxl_fp8_e4m3fn.safetensors", "clip_name2": "clip_l.safetensors", "type": "flux" }
+  },
+  "3": {
+    "class_type": "VAELoader",
+    "_meta": { "title": "vae" },
+    "inputs": { "vae_name": "ae.safetensors" }
+  },
+  "4": {
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": { "title": "persona lora" },
+    "inputs": { "model": ["1", 0], "lora_name": "REPLACED_BY_RENDER.safetensors", "strength_model": 0.9 }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "positive" },
+    "inputs": { "clip": ["2", 0], "text": "REPLACED_BY_RENDER" }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "_meta": { "title": "negative" },
+    "inputs": { "clip": ["2", 0], "text": "" }
+  },
+  "7": {
+    "class_type": "FluxGuidance",
+    "_meta": { "title": "guidance" },
+    "inputs": { "conditioning": ["5", 0], "guidance": 3.5 }
+  },
+  "8": {
+    "class_type": "EmptySD3LatentImage",
+    "_meta": { "title": "card canvas 5:7" },
+    "inputs": { "width": 480, "height": 672, "batch_size": 1 }
+  },
+  "9": {
+    "class_type": "KSampler",
+    "_meta": { "title": "sampler" },
+    "inputs": {
+      "model": ["4", 0],
+      "positive": ["7", 0],
+      "negative": ["6", 0],
+      "latent_image": ["8", 0],
+      "seed": 0,
+      "steps": 24,
+      "cfg": 1.0,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 1.0
+    }
+  },
+  "10": {
+    "class_type": "VAEDecode",
+    "_meta": { "title": "decode" },
+    "inputs": { "samples": ["9", 0], "vae": ["3", 0] }
+  },
+  "11": {
+    "class_type": "SaveImage",
+    "_meta": { "title": "save" },
+    "inputs": { "images": ["10", 0], "filename_prefix": "REPLACED_BY_RENDER" }
+  }
+}

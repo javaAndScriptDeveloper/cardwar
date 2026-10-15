@@ -74,6 +74,10 @@ jobs:
         working-directory: .
         run: node --test observability/grafana/build.test.mjs
 
+      - name: LoRA art pipeline helpers match the rosters
+        working-directory: .
+        run: node --test art/lora/personas.test.mjs && python3 -m unittest discover -s art/lora/pod
+
   # The whole stack as `make up` builds it (nginx with the client, app, Postgres, Redis), then the API smoke test and
   # two browsers playing a duel through the Mini App. Slow by nature; it runs beside the build, not inside it.
   client-e2e:
