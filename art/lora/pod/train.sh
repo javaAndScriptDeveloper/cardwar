@@ -13,6 +13,12 @@ WORK=${WORK:-/workspace}
 TOOLKIT=$WORK/ai-toolkit
 LORAS=$WORK/ComfyUI/models/loras
 
+# ai-toolkit downloads the gated FLUX.1-dev diffusers repo itself, so it needs the same token setup.sh used.
+if [[ -z "${HF_TOKEN:-}" && -r $WORK/.hf_token ]]; then
+    HF_TOKEN=$(tr -d '[:space:]' < "$WORK/.hf_token")
+    export HF_TOKEN
+fi
+
 if [[ $# -ne 1 ]]; then
     echo "usage: train.sh <pack>-<tag> | all" >&2
     exit 2
