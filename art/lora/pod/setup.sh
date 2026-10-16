@@ -11,6 +11,8 @@ set -euo pipefail
 WORK=${WORK:-/workspace}
 COMFY=$WORK/ComfyUI
 TOOLKIT=$WORK/ai-toolkit
+# Ubuntu 24.04 images mark the system Python as externally managed; the pod is disposable, so pip may use it.
+export PIP_BREAK_SYSTEM_PACKAGES=1
 
 # The token may also sit in a 600 file the owner wrote through the RunPod web terminal, so nobody has to paste it
 # into a chat or a shell history.
