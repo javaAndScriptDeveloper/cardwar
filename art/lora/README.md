@@ -42,6 +42,12 @@ art/lora/
 
 ### 0. Collect photos (laptop, no GPU)
 
+Photos live in the **private** repo `javaAndScriptDeveloper/cardwar-art-data`, cloned at `art/lora/dataset/`
+(this repo ignores that path): `git clone git@github.com:javaAndScriptDeveloper/cardwar-art-data art/lora/dataset`.
+It already holds `blogery/horokhovskyi` (30 captioned stills, provenance in `_raw/blogery/horokhovskyi/sources.tsv`).
+The harvest that produced it: image search for the name, download the originals, YuNet face detection to crop
+around the largest face at 2.4× its size, a visual pass to drop other people, overlays and near-duplicate series.
+
 For each persona, 15–25 photos into `art/lora/dataset/<pack>/<tag>/` (tags in `personas.json`, e.g.
 `dataset/blogery/lachen/`). Mix matters more than count: different angles, lighting, expressions, with and without
 glasses or hat if they wear them, no other faces in frame, face at least ~300 px tall. Skip heavy filters and group
