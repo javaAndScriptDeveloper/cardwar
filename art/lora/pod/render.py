@@ -56,14 +56,19 @@ def build_prompt(persona: dict, hint: str = "") -> str:
     return ", ".join(parts)
 
 
-def patch_workflow(workflow: dict, *, lora: str, prompt: str, seed: int, prefix: str) -> dict:
-    """A deep copy of the template with the four per-render fields filled in."""
+def patch_workflow(
+    workflow: dict, *, lora: str, prompt: str, seed: int, prefix: str, strength: float | None = None
+) -> dict:
+    """A deep copy of the template with the per-render fields filled in; the LoRA strength only when asked
+    (lower it when the style collapses into a photo, raise it when the face drifts)."""
     patched = copy.deepcopy(workflow)
     for node in patched.values():
         kind = node["class_type"]
         title = node.get("_meta", {}).get("title")
         if kind == "LoraLoaderModelOnly":
             node["inputs"]["lora_name"] = lora
+            if strength is not None:
+                node["inputs"]["strength_model"] = strength
         elif kind == "CLIPTextEncode" and title == "positive":
             node["inputs"]["text"] = prompt
         elif kind == "KSampler":
@@ -109,6 +114,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--variants", type=int, default=8)
     parser.add_argument("--hint", default="", help="extra prompt text, e.g. a prop")
     parser.add_argument("--seed", type=int, help="first seed; random when omitted")
+    parser.add_argument("--strength", type=float, help="LoRA strength override (template: 0.9)")
     parser.add_argument("--no-wait", action="store_true", help="queue and exit instead of waiting for the images")
     args = parser.parse_args(argv)
 
@@ -126,7 +132,12 @@ def main(argv: list[str]) -> int:
             seed = first_seed + i
             prefix = f"cardwar/{persona['pack']}/{persona['tag']}_{seed}"
             try:
-                queue(args.server, patch_workflow(template, lora=lora, prompt=prompt, seed=seed, prefix=prefix))
+                queue(
+                    args.server,
+                    patch_workflow(
+                        template, lora=lora, prompt=prompt, seed=seed, prefix=prefix, strength=args.strength
+                    ),
+                )
             except urllib.error.URLError as error:
                 print(f"ComfyUI at {args.server} refused the job: {error}", file=sys.stderr)
                 return 1

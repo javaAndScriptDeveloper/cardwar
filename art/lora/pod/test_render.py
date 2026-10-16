@@ -64,6 +64,14 @@ class WorkflowTest(unittest.TestCase):
         save = next(n for n in nodes if n["class_type"] == "SaveImage")
         self.assertEqual(save["inputs"]["filename_prefix"], "x/y")
 
+    def test_patch_can_override_the_lora_strength(self):
+        patched = patch_workflow(self.workflow, lora="a", prompt="b", seed=1, prefix="c", strength=0.75)
+        lora = next(n for n in patched.values() if n["class_type"] == "LoraLoaderModelOnly")
+        self.assertEqual(lora["inputs"]["strength_model"], 0.75)
+        untouched = patch_workflow(self.workflow, lora="a", prompt="b", seed=1, prefix="c")
+        lora = next(n for n in untouched.values() if n["class_type"] == "LoraLoaderModelOnly")
+        self.assertEqual(lora["inputs"]["strength_model"], 0.9)
+
     def test_patch_does_not_mutate_the_template(self):
         before = json.dumps(self.workflow, sort_keys=True)
         patch_workflow(self.workflow, lora="a", prompt="b", seed=1, prefix="c")
