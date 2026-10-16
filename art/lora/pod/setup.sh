@@ -12,6 +12,12 @@ WORK=${WORK:-/workspace}
 COMFY=$WORK/ComfyUI
 TOOLKIT=$WORK/ai-toolkit
 
+# The token may also sit in a 600 file the owner wrote through the RunPod web terminal, so nobody has to paste it
+# into a chat or a shell history.
+if [[ -z "${HF_TOKEN:-}" && -r $WORK/.hf_token ]]; then
+    HF_TOKEN=$(tr -d '[:space:]' < "$WORK/.hf_token")
+    export HF_TOKEN
+fi
 if [[ -z "${HF_TOKEN:-}" ]]; then
     echo "HF_TOKEN is not set: Flux dev is gated, accept the licence on huggingface.co and export a read token" >&2
     exit 1
