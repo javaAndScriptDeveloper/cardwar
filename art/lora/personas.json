@@ -5,6 +5,7 @@
     "trigger": "cw_lachen",
     "name": "Лачен",
     "role": "пише",
+    "art": null,
     "colour": "#283593",
     "rank": "SIX",
     "cards": [
@@ -20,6 +21,7 @@
     "trigger": "cw_ramina",
     "name": "Раміна",
     "role": "контент",
+    "art": null,
     "colour": "#ad1457",
     "rank": "SEVEN",
     "cards": [
@@ -35,6 +37,7 @@
     "trigger": "cw_durnev",
     "name": "Дурнєв",
     "role": "дивиться",
+    "art": null,
     "colour": "#4527a0",
     "rank": "EIGHT",
     "cards": [
@@ -50,6 +53,7 @@
     "trigger": "cw_sternenko",
     "name": "Стерненко",
     "role": "дрони",
+    "art": null,
     "colour": "#00695c",
     "rank": "NINE",
     "cards": [
@@ -65,6 +69,7 @@
     "trigger": "cw_prytula",
     "name": "Притула",
     "role": "збір",
+    "art": null,
     "colour": "#ef6c00",
     "rank": "TEN",
     "cards": [
@@ -80,6 +85,7 @@
     "trigger": "cw_petya",
     "name": "MC Петя",
     "role": "реп",
+    "art": null,
     "colour": "#212121",
     "rank": "JACK",
     "cards": [
@@ -95,6 +101,7 @@
     "trigger": "cw_nikitiuk",
     "name": "Леся Нікітюк",
     "role": "хто зверху",
+    "art": null,
     "colour": "#c62828",
     "rank": "QUEEN",
     "cards": [
@@ -110,6 +117,7 @@
     "trigger": "cw_horokhovskyi",
     "name": "Гороховський",
     "role": "банк",
+    "art": "a strong, confident green goblin warrior-banker with a short snub nose and a sharp grin, muscular, in a sleek black suit jacket over leather armour, a small black cat with white paws sitting on his shoulder, a plate of fresh yellow lemons in the foreground",
     "colour": "#37474f",
     "rank": "KING",
     "cards": [
@@ -125,6 +133,7 @@
     "trigger": "cw_usyk",
     "name": "Усик",
     "role": "I'm very feel",
+    "art": null,
     "colour": "#f9a825",
     "rank": "ACE",
     "cards": [
@@ -140,6 +149,7 @@
     "trigger": "cw_bezuhla",
     "name": "Безугла",
     "role": "народна депутатка",
+    "art": null,
     "colour": "#7b1fa2",
     "rank": "SIX",
     "cards": [
@@ -155,6 +165,7 @@
     "trigger": "cw_arakhamia",
     "name": "Арахамія",
     "role": "голова фракції",
+    "art": null,
     "colour": "#00796b",
     "rank": "SEVEN",
     "cards": [
@@ -170,6 +181,7 @@
     "trigger": "cw_honcharenko",
     "name": "Гончаренко",
     "role": "термінове звернення",
+    "art": null,
     "colour": "#e65100",
     "rank": "EIGHT",
     "cards": [
@@ -185,6 +197,7 @@
     "trigger": "cw_tymoshenko",
     "name": "Тимошенко",
     "role": "коса",
+    "art": null,
     "colour": "#c2185b",
     "rank": "NINE",
     "cards": [
@@ -200,6 +213,7 @@
     "trigger": "cw_klychko",
     "name": "Кличко",
     "role": "мер",
+    "art": null,
     "colour": "#1565c0",
     "rank": "TEN",
     "cards": [
@@ -215,6 +229,7 @@
     "trigger": "cw_poroshenko",
     "name": "Порошенко",
     "role": "армія, мова, віра",
+    "art": null,
     "colour": "#b71c1c",
     "rank": "JACK",
     "cards": [
@@ -230,6 +245,7 @@
     "trigger": "cw_yermak",
     "name": "Єрмак",
     "role": "офіс",
+    "art": null,
     "colour": "#37474f",
     "rank": "QUEEN",
     "cards": [
@@ -245,6 +261,7 @@
     "trigger": "cw_zaluzhnyi",
     "name": "Залужний",
     "role": "залізний генерал",
+    "art": null,
     "colour": "#556b2f",
     "rank": "KING",
     "cards": [
@@ -260,6 +277,7 @@
     "trigger": "cw_zelenskyi",
     "name": "Зеленський",
     "role": "президент",
+    "art": null,
     "colour": "#1b5e20",
     "rank": "ACE",
     "cards": [

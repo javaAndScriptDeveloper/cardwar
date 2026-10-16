@@ -24,12 +24,20 @@ PERSONA = {
 
 
 class PromptTest(unittest.TestCase):
-    def test_prompt_leads_with_the_trigger_and_asks_for_a_caricature(self):
+    def test_prompt_leads_with_the_trigger_and_asks_for_painted_card_art(self):
         prompt = build_prompt(PERSONA)
         self.assertTrue(prompt.startswith("cw_lachen"))
         self.assertIn("caricature", prompt)
+        self.assertIn("hearthstone style card art", prompt)
         self.assertIn(STYLE, prompt)
         self.assertNotIn("photo", prompt.replace("photorealistic", ""))
+
+    def test_persona_art_role_replaces_the_generic_subject_and_keeps_the_trigger(self):
+        persona = {**PERSONA, "art": "a strong green goblin warrior with a black cat on his shoulder"}
+        prompt = build_prompt(persona)
+        self.assertIn("cw_lachen reimagined as a strong green goblin warrior with a black cat on his shoulder", prompt)
+        self.assertIn("recognisable face of cw_lachen", prompt)
+        self.assertNotIn("a caricature of cw_lachen", prompt)
 
     def test_prompt_carries_the_persona_colour_and_role_hint(self):
         prompt = build_prompt(PERSONA)

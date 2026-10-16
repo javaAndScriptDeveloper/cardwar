@@ -25,19 +25,28 @@ HERE = Path(__file__).parent
 PERSONAS = HERE.parent / "personas.json"
 WORKFLOW = HERE / "workflow-card.json"
 
-# The house style every pack shares. A caricature, never a photo: the card frame, name band and «САТИРА» stamp
-# are drawn by the poster generator later, so the portrait must come out as a clean bust on a plain background.
+# The house style every pack shares (owner's direction, 2026-10-17): painted collectible-card art, a friendly
+# caricature, never a photo. The card frame, name band and «САТИРА» stamp are drawn by the poster generator later,
+# so the portrait must come out as a bust against a dark, simple background that cuts out cleanly.
 STYLE = (
-    "flat vector caricature, exaggerated features, bold clean outlines, poster colours, halftone shading, "
-    "head and shoulders bust, centred, facing the viewer, plain solid background, no text, no letters, no logo"
+    "hearthstone style card art, painterly digital illustration, exaggerated friendly caricature, "
+    "dynamic head and shoulders bust, warm rim light, rich saturated colours, dark vignette background, "
+    "no text, no letters, no logo"
 )
 
 
 def build_prompt(persona: dict, hint: str = "") -> str:
-    """The trigger word first (that is what the LoRA keys on), then style, palette and the role for a prop idea."""
+    """The trigger word first (that is what the LoRA keys on), the persona's fantasy role when the roster has one,
+    then the shared style, the deck colour and the role for a prop idea."""
+    trigger = persona["trigger"]
+    subject = (
+        f"{trigger} reimagined as {persona['art']}, recognisable face of {trigger}"
+        if persona.get("art")
+        else f"a caricature of {trigger}"
+    )
     parts = [
-        persona["trigger"],
-        f"a caricature of {persona['trigger']}",
+        trigger,
+        subject,
         STYLE,
         f"background colour {persona['colour']}",
         f"character theme: {persona['role']}",

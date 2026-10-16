@@ -121,6 +121,8 @@ const personas = [
         colour: '#37474f',
         tag: 'horokhovskyi',
         look: { hair: 'short', glasses: 'round', clothes: 'suit' },
+        // Owner's art direction for the painted portrait (art/lora): a heroic goblin, short snub nose, no gold hoard.
+        art: 'a strong, confident green goblin warrior-banker with a short snub nose and a sharp grin, muscular, in a sleek black suit jacket over leather armour, a small black cat with white paws sitting on his shoulder, a plate of fresh yellow lemons in the foreground',
         quotes: {
             CLUBS: 'Мінус гроші. Плюс досвід.',
             DIAMONDS: 'Кіт схвалив. Кешбек — ні.',

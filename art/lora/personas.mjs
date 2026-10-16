@@ -26,6 +26,7 @@ export async function exportPersonas() {
         trigger: `cw_${persona.tag}`,
         name: persona.name,
         role: persona.role,
+        art: persona.art ?? null,
         colour: persona.colour,
         rank: persona.rank,
         cards: SUITS.map((suit) => `${persona.rank}_OF_${suit}`),
