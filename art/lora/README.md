@@ -148,6 +148,27 @@ Issue #97: the poster generator gets a `portrait` per persona (`art/lora/out/por
 in the face SVG as a data URI so faces stay self-contained), the spec §2 boundary is updated, the satire tests allow
 the embedded portrait. Until then the vector avatars stay.
 
+## Lessons from the first run (2026-10-17, Horokhovskyi)
+
+- **Deploy with a network volume** (80 GB, ~$6/month) mounted at `/workspace`. Without one, Stop erases the container
+  disk, so the only exit is Terminate and the next session re-downloads ~60 GB (25 min). With one, Stop/Start is a
+  minute and the LoRAs, models and renders stay.
+- Disk budget: ComfyUI's Flux files 30 GB + the trainer's own diffusers copy 34 GB + tools 10 GB. On an 80 GB
+  container disk without a volume the first run ran out of space mid-download; the scripts now delete the trainer
+  copy after training when space is short.
+- The owner writes the HF token to `/workspace/.hf_token` through the RunPod web terminal; `setup.sh` and `train.sh`
+  read it. The account must have clicked «Agree» on the FLUX.1-dev page, a valid token alone gives 403.
+- Terminate from inside the pod when the console is awkward:
+  `env $(tr "\0" "\n" < /proc/1/environ | grep ^RUNPOD_ | tr "\n" " ") runpodctl remove pod <pod-id>`.
+- RTX A6000 48 GB at $0.59/h was a better deal than the 4090 that day: training ~55 min for 1200 steps at 2.5 s/it,
+  renders 15 s each, ComfyUI could stay up while training.
+- Likeness was clear at step 300 with 30 varied stills; 1200 steps gave a solid LoRA (172 MB). Renders at strength
+  0.8–0.9 kept the face through a full goblin transformation.
+- Hearthstone-style output is full-bleed card art, not a bust to cut out: issue #97 places the painted image as the
+  card background with the name band and stamp over it; `cutout.py` stays for styles that want a transparent bust.
+- Keep renders in the private data repo (`renders/<pack>/<tag>/vN/`) and LoRAs as release assets there
+  (GitHub refuses plain files over 100 MB; releases take 2 GB).
+
 ## Troubleshooting
 
 | Symptom | Fix |
