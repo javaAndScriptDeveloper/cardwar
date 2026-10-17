@@ -6,6 +6,7 @@
     "name": "Лачен",
     "role": "пише",
     "art": null,
+    "altArt": null,
     "colour": "#283593",
     "rank": "SIX",
     "cards": [
@@ -23,6 +24,7 @@
     "name": "Раміна",
     "role": "контент",
     "art": null,
+    "altArt": null,
     "colour": "#ad1457",
     "rank": "SEVEN",
     "cards": [
@@ -40,6 +42,7 @@
     "name": "Дурнєв",
     "role": "дивиться",
     "art": "a smug couch critic in a plain black T-shirt sprawled on a sofa, squinting at a wall of floating glowing phone screens full of other people's selfie stories, bowl of popcorn in his lap, one eyebrow raised in judgement, retro TV glow and vinyl shelves behind him",
+    "altArt": "at a desk with a huge monitor full of phone stories, pointing and laughing, a microphone arm, studio lamps",
     "colour": "#4527a0",
     "rank": "EIGHT",
     "cards": [
@@ -56,7 +59,8 @@
     "trigger": "cw_sternenko",
     "name": "Стерненко",
     "role": "дрони",
-    "art": null,
+    "art": "launching a swarm of FPV drones from a wooden crate on a hilltop, goggles pushed up on his forehead, hoodie with a torn-off brand patch",
+    "altArt": "streaming from a courtroom defendant's bench with a ring light, finger pointed at the camera, supporters with flags behind him",
     "colour": "#00695c",
     "rank": "NINE",
     "cards": [
@@ -73,7 +77,8 @@
     "trigger": "cw_prytula",
     "name": "Притула",
     "role": "збір",
-    "art": null,
+    "art": "cradling a satellite like a watermelon, a drone under the other arm, a fundraiser thermometer filled past the top",
+    "altArt": "a TV host in a shiny suit with a big microphone on a talent-show stage, golden buzzer, confetti, cheeky grin",
     "colour": "#ef6c00",
     "rank": "TEN",
     "cards": [
@@ -91,6 +96,7 @@
     "name": "MC Петя",
     "role": "реп",
     "art": "a village-born rap MC in a black hoodie and dark sunglasses, oversized gold chain with army dog tags, gripping a golden microphone, a cow peeking over his shoulder and a basket of mushrooms at his side, pointing at the viewer like a recruiting poster, neon graffiti over a rural fence behind him",
+    "altArt": "in camouflage with a golden microphone instead of a rifle, a trench as his stage, muddy boots, dog tags",
     "colour": "#212121",
     "rank": "JACK",
     "cards": [
@@ -108,6 +114,7 @@
     "name": "Леся Нікітюк",
     "role": "хто зверху",
     "art": "a towering TV host with a huge laugh and a stage microphone, waving a shiny golden credit card, one foot in the door of a crowded yellow minibus, a travel suitcase plastered with stickers, confetti and studio spotlights behind her",
+    "altArt": "a tourist in a sun hat flipping a coin, a golden credit card in one hand and a hundred-dollar bill in the other, world landmarks behind her",
     "colour": "#c62828",
     "rank": "QUEEN",
     "cards": [
@@ -125,6 +132,7 @@
     "name": "Гороховський",
     "role": "банк",
     "art": "a strong, confident green goblin warrior-banker with a short snub nose and a sharp grin, muscular, in a sleek black suit jacket over leather armour, a small black cat with white paws sitting on his shoulder, a plate of fresh yellow lemons in the foreground",
+    "altArt": "a strong, confident green goblin with a short snub nose riding a giant black cat like a warhorse, a lemon as a lance, heroic grin",
     "colour": "#37474f",
     "rank": "KING",
     "cards": [
@@ -142,6 +150,7 @@
     "name": "Усик",
     "role": "I'm very feel",
     "art": null,
+    "altArt": null,
     "colour": "#f9a825",
     "rank": "ACE",
     "cards": [
@@ -159,6 +168,7 @@
     "name": "Безугла",
     "role": "народна депутатка",
     "art": "a provocative late-night queen of the parliament in a dramatic red gown with a jagged golden crown, smoky eye make-up and glossy lips, raising a glowing phone like a weapon at three in the morning, a crescent moon and a clock behind her, torn general's epaulettes scattered at her feet, bold confident smirk",
+    "altArt": "in a grey hoodie at three in the morning, face lit by a laptop, energy drink cans around her, posts flying out as paper planes",
     "colour": "#7b1fa2",
     "rank": "SIX",
     "cards": [
@@ -176,6 +186,7 @@
     "name": "Арахамія",
     "role": "голова фракції",
     "art": null,
+    "altArt": null,
     "colour": "#00796b",
     "rank": "SEVEN",
     "cards": [
@@ -193,6 +204,7 @@
     "name": "Гончаренко",
     "role": "термінове звернення",
     "art": "a hyperactive parliament streamer gripping a selfie stick and three ringing phones, a red flashing emergency siren strapped to his head, mouth open mid-urgent-announcement, notification icons swarming around him like bees, parliament chamber benches behind him",
+    "altArt": "sprinting out of the parliament doors with a phone held high, a trail of notification bubbles behind him, tie flying over his shoulder",
     "colour": "#e65100",
     "rank": "EIGHT",
     "cards": [
@@ -209,7 +221,8 @@
     "trigger": "cw_tymoshenko",
     "name": "Тимошенко",
     "role": "коса",
-    "art": null,
+    "art": "in a snow-white dress with her braid wound into a giant crown, a heart brooch, holding a gas valve wheel like a sceptre",
+    "altArt": "a hard hat over the braid, white suit with sleeves rolled up, construction site at night, blueprints in hand",
     "colour": "#c2185b",
     "rank": "NINE",
     "cards": [
@@ -227,6 +240,7 @@
     "name": "Кличко",
     "role": "мер",
     "art": "a heavyweight boxing champion in red gloves and a gold title belt, a brass Kyiv metro token on a chain round his neck, chestnut leaves and conkers swirling around him, a tangled scribble speech bubble above his puzzled face, a glass pedestrian bridge with a cracked panel and art deco facades of Khreshchatyk glowing behind him",
+    "altArt": "a mayor in a tailored coat shovelling snow on Khreshchatyk, cars buried to the roof, a hard hat on his head",
     "colour": "#1565c0",
     "rank": "TEN",
     "cards": [
@@ -244,6 +258,7 @@
     "name": "Порошенко",
     "role": "армія, мова, віра",
     "art": "a chocolate king on a cocoa throne, crown of golden candy wrappers, velvet cape trimmed with chocolate bars, a chocolate-bar sceptre, a tiny chocolate factory with smoking chimneys behind him, pralines and caramel rivers at his feet, satisfied grin",
+    "altArt": "on a stadium stage on one knee with a microphone, roaring stands and floodlights behind him",
     "colour": "#b71c1c",
     "rank": "JACK",
     "cards": [
@@ -261,6 +276,7 @@
     "name": "Єрмак",
     "role": "офіс",
     "art": "a grey eminence in a long dark overcoat, half in shadow, a red leather folder under his arm, pulling the strings of a row of tiny identical puppet officials, an untouched army helmet dangling from his elbow, dim palace corridor behind him",
+    "altArt": "in brand-new spotless camouflage with a still-shiny helmet, rolling a designer suitcase onto a train platform, a shovel under his arm, soldiers staring",
     "colour": "#37474f",
     "rank": "QUEEN",
     "cards": [
@@ -278,6 +294,7 @@
     "name": "Залужний",
     "role": "залізний генерал",
     "art": null,
+    "altArt": null,
     "colour": "#556b2f",
     "rank": "KING",
     "cards": [
@@ -295,6 +312,7 @@
     "name": "Зеленський",
     "role": "президент",
     "art": "a comedy-series president in his trademark olive khaki T-shirt with rolled sleeves, firing two uzi submachine guns with wild muzzle flashes, parliament chamber in chaos behind him, papers and chairs flying, manic grin",
+    "altArt": "a ballroom dancer in a shimmering black shirt mid high kick, his partner's hand in his, disco ball overhead, judges' paddles showing tens",
     "colour": "#1b5e20",
     "rank": "ACE",
     "cards": [
@@ -312,6 +330,7 @@
     "name": "Дантес",
     "role": "співає",
     "art": "a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, a cracked heart-shaped locket on a chain at his chest, candlelit gothic mansion and a full moon behind him",
+    "altArt": "a backpacker TV host with a golden credit card and a worn paper map, curly hair in the wind, airport departure board behind him",
     "colour": "#5d4037",
     "rank": null,
     "cards": [],
@@ -324,6 +343,7 @@
     "name": "Дорофєєва",
     "role": "співає",
     "art": "a daring pop diva in a sparkling sequin stage outfit, bold winged eyeliner and glossy lips, blowing a kiss at the camera, long dark wavy hair, rhinestone microphone in hand, neon stage lights and glitter behind her",
+    "altArt": "a 2010s pop video look, glitter and bubble-gum pink, oversized headphones, retro camcorder frame, playful wink",
     "colour": "#c2185b",
     "rank": null,
     "cards": [],
@@ -336,9 +356,75 @@
     "name": "Міндіч",
     "role": "бізнес",
     "art": "a grinning energy baron in a shiny suit with a little propeller whirring on his back, mid-flight escape, clutching a suitcase that leaks glowing lightning bolts and gold coins, everything he touches turning to gold, hugging a glowing power transformer, power lines and a spinning electricity meter behind him",
+    "altArt": "whispering into an old reel-to-reel tape recorder in a dim back office, tapes spilling from the shelves, curtains drawn",
     "colour": "#1b5e20",
     "rank": null,
     "cards": [],
     "generated": "2026-10-18"
+  },
+  {
+    "pack": "extra",
+    "tag": "arestovych",
+    "trigger": "cw_arestovych",
+    "name": "Арестович",
+    "role": "2–3 тижні",
+    "art": "pointing at a wall calendar full of crossed-out weeks, a crystal ball on the desk, soothing smile",
+    "altArt": "lying on a therapist's couch himself with a laptop stream, a candle, a hoodie, thought clouds above him",
+    "colour": "#37474f",
+    "rank": null,
+    "cards": [],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "klopotenko",
+    "trigger": "cw_klopotenko",
+    "name": "Клопотенко",
+    "role": "борщ",
+    "art": "a borscht crusader in beetroot-red armour with a ladle for a sword, a steaming cauldron of borscht, curls bursting out of the helmet",
+    "altArt": "in an apron in a school cafeteria serving kids a mountain of colourful plates, flinging away a grey Soviet cutlet",
+    "colour": "#b71c1c",
+    "rank": null,
+    "cards": [],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "gordon",
+    "trigger": "cw_gordon",
+    "name": "Гордон",
+    "role": "питає",
+    "art": "in his interview chair with a stack of microphones, a clock showing five hours, the guest asleep in the other chair",
+    "altArt": "an oracle with a turban over his glasses, a crystal ball showing a calendar, scrolls of predictions unrolling to the floor",
+    "colour": "#455a64",
+    "rank": null,
+    "cards": [],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "mudryk",
+    "trigger": "cw_mudryk",
+    "name": "Мудрик",
+    "role": "футбол",
+    "art": "sprinting in a blue football kit with a giant price tag flapping on his back, motion blur, London skyline",
+    "altArt": "alone on a long empty bench in a blue tracksuit scrolling a phone, cobwebs on the ball, rain",
+    "colour": "#1565c0",
+    "rank": null,
+    "cards": [],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "kolomoisky",
+    "trigger": "cw_kolomoisky",
+    "name": "Коломойський",
+    "role": "акули",
+    "art": "feet up on a desk in front of a huge aquarium with sharks, a green suit, a cigar, 1990s office",
+    "altArt": "on a prison bunk in a tracksuit with a thick book, a tiny shark in a jar on the windowsill, bars with sunlight",
+    "colour": "#2e7d32",
+    "rank": null,
+    "cards": [],
+    "generated": null
   }
 ]

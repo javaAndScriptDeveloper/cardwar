@@ -39,6 +39,14 @@ class PromptTest(unittest.TestCase):
         self.assertIn("recognisable face of cw_lachen", prompt)
         self.assertNotIn("a caricature of cw_lachen", prompt)
 
+    def test_alt_variant_renders_the_second_role_and_falls_back_to_the_first(self):
+        persona = {**PERSONA, "art": "a goblin banker", "altArt": "a goblin riding a giant black cat"}
+        prompt = build_prompt(persona, variant="alt")
+        self.assertIn("cw_lachen reimagined as a goblin riding a giant black cat", prompt)
+        self.assertNotIn("goblin banker", prompt)
+        without = {**PERSONA, "art": "a goblin banker", "altArt": None}
+        self.assertIn("reimagined as a goblin banker", build_prompt(without, variant="alt"))
+
     def test_prompt_carries_the_persona_colour_and_role_hint(self):
         prompt = build_prompt(PERSONA)
         self.assertIn("#283593", prompt)

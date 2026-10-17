@@ -26,6 +26,8 @@ test('every roster persona is exported once with a unique trigger word', async (
     assert.ok(persona.role.length > 0);
     assert.match(persona.colour, /^#[0-9a-f]{6}$/);
     assert.ok(persona.generated === null || /^\d{4}-\d{2}-\d{2}$/.test(persona.generated));
+    assert.ok(persona.altArt === null || persona.altArt.length > 20, `${persona.name}: altArt is null or a role`);
+    if (persona.altArt !== null) assert.ok(persona.art, `${persona.name}: a second role needs a first`);
     if (persona.pack === 'extra') {
       assert.equal(persona.rank, null);
       assert.deepEqual(persona.cards, [], `${persona.name} has a LoRA but no card yet`);
@@ -39,7 +41,7 @@ test('every roster persona is exported once with a unique trigger word', async (
 test('extras are personas trained ahead of a roster slot', async () => {
   const personas = await exportPersonas();
   const extras = personas.filter((p) => p.pack === 'extra').map((p) => p.tag);
-  assert.deepEqual(extras, ['dantes', 'dorofeeva', 'mindich']);
+  assert.deepEqual(extras, ['dantes', 'dorofeeva', 'mindich', 'arestovych', 'klopotenko', 'gordon', 'mudryk', 'kolomoisky']);
 });
 
 test('the committed personas.json is exactly what the rosters produce', async () => {

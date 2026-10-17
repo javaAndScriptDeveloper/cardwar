@@ -16,6 +16,7 @@ const personas = [
         colour: '#7b1fa2',
         tag: 'bezuhla',
         art: "a provocative late-night queen of the parliament in a dramatic red gown with a jagged golden crown, smoky eye make-up and glossy lips, raising a glowing phone like a weapon at three in the morning, a crescent moon and a clock behind her, torn general's epaulettes scattered at her feet, bold confident smirk",
+        altArt: 'in a grey hoodie at three in the morning, face lit by a laptop, energy drink cans around her, posts flying out as paper planes',
         look: { hair: 'long', hairColour: '#6b4a2b', clothes: 'suit' },
         quotes: {
             CLUBS: 'Вимагаю звільнити цю карту. І наступну теж.',
@@ -47,6 +48,7 @@ const personas = [
         colour: '#e65100',
         tag: 'honcharenko',
         art: 'a hyperactive parliament streamer gripping a selfie stick and three ringing phones, a red flashing emergency siren strapped to his head, mouth open mid-urgent-announcement, notification icons swarming around him like bees, parliament chamber benches behind him',
+        altArt: 'sprinting out of the parliament doors with a phone held high, a trail of notification bubbles behind him, tie flying over his shoulder',
         look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: '⚡ Термінове звернення. Кінець звернення.',
@@ -62,6 +64,8 @@ const personas = [
         emoji: '🎀',
         colour: '#c2185b',
         tag: 'tymoshenko',
+        art: 'in a snow-white dress with her braid wound into a giant crown, a heart brooch, holding a gas valve wheel like a sceptre',
+        altArt: 'a hard hat over the braid, white suit with sleeves rolled up, construction site at night, blueprints in hand',
         look: { hair: 'braid', hairColour: '#d9b86a', clothes: 'dress' },
         quotes: {
             CLUBS: 'Коса — сила. Решта — деталі.',
@@ -78,6 +82,7 @@ const personas = [
         colour: '#1565c0',
         tag: 'klychko',
         art: 'a heavyweight boxing champion in red gloves and a gold title belt, a brass Kyiv metro token on a chain round his neck, chestnut leaves and conkers swirling around him, a tangled scribble speech bubble above his puzzled face, a glass pedestrian bridge with a cracked panel and art deco facades of Khreshchatyk glowing behind him',
+        altArt: 'a mayor in a tailored coat shovelling snow on Khreshchatyk, cars buried to the roof, a hard hat on his head',
         look: { hair: 'buzz', clothes: 'suit' },
         quotes: {
             CLUBS: 'Сьогодні в завтрашній день не всі можуть дивитися.',
@@ -94,6 +99,7 @@ const personas = [
         colour: '#b71c1c',
         tag: 'poroshenko',
         art: 'a chocolate king on a cocoa throne, crown of golden candy wrappers, velvet cape trimmed with chocolate bars, a chocolate-bar sceptre, a tiny chocolate factory with smoking chimneys behind him, pralines and caramel rivers at his feet, satisfied grin',
+        altArt: 'on a stadium stage on one knee with a microphone, roaring stands and floodlights behind him',
         look: { hair: 'short', hairColour: '#8a8a90', clothes: 'suit' },
         quotes: {
             CLUBS: 'Армія! Мова! Віра! Карта!',
@@ -110,6 +116,7 @@ const personas = [
         colour: '#37474f',
         tag: 'yermak',
         art: 'a grey eminence in a long dark overcoat, half in shadow, a red leather folder under his arm, pulling the strings of a row of tiny identical puppet officials, an untouched army helmet dangling from his elbow, dim palace corridor behind him',
+        altArt: 'in brand-new spotless camouflage with a still-shiny helmet, rolling a designer suitcase onto a train platform, a shovel under his arm, soldiers staring',
         look: { hair: 'buzz', hairColour: '#6b6b70', beard: 'stubble', clothes: 'suit' },
         quotes: {
             CLUBS: 'Офіс не коментує. Офіс грає.',
@@ -141,6 +148,7 @@ const personas = [
         colour: '#1b5e20',
         tag: 'zelenskyi',
         art: 'a comedy-series president in his trademark olive khaki T-shirt with rolled sleeves, firing two uzi submachine guns with wild muzzle flashes, parliament chamber in chaos behind him, papers and chairs flying, manic grin',
+        altArt: "a ballroom dancer in a shimmering black shirt mid high kick, his partner's hand in his, disco ball overhead, judges' paddles showing tens",
         look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: 'Доброго вечора. Ми з козирями.',
@@ -296,6 +304,16 @@ const rules = [
         id: 'poroshenko-played',
         ...played('poroshenko', 'you'),
         do: [{ say: { uk: 'Армія! Мова! Віра!' }, rate: 1.1 }],
+        cooldownMs: 6000,
+    },
+    {
+        id: 'zelenskyi-played',
+        ...played('zelenskyi', 'you'),
+        do: [
+            { anim: 'pulse', target: 'played' },
+            { bubble: { uk: 'Вийди звідси, розбійник!' }, target: 'played' },
+            { say: { uk: 'Вийди звідси, розбійник!' }, rate: 1.1 },
+        ],
         cooldownMs: 6000,
     },
     {

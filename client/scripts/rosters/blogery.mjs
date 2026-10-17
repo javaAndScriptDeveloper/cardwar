@@ -46,6 +46,7 @@ const personas = [
         colour: '#4527a0',
         tag: 'durnev',
         art: "a smug couch critic in a plain black T-shirt sprawled on a sofa, squinting at a wall of floating glowing phone screens full of other people's selfie stories, bowl of popcorn in his lap, one eyebrow raised in judgement, retro TV glow and vinyl shelves behind him",
+        altArt: 'at a desk with a huge monitor full of phone stories, pointing and laughing, a microphone arm, studio lamps',
         look: { hair: 'short', glasses: 'square', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Дурнєв дивиться на тебе. Не моргай.',
@@ -61,6 +62,8 @@ const personas = [
         emoji: '🛸',
         colour: '#00695c',
         tag: 'sternenko',
+        art: 'launching a swarm of FPV drones from a wooden crate on a hilltop, goggles pushed up on his forehead, hoodie with a torn-off brand patch',
+        altArt: "streaming from a courtroom defendant's bench with a ring light, finger pointed at the camera, supporters with flags behind him",
         look: { hair: 'short', beard: 'full', clothes: 'tee' },
         quotes: {
             CLUBS: 'Дрони вже летять. Карта — вслід.',
@@ -76,6 +79,8 @@ const personas = [
         emoji: '🫙',
         colour: '#ef6c00',
         tag: 'prytula',
+        art: 'cradling a satellite like a watermelon, a drone under the other arm, a fundraiser thermometer filled past the top',
+        altArt: 'a TV host in a shiny suit with a big microphone on a talent-show stage, golden buzzer, confetti, cheeky grin',
         look: { hair: 'short', beard: 'full', clothes: 'tee' },
         quotes: {
             CLUBS: 'Збір закрито за дві години. Знову.',
@@ -92,6 +97,7 @@ const personas = [
         colour: '#212121',
         tag: 'petya',
         art: 'a village-born rap MC in a black hoodie and dark sunglasses, oversized gold chain with army dog tags, gripping a golden microphone, a cow peeking over his shoulder and a basket of mushrooms at his side, pointing at the viewer like a recruiting poster, neon graffiti over a rural fence behind him',
+        altArt: 'in camouflage with a golden microphone instead of a rifle, a trench as his stage, muddy boots, dog tags',
         look: { hair: 'curly', glasses: 'sun', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Йоу. Це був хід. Йоу.',
@@ -108,6 +114,7 @@ const personas = [
         colour: '#c62828',
         tag: 'nikitiuk',
         art: 'a towering TV host with a huge laugh and a stage microphone, waving a shiny golden credit card, one foot in the door of a crowded yellow minibus, a travel suitcase plastered with stickers, confetti and studio spotlights behind her',
+        altArt: 'a tourist in a sun hat flipping a coin, a golden credit card in one hand and a hundred-dollar bill in the other, world landmarks behind her',
         look: { hair: 'bob', hairColour: '#2a1a12', clothes: 'dress' },
         quotes: {
             CLUBS: 'Хто зверху? Поки що не ти.',
@@ -126,6 +133,7 @@ const personas = [
         look: { hair: 'short', glasses: 'round', clothes: 'suit' },
         // Owner's art direction for the painted portrait (art/lora): a heroic goblin, short snub nose, no gold hoard.
         art: 'a strong, confident green goblin warrior-banker with a short snub nose and a sharp grin, muscular, in a sleek black suit jacket over leather armour, a small black cat with white paws sitting on his shoulder, a plate of fresh yellow lemons in the foreground',
+        altArt: 'a strong, confident green goblin with a short snub nose riding a giant black cat like a warhorse, a lemon as a lance, heroic grin',
         quotes: {
             CLUBS: 'Мінус гроші. Плюс досвід.',
             DIAMONDS: 'Кіт схвалив. Кешбек — ні.',

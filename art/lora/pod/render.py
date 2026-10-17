@@ -35,15 +35,13 @@ STYLE = (
 )
 
 
-def build_prompt(persona: dict, hint: str = "") -> str:
-    """The trigger word first (that is what the LoRA keys on), the persona's fantasy role when the roster has one,
-    then the shared style, the deck colour and the role for a prop idea."""
+def build_prompt(persona: dict, hint: str = "", variant: str | None = None) -> str:
+    """The trigger word first (that is what the LoRA keys on), the persona's fantasy role when the roster has one
+    (`variant="alt"` picks the second role, `altArt`, when present), then the shared style, the deck colour and the
+    role for a prop idea."""
     trigger = persona["trigger"]
-    subject = (
-        f"{trigger} reimagined as {persona['art']}, recognisable face of {trigger}"
-        if persona.get("art")
-        else f"a caricature of {trigger}"
-    )
+    art = (persona.get("altArt") if variant == "alt" else None) or persona.get("art")
+    subject = f"{trigger} reimagined as {art}, recognisable face of {trigger}" if art else f"a caricature of {trigger}"
     parts = [
         trigger,
         subject,
@@ -116,6 +114,7 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--seed", type=int, help="first seed; random when omitted")
     parser.add_argument("--strength", type=float, help="LoRA strength override (template: 0.9)")
     parser.add_argument("--no-wait", action="store_true", help="queue and exit instead of waiting for the images")
+    parser.add_argument("--variant", choices=["alt"], help="render the persona's second role (altArt) instead of art")
     args = parser.parse_args(argv)
 
     personas = select(json.loads(PERSONAS.read_text()), pack=args.pack, tag=args.tag, everything=args.all)
@@ -127,10 +126,11 @@ def main(argv: list[str]) -> int:
     queued = 0
     for persona in personas:
         lora = f"{persona['pack']}-{persona['tag']}.safetensors"
-        prompt = build_prompt(persona, args.hint)
+        prompt = build_prompt(persona, args.hint, args.variant)
+        stem = f"{persona['tag']}-{args.variant}" if args.variant else persona["tag"]
         for i in range(args.variants):
             seed = first_seed + i
-            prefix = f"cardwar/{persona['pack']}/{persona['tag']}_{seed}"
+            prefix = f"cardwar/{persona['pack']}/{stem}_{seed}"
             try:
                 queue(
                     args.server,
