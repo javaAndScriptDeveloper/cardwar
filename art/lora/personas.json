@@ -13,7 +13,8 @@
       "SIX_OF_DIAMONDS",
       "SIX_OF_HEARTS",
       "SIX_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -29,7 +30,8 @@
       "SEVEN_OF_DIAMONDS",
       "SEVEN_OF_HEARTS",
       "SEVEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -45,7 +47,8 @@
       "EIGHT_OF_DIAMONDS",
       "EIGHT_OF_HEARTS",
       "EIGHT_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -61,7 +64,8 @@
       "NINE_OF_DIAMONDS",
       "NINE_OF_HEARTS",
       "NINE_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -77,7 +81,8 @@
       "TEN_OF_DIAMONDS",
       "TEN_OF_HEARTS",
       "TEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -93,7 +98,8 @@
       "JACK_OF_DIAMONDS",
       "JACK_OF_HEARTS",
       "JACK_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -109,7 +115,8 @@
       "QUEEN_OF_DIAMONDS",
       "QUEEN_OF_HEARTS",
       "QUEEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "blogery",
@@ -125,7 +132,8 @@
       "KING_OF_DIAMONDS",
       "KING_OF_HEARTS",
       "KING_OF_SPADES"
-    ]
+    ],
+    "generated": "2026-10-17"
   },
   {
     "pack": "blogery",
@@ -141,7 +149,8 @@
       "ACE_OF_DIAMONDS",
       "ACE_OF_HEARTS",
       "ACE_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -157,7 +166,8 @@
       "SIX_OF_DIAMONDS",
       "SIX_OF_HEARTS",
       "SIX_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -173,7 +183,8 @@
       "SEVEN_OF_DIAMONDS",
       "SEVEN_OF_HEARTS",
       "SEVEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -189,7 +200,8 @@
       "EIGHT_OF_DIAMONDS",
       "EIGHT_OF_HEARTS",
       "EIGHT_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -205,7 +217,8 @@
       "NINE_OF_DIAMONDS",
       "NINE_OF_HEARTS",
       "NINE_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -221,7 +234,8 @@
       "TEN_OF_DIAMONDS",
       "TEN_OF_HEARTS",
       "TEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -237,7 +251,8 @@
       "JACK_OF_DIAMONDS",
       "JACK_OF_HEARTS",
       "JACK_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -253,7 +268,8 @@
       "QUEEN_OF_DIAMONDS",
       "QUEEN_OF_HEARTS",
       "QUEEN_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -269,7 +285,8 @@
       "KING_OF_DIAMONDS",
       "KING_OF_HEARTS",
       "KING_OF_SPADES"
-    ]
+    ],
+    "generated": null
   },
   {
     "pack": "sluhy-narodu",
@@ -285,6 +302,31 @@
       "ACE_OF_DIAMONDS",
       "ACE_OF_HEARTS",
       "ACE_OF_SPADES"
-    ]
+    ],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "dantes",
+    "trigger": "cw_dantes",
+    "name": "Дантес",
+    "role": "співає",
+    "art": null,
+    "colour": "#5d4037",
+    "rank": null,
+    "cards": [],
+    "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "dorofeeva",
+    "trigger": "cw_dorofeeva",
+    "name": "Дорофєєва",
+    "role": "співає",
+    "art": null,
+    "colour": "#c2185b",
+    "rank": null,
+    "cards": [],
+    "generated": null
   }
 ]

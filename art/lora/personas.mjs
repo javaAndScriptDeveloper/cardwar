@@ -12,8 +12,24 @@ const SUITS = ['CLUBS', 'DIAMONDS', 'HEARTS', 'SPADES'];
 export const PACKS = ['blogery', 'sluhy-narodu'];
 
 /**
+ * Personas the owner wants a LoRA for before any roster has a card for them (both decks are full at 9 × 4). They
+ * train and render like the others under pack `extra`; moving one onto a card later is a roster edit, the LoRA
+ * and renders carry over because the trigger word is the tag.
+ */
+export const EXTRAS = [
+  { tag: 'dantes', name: 'Дантес', role: 'співає', colour: '#5d4037' },
+  { tag: 'dorofeeva', name: 'Дорофєєва', role: 'співає', colour: '#c2185b' },
+];
+
+/** Tag → date of the first render batch saved in the private data repo (`renders/<pack>/<tag>/`). */
+const GENERATED = {
+  horokhovskyi: '2026-10-17',
+};
+
+/**
  * One entry per persona: pack, tag, LoRA trigger word (`cw_<tag>`, an ASCII token no caption would contain by
- * accident), display name, role, poster colour, rank and the four card ids the portrait will end up on.
+ * accident), display name, role, poster colour, rank, the four card ids the portrait will end up on, and
+ * `generated`: the date of the first saved render batch, null while the persona is photos only.
  */
 export async function exportPersonas() {
   const personas = [];
@@ -30,8 +46,23 @@ export async function exportPersonas() {
         colour: persona.colour,
         rank: persona.rank,
         cards: SUITS.map((suit) => `${persona.rank}_OF_${suit}`),
+        generated: GENERATED[persona.tag] ?? null,
       });
     }
+  }
+  for (const extra of EXTRAS) {
+    personas.push({
+      pack: 'extra',
+      tag: extra.tag,
+      trigger: `cw_${extra.tag}`,
+      name: extra.name,
+      role: extra.role,
+      art: extra.art ?? null,
+      colour: extra.colour,
+      rank: null,
+      cards: [],
+      generated: GENERATED[extra.tag] ?? null,
+    });
   }
   return personas;
 }

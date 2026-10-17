@@ -9,14 +9,14 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { exportPersonas, PACKS } from './personas.mjs';
+import { EXTRAS, exportPersonas, PACKS } from './personas.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
 test('every roster persona is exported once with a unique trigger word', async () => {
   const personas = await exportPersonas();
-  assert.equal(personas.length, 18);
-  assert.deepEqual([...new Set(personas.map((p) => p.pack))].sort(), [...PACKS].sort());
+  assert.equal(personas.length, 18 + EXTRAS.length);
+  assert.deepEqual([...new Set(personas.map((p) => p.pack))].sort(), [...PACKS, 'extra'].sort());
   const triggers = personas.map((p) => p.trigger);
   assert.equal(new Set(triggers).size, triggers.length);
   for (const persona of personas) {
@@ -24,9 +24,22 @@ test('every roster persona is exported once with a unique trigger word', async (
     assert.equal(persona.trigger, `cw_${persona.tag}`);
     assert.ok(persona.name.length > 0);
     assert.ok(persona.role.length > 0);
-    assert.equal(persona.cards.length, 4, `${persona.name} owns one card per suit`);
-    assert.ok(persona.cards.every((card) => card.startsWith(`${persona.rank}_OF_`)));
+    assert.match(persona.colour, /^#[0-9a-f]{6}$/);
+    assert.ok(persona.generated === null || /^\d{4}-\d{2}-\d{2}$/.test(persona.generated));
+    if (persona.pack === 'extra') {
+      assert.equal(persona.rank, null);
+      assert.deepEqual(persona.cards, [], `${persona.name} has a LoRA but no card yet`);
+    } else {
+      assert.equal(persona.cards.length, 4, `${persona.name} owns one card per suit`);
+      assert.ok(persona.cards.every((card) => card.startsWith(`${persona.rank}_OF_`)));
+    }
   }
+});
+
+test('extras are personas trained ahead of a roster slot', async () => {
+  const personas = await exportPersonas();
+  const extras = personas.filter((p) => p.pack === 'extra').map((p) => p.tag);
+  assert.deepEqual(extras, ['dantes', 'dorofeeva']);
 });
 
 test('the committed personas.json is exactly what the rosters produce', async () => {
