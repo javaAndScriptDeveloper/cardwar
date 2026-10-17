@@ -43,6 +43,18 @@ export const EXTRAS = [
 /** Tag → date of the first render batch saved in the private data repo (`renders/<pack>/<tag>/`). */
 const GENERATED = {
   horokhovskyi: '2026-10-17',
+  yermak: '2026-10-18',
+  zelenskyi: '2026-10-18',
+  poroshenko: '2026-10-18',
+  klychko: '2026-10-18',
+  honcharenko: '2026-10-18',
+  bezuhla: '2026-10-18',
+  nikitiuk: '2026-10-18',
+  petya: '2026-10-18',
+  durnev: '2026-10-18',
+  dantes: '2026-10-18',
+  dorofeeva: '2026-10-18',
+  mindich: '2026-10-18',
 };
 
 /**

@@ -48,7 +48,7 @@
       "EIGHT_OF_HEARTS",
       "EIGHT_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "blogery",
@@ -99,7 +99,7 @@
       "JACK_OF_HEARTS",
       "JACK_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "blogery",
@@ -116,7 +116,7 @@
       "QUEEN_OF_HEARTS",
       "QUEEN_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "blogery",
@@ -167,7 +167,7 @@
       "SIX_OF_HEARTS",
       "SIX_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "sluhy-narodu",
@@ -201,7 +201,7 @@
       "EIGHT_OF_HEARTS",
       "EIGHT_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "sluhy-narodu",
@@ -235,7 +235,7 @@
       "TEN_OF_HEARTS",
       "TEN_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "sluhy-narodu",
@@ -252,7 +252,7 @@
       "JACK_OF_HEARTS",
       "JACK_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "sluhy-narodu",
@@ -269,7 +269,7 @@
       "QUEEN_OF_HEARTS",
       "QUEEN_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "sluhy-narodu",
@@ -303,7 +303,7 @@
       "ACE_OF_HEARTS",
       "ACE_OF_SPADES"
     ],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "extra",
@@ -315,7 +315,7 @@
     "colour": "#5d4037",
     "rank": null,
     "cards": [],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "extra",
@@ -327,7 +327,7 @@
     "colour": "#c2185b",
     "rank": null,
     "cards": [],
-    "generated": null
+    "generated": "2026-10-18"
   },
   {
     "pack": "extra",
@@ -339,6 +339,6 @@
     "colour": "#1b5e20",
     "rank": null,
     "cards": [],
-    "generated": null
+    "generated": "2026-10-18"
   }
 ]
