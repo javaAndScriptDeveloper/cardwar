@@ -15,7 +15,7 @@ const personas = [
         emoji: '📱',
         colour: '#7b1fa2',
         tag: 'bezuhla',
-        art: 'a provocative late-night femme fatale of the parliament, dramatic red evening dress and smoky eye make-up, glossy lips, one hand on her hip, the other raising a glowing phone like a weapon, bold confident smirk, flashing camera lights behind her',
+        art: "a provocative late-night queen of the parliament in a dramatic red gown with a jagged golden crown, smoky eye make-up and glossy lips, raising a glowing phone like a weapon at three in the morning, a crescent moon and a clock behind her, torn general's epaulettes scattered at her feet, bold confident smirk",
         look: { hair: 'long', hairColour: '#6b4a2b', clothes: 'suit' },
         quotes: {
             CLUBS: 'Вимагаю звільнити цю карту. І наступну теж.',
@@ -77,7 +77,7 @@ const personas = [
         emoji: '🥊',
         colour: '#1565c0',
         tag: 'klychko',
-        art: 'a heavyweight boxing champion in red gloves and a gold title belt, a brass Kyiv metro token on a chain round his neck, chestnut leaves and conkers swirling around him, art deco department store facade of Khreshchatyk glowing behind him',
+        art: 'a heavyweight boxing champion in red gloves and a gold title belt, a brass Kyiv metro token on a chain round his neck, chestnut leaves and conkers swirling around him, a tangled scribble speech bubble above his puzzled face, a glass pedestrian bridge with a cracked panel and art deco facades of Khreshchatyk glowing behind him',
         look: { hair: 'buzz', clothes: 'suit' },
         quotes: {
             CLUBS: 'Сьогодні в завтрашній день не всі можуть дивитися.',
@@ -93,7 +93,7 @@ const personas = [
         emoji: '🍬',
         colour: '#b71c1c',
         tag: 'poroshenko',
-        art: 'a chocolate king on a cocoa throne, crown of golden candy wrappers, velvet cape trimmed with chocolate bars, a chocolate-bar sceptre, pralines and caramel rivers at his feet, satisfied grin',
+        art: 'a chocolate king on a cocoa throne, crown of golden candy wrappers, velvet cape trimmed with chocolate bars, a chocolate-bar sceptre, a tiny chocolate factory with smoking chimneys behind him, pralines and caramel rivers at his feet, satisfied grin',
         look: { hair: 'short', hairColour: '#8a8a90', clothes: 'suit' },
         quotes: {
             CLUBS: 'Армія! Мова! Віра! Карта!',
@@ -109,7 +109,7 @@ const personas = [
         emoji: '🗂️',
         colour: '#37474f',
         tag: 'yermak',
-        art: 'a grey eminence in a long dark overcoat, half in shadow, a red leather folder under his arm, leaning in to whisper, dim palace corridor behind him',
+        art: 'a grey eminence in a long dark overcoat, half in shadow, a red leather folder under his arm, pulling the strings of a row of tiny identical puppet officials, an untouched army helmet dangling from his elbow, dim palace corridor behind him',
         look: { hair: 'buzz', hairColour: '#6b6b70', beard: 'stubble', clothes: 'suit' },
         quotes: {
             CLUBS: 'Офіс не коментує. Офіс грає.',
@@ -140,7 +140,7 @@ const personas = [
         emoji: '🎤',
         colour: '#1b5e20',
         tag: 'zelenskyi',
-        art: 'a comedy-series president in a white shirt with rolled sleeves, firing two uzi submachine guns with wild muzzle flashes, parliament chamber in chaos behind him, papers and chairs flying, manic grin',
+        art: 'a comedy-series president in his trademark olive khaki T-shirt with rolled sleeves, firing two uzi submachine guns with wild muzzle flashes, parliament chamber in chaos behind him, papers and chairs flying, manic grin',
         look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: 'Доброго вечора. Ми з козирями.',

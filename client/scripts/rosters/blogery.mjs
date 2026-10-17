@@ -91,7 +91,7 @@ const personas = [
         emoji: '🎧',
         colour: '#212121',
         tag: 'petya',
-        art: 'a street rap MC in a black hoodie and dark sunglasses, oversized gold chain, gripping a golden microphone, boombox on his shoulder, neon graffiti glow behind him, mid-verse shouting',
+        art: 'a village-born rap MC in a black hoodie and dark sunglasses, oversized gold chain with army dog tags, gripping a golden microphone, a cow peeking over his shoulder and a basket of mushrooms at his side, pointing at the viewer like a recruiting poster, neon graffiti over a rural fence behind him',
         look: { hair: 'curly', glasses: 'sun', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Йоу. Це був хід. Йоу.',

@@ -22,7 +22,7 @@ export const EXTRAS = [
     name: 'Дантес',
     role: 'співає',
     colour: '#5d4037',
-    art: 'a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, candlelit gothic mansion and a full moon behind him',
+    art: 'a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, a cracked heart-shaped locket on a chain at his chest, candlelit gothic mansion and a full moon behind him',
   },
   {
     tag: 'dorofeeva',
@@ -36,7 +36,7 @@ export const EXTRAS = [
     name: 'Міндіч',
     role: 'бізнес',
     colour: '#1b5e20',
-    art: 'a grinning energy baron in a shiny suit, hugging a glowing power transformer, a briefcase overflowing with stolen lightning bolts, copper wires and sparks everywhere, a spinning electricity meter and power lines behind him',
+    art: 'a grinning energy baron in a shiny suit with a little propeller whirring on his back, mid-flight escape, clutching a suitcase that leaks glowing lightning bolts and gold coins, everything he touches turning to gold, hugging a glowing power transformer, power lines and a spinning electricity meter behind him',
   },
 ];
 
