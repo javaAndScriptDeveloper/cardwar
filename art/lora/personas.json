@@ -39,7 +39,7 @@
     "trigger": "cw_durnev",
     "name": "Дурнєв",
     "role": "дивиться",
-    "art": null,
+    "art": "a smug couch critic in a plain black T-shirt sprawled on a sofa, squinting at a wall of floating glowing phone screens full of other people's selfie stories, bowl of popcorn in his lap, one eyebrow raised in judgement, retro TV glow and vinyl shelves behind him",
     "colour": "#4527a0",
     "rank": "EIGHT",
     "cards": [
@@ -107,7 +107,7 @@
     "trigger": "cw_nikitiuk",
     "name": "Леся Нікітюк",
     "role": "хто зверху",
-    "art": null,
+    "art": "a towering TV host with a huge laugh and a stage microphone, waving a shiny golden credit card, one foot in the door of a crowded yellow minibus, a travel suitcase plastered with stickers, confetti and studio spotlights behind her",
     "colour": "#c62828",
     "rank": "QUEEN",
     "cards": [
@@ -192,7 +192,7 @@
     "trigger": "cw_honcharenko",
     "name": "Гончаренко",
     "role": "термінове звернення",
-    "art": null,
+    "art": "a hyperactive parliament streamer gripping a selfie stick and three ringing phones, a red flashing emergency siren strapped to his head, mouth open mid-urgent-announcement, notification icons swarming around him like bees, parliament chamber benches behind him",
     "colour": "#e65100",
     "rank": "EIGHT",
     "cards": [
@@ -323,7 +323,7 @@
     "trigger": "cw_dorofeeva",
     "name": "Дорофєєва",
     "role": "співає",
-    "art": null,
+    "art": "a daring pop diva in a sparkling sequin stage outfit, bold winged eyeliner and glossy lips, blowing a kiss at the camera, long dark wavy hair, rhinestone microphone in hand, neon stage lights and glitter behind her",
     "colour": "#c2185b",
     "rank": null,
     "cards": [],

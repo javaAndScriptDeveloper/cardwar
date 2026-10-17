@@ -46,6 +46,7 @@ const personas = [
         emoji: '⚡',
         colour: '#e65100',
         tag: 'honcharenko',
+        art: 'a hyperactive parliament streamer gripping a selfie stick and three ringing phones, a red flashing emergency siren strapped to his head, mouth open mid-urgent-announcement, notification icons swarming around him like bees, parliament chamber benches behind him',
         look: { hair: 'short', beard: 'stubble', clothes: 'tee' },
         quotes: {
             CLUBS: '⚡ Термінове звернення. Кінець звернення.',

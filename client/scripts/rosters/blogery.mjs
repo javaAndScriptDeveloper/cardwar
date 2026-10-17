@@ -45,6 +45,7 @@ const personas = [
         emoji: '👀',
         colour: '#4527a0',
         tag: 'durnev',
+        art: "a smug couch critic in a plain black T-shirt sprawled on a sofa, squinting at a wall of floating glowing phone screens full of other people's selfie stories, bowl of popcorn in his lap, one eyebrow raised in judgement, retro TV glow and vinyl shelves behind him",
         look: { hair: 'short', glasses: 'square', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Дурнєв дивиться на тебе. Не моргай.',
@@ -106,6 +107,7 @@ const personas = [
         emoji: '📺',
         colour: '#c62828',
         tag: 'nikitiuk',
+        art: 'a towering TV host with a huge laugh and a stage microphone, waving a shiny golden credit card, one foot in the door of a crowded yellow minibus, a travel suitcase plastered with stickers, confetti and studio spotlights behind her',
         look: { hair: 'bob', hairColour: '#2a1a12', clothes: 'dress' },
         quotes: {
             CLUBS: 'Хто зверху? Поки що не ти.',

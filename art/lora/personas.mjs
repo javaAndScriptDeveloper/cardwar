@@ -24,7 +24,13 @@ export const EXTRAS = [
     colour: '#5d4037',
     art: 'a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, candlelit gothic mansion and a full moon behind him',
   },
-  { tag: 'dorofeeva', name: 'Дорофєєва', role: 'співає', colour: '#c2185b' },
+  {
+    tag: 'dorofeeva',
+    name: 'Дорофєєва',
+    role: 'співає',
+    colour: '#c2185b',
+    art: 'a daring pop diva in a sparkling sequin stage outfit, bold winged eyeliner and glossy lips, blowing a kiss at the camera, long dark wavy hair, rhinestone microphone in hand, neon stage lights and glitter behind her',
+  },
   {
     tag: 'mindich',
     name: 'Міндіч',
