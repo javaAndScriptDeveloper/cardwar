@@ -105,6 +105,7 @@ const personas = [
         emoji: '🗂️',
         colour: '#37474f',
         tag: 'yermak',
+        art: 'a grey eminence in a long dark overcoat, half in shadow, a red leather folder under his arm, leaning in to whisper, dim palace corridor behind him',
         look: { hair: 'buzz', hairColour: '#6b6b70', beard: 'stubble', clothes: 'suit' },
         quotes: {
             CLUBS: 'Офіс не коментує. Офіс грає.',
