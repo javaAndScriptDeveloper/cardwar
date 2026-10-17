@@ -90,6 +90,7 @@ const personas = [
         emoji: '🎧',
         colour: '#212121',
         tag: 'petya',
+        art: 'a street rap MC in a black hoodie and dark sunglasses, oversized gold chain, gripping a golden microphone, boombox on his shoulder, neon graffiti glow behind him, mid-verse shouting',
         look: { hair: 'curly', glasses: 'sun', clothes: 'hoodie' },
         quotes: {
             CLUBS: 'Йоу. Це був хід. Йоу.',

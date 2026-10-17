@@ -17,9 +17,21 @@ export const PACKS = ['blogery', 'sluhy-narodu'];
  * and renders carry over because the trigger word is the tag.
  */
 export const EXTRAS = [
-  { tag: 'dantes', name: 'Дантес', role: 'співає', colour: '#5d4037' },
+  {
+    tag: 'dantes',
+    name: 'Дантес',
+    role: 'співає',
+    colour: '#5d4037',
+    art: 'a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, candlelit gothic mansion and a full moon behind him',
+  },
   { tag: 'dorofeeva', name: 'Дорофєєва', role: 'співає', colour: '#c2185b' },
-  { tag: 'mindich', name: 'Міндіч', role: 'бізнес', colour: '#1b5e20' },
+  {
+    tag: 'mindich',
+    name: 'Міндіч',
+    role: 'бізнес',
+    colour: '#1b5e20',
+    art: 'a grinning energy baron in a shiny suit, hugging a glowing power transformer, a briefcase overflowing with stolen lightning bolts, copper wires and sparks everywhere, a spinning electricity meter and power lines behind him',
+  },
 ];
 
 /** Tag → date of the first render batch saved in the private data repo (`renders/<pack>/<tag>/`). */

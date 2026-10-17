@@ -90,7 +90,7 @@
     "trigger": "cw_petya",
     "name": "MC Петя",
     "role": "реп",
-    "art": null,
+    "art": "a street rap MC in a black hoodie and dark sunglasses, oversized gold chain, gripping a golden microphone, boombox on his shoulder, neon graffiti glow behind him, mid-verse shouting",
     "colour": "#212121",
     "rank": "JACK",
     "cards": [
@@ -158,7 +158,7 @@
     "trigger": "cw_bezuhla",
     "name": "Безугла",
     "role": "народна депутатка",
-    "art": null,
+    "art": "a provocative late-night femme fatale of the parliament, dramatic red evening dress and smoky eye make-up, glossy lips, one hand on her hip, the other raising a glowing phone like a weapon, bold confident smirk, flashing camera lights behind her",
     "colour": "#7b1fa2",
     "rank": "SIX",
     "cards": [
@@ -226,7 +226,7 @@
     "trigger": "cw_klychko",
     "name": "Кличко",
     "role": "мер",
-    "art": null,
+    "art": "a heavyweight boxing champion in red gloves and a gold title belt, a brass Kyiv metro token on a chain round his neck, chestnut leaves and conkers swirling around him, art deco department store facade of Khreshchatyk glowing behind him",
     "colour": "#1565c0",
     "rank": "TEN",
     "cards": [
@@ -243,7 +243,7 @@
     "trigger": "cw_poroshenko",
     "name": "Порошенко",
     "role": "армія, мова, віра",
-    "art": null,
+    "art": "a chocolate king on a cocoa throne, crown of golden candy wrappers, velvet cape trimmed with chocolate bars, a chocolate-bar sceptre, pralines and caramel rivers at his feet, satisfied grin",
     "colour": "#b71c1c",
     "rank": "JACK",
     "cards": [
@@ -294,7 +294,7 @@
     "trigger": "cw_zelenskyi",
     "name": "Зеленський",
     "role": "президент",
-    "art": null,
+    "art": "a comedy-series president in a white shirt with rolled sleeves, firing two uzi submachine guns with wild muzzle flashes, parliament chamber in chaos behind him, papers and chairs flying, manic grin",
     "colour": "#1b5e20",
     "rank": "ACE",
     "cards": [
@@ -311,7 +311,7 @@
     "trigger": "cw_dantes",
     "name": "Дантес",
     "role": "співає",
-    "art": null,
+    "art": "a brooding 1890s Lemberg vampire, long dark curly hair and a short beard, pale skin, fangs showing in a seductive smirk, high-collared black cape with crimson lining, candlelit gothic mansion and a full moon behind him",
     "colour": "#5d4037",
     "rank": null,
     "cards": [],
@@ -335,7 +335,7 @@
     "trigger": "cw_mindich",
     "name": "Міндіч",
     "role": "бізнес",
-    "art": null,
+    "art": "a grinning energy baron in a shiny suit, hugging a glowing power transformer, a briefcase overflowing with stolen lightning bolts, copper wires and sparks everywhere, a spinning electricity meter and power lines behind him",
     "colour": "#1b5e20",
     "rank": null,
     "cards": [],
