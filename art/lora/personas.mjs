@@ -19,6 +19,7 @@ export const PACKS = ['blogery', 'sluhy-narodu'];
 export const EXTRAS = [
   { tag: 'dantes', name: 'Дантес', role: 'співає', colour: '#5d4037' },
   { tag: 'dorofeeva', name: 'Дорофєєва', role: 'співає', colour: '#c2185b' },
+  { tag: 'mindich', name: 'Міндіч', role: 'бізнес', colour: '#1b5e20' },
 ];
 
 /** Tag → date of the first render batch saved in the private data repo (`renders/<pack>/<tag>/`). */

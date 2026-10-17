@@ -328,5 +328,17 @@
     "rank": null,
     "cards": [],
     "generated": null
+  },
+  {
+    "pack": "extra",
+    "tag": "mindich",
+    "trigger": "cw_mindich",
+    "name": "Міндіч",
+    "role": "бізнес",
+    "art": null,
+    "colour": "#1b5e20",
+    "rank": null,
+    "cards": [],
+    "generated": null
   }
 ]

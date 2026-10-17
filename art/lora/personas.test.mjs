@@ -39,7 +39,7 @@ test('every roster persona is exported once with a unique trigger word', async (
 test('extras are personas trained ahead of a roster slot', async () => {
   const personas = await exportPersonas();
   const extras = personas.filter((p) => p.pack === 'extra').map((p) => p.tag);
-  assert.deepEqual(extras, ['dantes', 'dorofeeva']);
+  assert.deepEqual(extras, ['dantes', 'dorofeeva', 'mindich']);
 });
 
 test('the committed personas.json is exactly what the rosters produce', async () => {
