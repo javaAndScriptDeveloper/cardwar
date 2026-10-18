@@ -21,6 +21,7 @@ public record MoveRequest(@NotNull MoveType type, @Valid CardRef card, @Valid Ca
                         require(card, "card").toCard());
             case TAKE -> new GameCommand.TakeCards();
             case END_ATTACK -> new GameCommand.EndAttack();
+            case RESIGN -> new GameCommand.Resign();
         };
     }
 

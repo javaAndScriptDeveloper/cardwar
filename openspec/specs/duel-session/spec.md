@@ -153,6 +153,11 @@ The system SHALL expose endpoints to create a duel, read a duel's state, and sub
 - **WHEN** a move request is missing a required field or carries an unknown command type
 - **THEN** the API responds with 400 before any engine logic runs
 
+#### Scenario: Leaving a duel
+- **WHEN** a participant submits a move of type `RESIGN` before the duel is finished, on their turn or not
+- **THEN** the duel finishes at once as a forfeit (`FORFEIT`) with the opponent as the winner
+- **AND** the result is persisted and the in-progress state removed exactly as for a duel played to the end
+
 ### Requirement: Turn updates are pushed, not polled
 Every event produced by the engine SHALL be published to a per-duel Redis channel, and the API SHALL expose a server-sent events stream so a participant receives the opponent's moves without polling. The publisher SHALL be independent of the stream transport so that a WebSocket transport can subscribe to the same channel later without changing the publishing code.
 

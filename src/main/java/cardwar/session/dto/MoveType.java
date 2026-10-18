@@ -5,5 +5,7 @@ public enum MoveType {
     ATTACK,
     DEFEND,
     TAKE,
-    END_ATTACK
+    END_ATTACK,
+    /** Leave the duel: it ends at once as a forfeit, the opponent wins. Allowed on either player's turn. */
+    RESIGN
 }

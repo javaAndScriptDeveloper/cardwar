@@ -133,6 +133,23 @@ class DuelIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.progress.duelsWon").value(bobWon));
     }
 
+    @Test
+    void aPlayerCanLeaveADuelAndForfeitsItToTheOpponent() throws Exception {
+        DuelView start = view(api.createDuel(alice, bob.username()).andExpect(status().isCreated()));
+        UUID duelId = start.duelId();
+
+        DuelView finished =
+                view(api.move(alice, duelId, Map.of("type", "RESIGN")).andExpect(status().isOk()));
+
+        assertThat(finished.phase()).isEqualTo(DuelPhase.FINISHED);
+        assertThat(finished.outcome().winner()).isEqualTo(bob.id());
+        assertThat(finished.outcome().loser()).isEqualTo(alice.id());
+        DuelResult result = results.findByDuelId(duelId).orElseThrow();
+        assertThat(result.getEndReason()).isEqualTo("FORFEIT");
+        // Finished means gone for both, exactly like a duel played to the end.
+        api.viewDuel(bob, duelId).andExpect(status().isNotFound());
+    }
+
     // --- authorization and redaction (11.3) -----------------------------------------------------------------
 
     @Test
