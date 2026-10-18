@@ -322,4 +322,18 @@ describe('Table cosmetics', () => {
         renderTable({ view: defending });
         expect(screen.getByTestId('you-side').getAttribute('data-to-move')).toBe('true');
     });
+
+    it('leaves the duel only after a second tap, and the first tap can be taken back', () => {
+        const { props } = renderTable({ onLeave: vi.fn() });
+        expect(screen.queryByTestId('leave-confirm')).toBeNull();
+
+        fireEvent.click(screen.getByTestId('leave'));
+        expect(props.onLeave).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByTestId('leave-cancel'));
+        expect(screen.queryByTestId('leave-confirm')).toBeNull();
+
+        fireEvent.click(screen.getByTestId('leave'));
+        fireEvent.click(screen.getByTestId('leave-confirm'));
+        expect(props.onLeave).toHaveBeenCalledTimes(1);
+    });
 });

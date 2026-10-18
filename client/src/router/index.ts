@@ -6,6 +6,7 @@ export type Route =
     | { name: 'shop' }
     | { name: 'profile' }
     | { name: 'settings' }
+    | { name: 'cards' }
     | { name: 'duel'; duelId: string };
 
 /** The screens the bottom navigation switches between. */
@@ -24,6 +25,7 @@ export function parseRoute(hash: string): Route {
         case 'shop':
         case 'profile':
         case 'settings':
+        case 'cards':
             return { name: parts[0] };
         case 'duel':
             return parts[1] ? { name: 'duel', duelId: decodeURIComponent(parts[1]) } : { name: 'lobby' };

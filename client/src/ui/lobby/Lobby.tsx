@@ -22,6 +22,8 @@ interface Props {
     drop?: ShopItemView | undefined;
     onClaimMission?: ((code: string) => Promise<void>) | undefined;
     onOpenShop?: (() => void) | undefined;
+    /** Opens the gallery of the equipped deck's faces. */
+    onOpenCards?: (() => void) | undefined;
     /** An invite is being created (after a stake was picked). */
     creating: boolean;
     /** Opens the stake picker; the invite itself is created once a stake is chosen. */
@@ -43,6 +45,7 @@ export function Lobby({
     drop,
     onClaimMission,
     onOpenShop,
+    onOpenCards,
     creating,
     onInvite,
     onQuickMatch,
@@ -110,6 +113,11 @@ export function Lobby({
                     {t('lobby.invite')}
                 </Button>
                 <span class="notice">{t('lobby.quickMatchHint')}</span>
+                {onOpenCards && (
+                    <Button variant="ghost" onClick={onOpenCards} data-testid="my-cards">
+                        {t('lobby.myCards')}
+                    </Button>
+                )}
             </div>
             {wallet && <DailyBonus bonus={wallet.dailyBonus} onClaim={onClaimBonus} onDue={onBonusDue} />}
             {missions && onClaimMission && <Missions missions={missions} onClaim={onClaimMission} />}

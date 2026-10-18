@@ -2135,3 +2135,40 @@ button.link {
 .progress-lines .broken {
     color: var(--hint);
 }
+
+/* The owner's deck gallery (#/cards): four columns of faces with the pack's own card titles. */
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    padding: 0 0 16px;
+}
+.gallery-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: center;
+}
+.gallery-card img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+/* Leaving a duel takes two taps; the question and both answers sit on one line above the move buttons. */
+.leave {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+}
+.leave button {
+    font-size: 13px;
+    padding: 4px 10px;
+}

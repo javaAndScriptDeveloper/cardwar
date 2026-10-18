@@ -234,7 +234,9 @@ export type MoveRequest =
     | { type: 'ATTACK'; card: Card }
     | { type: 'DEFEND'; attackCard: Card; card: Card }
     | { type: 'TAKE' }
-    | { type: 'END_ATTACK' };
+    | { type: 'END_ATTACK' }
+    /** Leave the duel: it ends as a forfeit, the opponent wins. */
+    | { type: 'RESIGN' };
 
 /** RFC 9457 problem detail; `reason` is the engine's code for an illegal move (NOT_YOUR_TURN, CANNOT_BEAT, ...). */
 export interface ProblemDetail {

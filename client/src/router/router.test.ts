@@ -8,6 +8,7 @@ describe('parseRoute', () => {
         ['#/', { name: 'lobby' }],
         ['#/friends', { name: 'friends' }],
         ['#/settings', { name: 'settings' }],
+        ['#/cards', { name: 'cards' }],
         ['#/duel/abc-1', { name: 'duel', duelId: 'abc-1' }],
         ['#/duel', { name: 'lobby' }],
         ['#/garbage/x', { name: 'lobby' }],
@@ -20,6 +21,7 @@ describe('parseRoute', () => {
             { name: 'lobby' as const },
             { name: 'shop' as const },
             { name: 'settings' as const },
+            { name: 'cards' as const },
             { name: 'duel' as const, duelId: 'd/1' },
         ]) {
             expect(parseRoute(routeHash(route))).toEqual(route);

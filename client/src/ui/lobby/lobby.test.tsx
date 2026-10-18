@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/preact';
+import { fireEvent, render, screen } from '@testing-library/preact';
 import { describe, expect, it, vi } from 'vitest';
 import { t } from '../../i18n';
 import { Lobby } from './Lobby';
@@ -35,5 +35,26 @@ describe('Lobby', () => {
         const panel = screen.getByTestId('play-panel');
         expect(panel.contains(screen.getByTestId('quick-match'))).toBe(true);
         expect(panel.contains(screen.getByTestId('invite'))).toBe(true);
+    });
+
+    it("opens the owner's cards from the menu", () => {
+        const onOpenCards = vi.fn();
+        render(
+            <Lobby
+                player={player}
+                error={undefined}
+                wallet={undefined}
+                creating={false}
+                onInvite={vi.fn()}
+                onQuickMatch={vi.fn()}
+                onJoin={vi.fn().mockResolvedValue(undefined)}
+                onClaimBonus={vi.fn().mockResolvedValue(undefined)}
+                onBonusDue={vi.fn()}
+                onOpenCards={onOpenCards}
+            />,
+        );
+
+        fireEvent.click(screen.getByTestId('my-cards'));
+        expect(onOpenCards).toHaveBeenCalledTimes(1);
     });
 });

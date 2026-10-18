@@ -690,6 +690,7 @@ export function DuelScreen({
                         onTableCard={(attack) => onTableCard(state.view, attack)}
                         onTake={() => void play({ type: 'TAKE' })}
                         onEndAttack={() => void play({ type: 'END_ATTACK' })}
+                        onLeave={() => void play({ type: 'RESIGN' })}
                         onClockWarning={clockWarning}
                         layouts={layouts}
                         cosmetics={{

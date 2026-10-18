@@ -13,6 +13,7 @@ import { refreshWallet, wallet } from '../state/wallet';
 import { describeError } from './errors';
 import { Friends } from './friends/Friends';
 import { BottomNav } from './kit';
+import { MyCards } from './cards/MyCards';
 import { Lobby } from './lobby/Lobby';
 import { OfflineBanner } from './OfflineBanner';
 import { Searching } from './lobby/Searching';
@@ -468,6 +469,7 @@ export function Shell({
                         drop={drop}
                         onClaimMission={claimMission}
                         onOpenShop={() => navigate({ name: 'shop' })}
+                        onOpenCards={() => navigate({ name: 'cards' })}
                         creating={creating}
                         onInvite={() => openStakePicker('invite')}
                         onQuickMatch={() => openStakePicker('match')}
@@ -492,6 +494,8 @@ export function Shell({
                         onInvite={() => openStakePicker('invite')}
                     />
                 );
+            case 'cards':
+                return <MyCards />;
             case 'shop':
                 return <Shop api={api} telegram={telegram} />;
             case 'profile':

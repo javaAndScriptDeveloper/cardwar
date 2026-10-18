@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact';
-import { useRef } from 'preact/hooks';
+import { useRef, useState } from 'preact/hooks';
 import type { DuelView } from '../api/types';
 import { arrange, type LayoutDirective } from '../content/layout';
 import { type Card, cardId, sameCard, type Suit } from '../game/cards';
@@ -38,6 +38,8 @@ export interface TableProps {
     onTableCard: (attack: Card) => void;
     onTake: () => void;
     onEndAttack: () => void;
+    /** Leave the duel (a forfeit); the table asks for a second tap before calling it. */
+    onLeave?: (() => void) | undefined;
     /** Your own move clock reached ten or five seconds (sound and haptics live in the duel screen). */
     onClockWarning?: ((warning: ClockWarning) => void) | undefined;
     /** The equipped pack's hand layouts; they only change the order cards are drawn in. */
@@ -91,10 +93,12 @@ export function Table({
     onTableCard,
     onTake,
     onEndAttack,
+    onLeave,
     onClockWarning,
     layouts = [],
     cosmetics = {},
 }: TableProps) {
+    const [leaving, setLeaving] = useState(false);
     const tableStyle = styleRef(cosmetics.table, 'green');
     const opponentBack = styleRef(cosmetics.opponentBack, 'classic');
     const yourBack = styleRef(cosmetics.back, 'classic');
@@ -220,6 +224,33 @@ export function Table({
                 {status(view, opponent.name)}
             </p>
 
+            {onLeave && (
+                <div class="leave" data-testid="leave-row">
+                    {leaving ? (
+                        <>
+                            <span class="notice">{t('duel.leaveQuestion')}</span>
+                            <button data-testid="leave-cancel" onClick={() => setLeaving(false)}>
+                                {t('duel.leaveCancel')}
+                            </button>
+                            <button
+                                class="danger"
+                                data-testid="leave-confirm"
+                                disabled={busy}
+                                onClick={() => {
+                                    setLeaving(false);
+                                    onLeave();
+                                }}
+                            >
+                                {t('duel.leaveConfirm')}
+                            </button>
+                        </>
+                    ) : (
+                        <button class="ghost" data-testid="leave" onClick={() => setLeaving(true)}>
+                            {t('duel.leave')}
+                        </button>
+                    )}
+                </div>
+            )}
             <div class="actions">
                 <button
                     data-testid="take"
