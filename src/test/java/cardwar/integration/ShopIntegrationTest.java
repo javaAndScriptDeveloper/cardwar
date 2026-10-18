@@ -204,7 +204,12 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(
                         jsonPath("$.items[?(@.code == 'deck-classic')].owned").value(true))
+                // The likeness deck is the one everybody starts with; the classic deck stays owned, a tap away.
                 .andExpect(jsonPath("$.items[?(@.code == 'deck-classic')].equipped")
+                        .value(false))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-karykatury')].owned")
+                        .value(true))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-karykatury')].equipped")
                         .value(true))
                 .andExpect(
                         jsonPath("$.items[?(@.code == 'back-trident')].owned").value(false))
@@ -212,7 +217,7 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.items[?(@.type == 'FRAME')]").isNotEmpty())
                 .andExpect(jsonPath("$.coinPacks[0].stars").value(50));
         mvc.perform(get("/api/v1/me/loadout").headers(api.bearer(alice)))
-                .andExpect(jsonPath("$.deck").value("classic"))
+                .andExpect(jsonPath("$.deck").value("karykatury"))
                 .andExpect(jsonPath("$.cardBack").value("classic"))
                 .andExpect(jsonPath("$.table").value("green"))
                 .andExpect(jsonPath("$.frame").doesNotExist());

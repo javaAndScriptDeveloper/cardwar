@@ -154,14 +154,14 @@ test('a duel plays to a result with the demo pack, keeping its sticky pair toget
     await alice.getByTestId('nav-profile').click();
     await alice.getByTestId('open-settings').click();
     await expect(alice.getByTestId('deck-picker')).toBeVisible();
-    await expect(alice.getByTestId('deck-classic')).toHaveAttribute('aria-checked', 'true');
+    await expect(alice.getByTestId('deck-karykatury')).toHaveAttribute('aria-checked', 'true');
     await alice.getByTestId(`deck-${PACK}`).click();
     await expect(alice.getByTestId(`deck-${PACK}`)).toHaveAttribute('aria-checked', 'true');
     await alice.evaluate(() => {
         window.location.hash = '#/';
     });
 
-    // A friendly invite, accepted by a second player who keeps the classic deck.
+    // A friendly invite, accepted by a second player who keeps the default deck («Карикатури»).
     await alice.getByTestId('invite').click();
     await alice.getByTestId('stake-0').click();
     const code = (await alice.getByTestId('invite-code').textContent())?.trim() ?? '';
@@ -174,7 +174,7 @@ test('a duel plays to a result with the demo pack, keeping its sticky pair toget
         'src',
         new RegExp(`^/app/packs/${PACK}/`),
     );
-    await expect(bob.locator('.hand-card img').first()).toHaveAttribute('src', /^\/app\/cards\/classic\//);
+    await expect(bob.locator('.hand-card img').first()).toHaveAttribute('src', /^\/app\/packs\/karykatury\//);
 
     let stepsWithPair = 0;
     /** Alice's hand right now: every face from the pack, and the sticky pair adjacent whenever both are held. */
