@@ -101,6 +101,11 @@ class ShopIntegrationTest extends AbstractIntegrationTest {
                         jsonPath("$.items[?(@.code == 'deck-blogery')].owned").value(false))
                 .andExpect(jsonPath("$.items[?(@.code == 'frame-kozak')].unlock.value")
                         .value(5))
+                // The likeness deck is free while the owner play-tests it; a price comes with #103.
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-karykatury')].price")
+                        .value(0))
+                .andExpect(jsonPath("$.items[?(@.code == 'deck-karykatury')].unlock")
+                        .isEmpty())
                 .andExpect(jsonPath("$.items[?(@.code == 'emote-ty-sho')].name").value("Ти шо, Кличко?"))
                 .andExpect(
                         jsonPath("$.items[?(@.code == 'emote-ty-sho')].price").value(200))
