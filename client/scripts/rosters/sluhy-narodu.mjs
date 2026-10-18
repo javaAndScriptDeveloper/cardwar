@@ -312,7 +312,6 @@ const rules = [
         do: [
             { anim: 'pulse', target: 'played' },
             { bubble: { uk: 'Вийди звідси, розбійник!' }, target: 'played' },
-            { say: { uk: 'Вийди звідси, розбійник!' }, rate: 1.1 },
         ],
         cooldownMs: 6000,
     },

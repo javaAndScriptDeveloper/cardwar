@@ -218,6 +218,16 @@
       "cooldownMs": 6000
     },
     {
+      "id": "zelenskyi-played",
+      "on": "card_played",
+      "if": { "side": "you", "card": { "tag": "zelenskyi" } },
+      "do": [
+        { "anim": "pulse", "target": "played" },
+        { "bubble": { "uk": "Вийди звідси, розбійник!" }, "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
       "id": "bezuhla-played",
       "on": "card_played",
       "if": { "side": "opponent", "card": { "tag": "bezuhla" } },
