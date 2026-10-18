@@ -98,6 +98,10 @@ const GENERATED = {
   dantes: '2026-10-18',
   dorofeeva: '2026-10-18',
   mindich: '2026-10-18',
+  sternenko: '2026-10-18',
+  prytula: '2026-10-18',
+  tymoshenko: '2026-10-18',
+  arestovych: '2026-10-18',
 };
 
 /**
