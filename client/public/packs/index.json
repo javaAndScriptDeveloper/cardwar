@@ -23,6 +23,18 @@
     "demoSound": "packs/blogery/sounds/lose_money.wav"
   },
   {
+    "id": "karykatury",
+    "name": {
+      "uk": "Карикатури (сатира)"
+    },
+    "preview": [
+      "packs/karykatury/cards/ACE_OF_HEARTS.svg",
+      "packs/karykatury/cards/KING_OF_SPADES.svg",
+      "packs/karykatury/cards/QUEEN_OF_DIAMONDS.svg"
+    ],
+    "demoSound": "packs/karykatury/sounds/fanfare.wav"
+  },
+  {
     "id": "memes-demo",
     "name": {
       "uk": "Мемна колода (демо)"

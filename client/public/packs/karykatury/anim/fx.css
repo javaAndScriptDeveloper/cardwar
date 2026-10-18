@@ -1,0 +1,130 @@
+/* Classes named by this pack's css animations; the runtime adds one to the target for its durationMs. */
+.fx-blackout {
+    position: relative;
+    animation: fx-blackout-dim 1800ms ease-in-out;
+}
+
+.fx-blackout::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(circle at 24% 38%, rgb(255 214 110 / 90%) 0 4px, transparent 6px),
+        radial-gradient(circle at 76% 62%, rgb(255 214 110 / 90%) 0 4px, transparent 6px);
+    animation: fx-blackout-flicker 1800ms steps(1, end);
+}
+
+@keyframes fx-blackout-dim {
+    0% {
+        filter: brightness(1);
+    }
+    15% {
+        filter: brightness(0.25);
+    }
+    85% {
+        filter: brightness(0.25);
+    }
+    100% {
+        filter: brightness(1);
+    }
+}
+
+@keyframes fx-blackout-flicker {
+    0% {
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+    }
+    35% {
+        opacity: 0;
+    }
+    45% {
+        opacity: 1;
+    }
+    60% {
+        opacity: 0.3;
+    }
+    70% {
+        opacity: 1;
+    }
+    85% {
+        opacity: 0;
+    }
+}
+
+/* Classes named by this pack's css animations; the runtime adds one to the target for its durationMs. */
+.fx-money-rain {
+    position: relative;
+    animation: fx-money-glow 1200ms ease-out;
+}
+
+.fx-money-rain::after {
+    content: '💸 💵 💸';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1.2em;
+    text-align: center;
+    font-size: 20px;
+    pointer-events: none;
+    animation: fx-money-fall 1200ms ease-in forwards;
+}
+
+.fx-coins {
+    position: relative;
+}
+
+.fx-coins::after {
+    content: '🪙 🪙 🪙';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: 20px;
+    pointer-events: none;
+    animation: fx-coins-rise 1000ms ease-out forwards;
+}
+
+@keyframes fx-money-glow {
+    0% {
+        filter: drop-shadow(0 0 0 rgb(46 125 50 / 0%));
+    }
+    30% {
+        filter: drop-shadow(0 0 14px rgb(46 125 50 / 90%));
+        transform: scale(1.06);
+    }
+    100% {
+        filter: drop-shadow(0 0 0 rgb(46 125 50 / 0%));
+        transform: scale(1);
+    }
+}
+
+@keyframes fx-money-fall {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(140px);
+        opacity: 0;
+    }
+}
+
+@keyframes fx-coins-rise {
+    0% {
+        transform: translateY(0) scale(0.6);
+        opacity: 0;
+    }
+    30% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-120px) scale(1.1);
+        opacity: 0;
+    }
+}

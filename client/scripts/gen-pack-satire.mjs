@@ -6,7 +6,7 @@
  *
  *   npm run gen:pack:satire -- sluhy-narodu
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as prettier from 'prettier';
@@ -34,12 +34,35 @@ for (const persona of roster.personas) {
         }
     }
 }
-const byRank = new Map(roster.personas.map((persona) => [persona.rank, persona]));
-for (const [rank] of RANKS) {
-    if (!byRank.has(rank)) {
-        throw new Error(`roster ${id} has no persona for ${rank}`);
+// A classic satire roster has one persona per rank who owns all four suits. A likeness roster (`pairs: true`) has
+// two per rank, one per colour (`side`), each with a portrait per suit: `faces: { HEARTS: 1, DIAMONDS: 2 }` names the
+// jpeg in art/lora/out/portraits/<tag>/ (written by art/lora/pod/portraits.py from the owner's picks).
+const RED = new Set(['HEARTS', 'DIAMONDS']);
+const colourOf = (suit) => (RED.has(suit) ? 'red' : 'black');
+const personaFor = (rank, suit) => {
+    const candidates = roster.personas.filter((persona) => persona.rank === rank);
+    const persona = roster.pairs
+        ? candidates.find((candidate) => candidate.side === colourOf(suit))
+        : candidates[0];
+    if (!persona) {
+        throw new Error(`roster ${id} has no persona for ${rank} ${suit}`);
     }
-}
+    return persona;
+};
+const PORTRAITS = join(here, '..', '..', 'art', 'lora', 'out', 'portraits');
+const fallbacks = new Set();
+const portraitFor = (persona, suit) => {
+    const n = persona.faces?.[suit];
+    if (n === undefined) {
+        return undefined;
+    }
+    const file = join(PORTRAITS, persona.tag, `${n}.jpg`);
+    if (!existsSync(file)) {
+        fallbacks.add(persona.tag);
+        return undefined;
+    }
+    return `data:image/jpeg;base64,${readFileSync(file).toString('base64')}`;
+};
 
 const manifest = {
     id,
@@ -59,13 +82,14 @@ mkdirSync(join(OUT, 'anim'), { recursive: true });
 mkdirSync(join(OUT, 'sounds'), { recursive: true });
 for (const suit of Object.keys(SUITS)) {
     for (const [rank, label] of RANKS) {
-        const persona = byRank.get(rank);
+        const persona = personaFor(rank, suit);
         const cardId = `${rank}_OF_${suit}`;
         const quote = persona.quotes[suit];
         if (!quote) {
             throw new Error(`roster ${id}: ${persona.name} has no quote for ${suit}`);
         }
-        writeFileSync(join(OUT, 'cards', `${cardId}.svg`), face({ label, suit, persona, quote }));
+        const portrait = portraitFor(persona, suit);
+        writeFileSync(join(OUT, 'cards', `${cardId}.svg`), face({ label, suit, persona, quote, portrait }));
         manifest.cards[cardId] = {
             image: `cards/${cardId}.svg`,
             title: { uk: persona.name },
@@ -84,3 +108,6 @@ writeFileSync(file, await prettier.format(JSON.stringify(manifest), options));
 console.log(
     `Wrote ${id}: ${Object.keys(manifest.cards).length} faces, a back, ${Object.keys(roster.sounds).length} sounds, ${roster.rules.length} rules`,
 );
+if (fallbacks.size > 0) {
+    console.log(`No portrait yet, vector avatar used: ${[...fallbacks].join(', ')}`);
+}

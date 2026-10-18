@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 336" width="240" height="336">
+<defs>
+<radialGradient id="felt" cx="0.5" cy="0.4" r="0.8"><stop offset="0" stop-color="#2b3a55"/><stop offset="1" stop-color="#0f1626"/></radialGradient>
+</defs>
+<rect x="2" y="2" width="236" height="332" rx="18" fill="#ffffff" stroke="#b9bcc6" stroke-width="3"/>
+<rect x="10" y="10" width="220" height="316" rx="14" fill="url(#felt)"/>
+<g font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700"><text x="26" y="34" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="64" y="34" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="102" y="34" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="140" y="34" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="178" y="34" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="216" y="34" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="45" y="74" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="83" y="74" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="121" y="74" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="159" y="74" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="197" y="74" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="235" y="74" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="26" y="114" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="64" y="114" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="102" y="114" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="140" y="114" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="178" y="114" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="216" y="114" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="45" y="154" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="83" y="154" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="121" y="154" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="159" y="154" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="197" y="154" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="235" y="154" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="26" y="194" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="64" y="194" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="102" y="194" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="140" y="194" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="178" y="194" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="216" y="194" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="45" y="234" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="83" y="234" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="121" y="234" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="159" y="234" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="197" y="234" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="235" y="234" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="26" y="274" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="64" y="274" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="102" y="274" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="140" y="274" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="178" y="274" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="216" y="274" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="45" y="314" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="83" y="314" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text>
+<text x="121" y="314" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♥</text>
+<text x="159" y="314" text-anchor="middle" font-size="22" fill="#ef5350" fill-opacity="0.16">♦</text>
+<text x="197" y="314" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♣</text>
+<text x="235" y="314" text-anchor="middle" font-size="22" fill="#cfd8dc" fill-opacity="0.16">♠</text></g>
+<rect x="10" y="10" width="220" height="316" rx="14" fill="none" stroke="#f2c14e" stroke-opacity="0.7" stroke-width="2"/>
+<rect x="18" y="18" width="204" height="300" rx="10" fill="none" stroke="#f2c14e" stroke-opacity="0.35"/>
+<circle cx="120" cy="168" r="58" fill="#0f1626" stroke="#f2c14e" stroke-width="3"/>
+<circle cx="120" cy="168" r="50" fill="none" stroke="#f2c14e" stroke-opacity="0.5" stroke-dasharray="3 4"/>
+<text x="120" y="158" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="30" fill="#f2c14e">🃏</text>
+<text x="120" y="186" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-weight="700" font-size="13" letter-spacing="2" fill="#ffffff">КАРИКАТУРИ</text>
+<text x="120" y="204" text-anchor="middle" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="10" letter-spacing="3" fill="#ef5350">САТИРА</text>
+</svg>

@@ -242,7 +242,10 @@ function stamp(x, y) {
  * One face: a colour panel (gradient and halftone) with a faint suit glyph, the persona's avatar, a name band, the
  * role, the quote at the bottom, and the satire stamp. Corners carry rank and suit for both hands.
  */
-export function face({ label, suit, persona, quote }) {
+export function face({ label, suit, persona, quote, portrait }) {
+    if (portrait !== undefined) {
+        return portraitFace({ label, suit, persona, quote, portrait });
+    }
     const { glyph } = SUITS[suit];
     const names = nameLines(persona.name);
     const nameSize = Math.min(...names.map((line) => fit(line, names.length === 1 ? 26 : 20, 180)));
@@ -278,6 +281,58 @@ ${quoteLines
             `<text x="${W / 2}" y="${firstQuoteY + 14 * i}" text-anchor="middle" ${FONT} font-style="italic" font-size="12.5" fill="#ffffff" fill-opacity="0.95">${escapeXml(line)}</text>`,
     )
     .join('\n')}
+${stamp(186, 70)}
+${corners(label, suit)}
+</svg>
+`;
+}
+
+const PORTRAIT_PREFIX = 'data:image/jpeg;base64,';
+
+/**
+ * A likeness face: the caricature portrait fills the panel edge to edge (cropped to the card, never stretched), a
+ * dark band at the bottom carries the nickname, the role and the caption, and the corners sit on white pills so the
+ * indices stay readable over any painting. Only an embedded jpeg is accepted: a face never fetches anything.
+ */
+function portraitFace({ label, suit, persona, quote, portrait }) {
+    if (typeof portrait !== 'string' || !portrait.startsWith(PORTRAIT_PREFIX)) {
+        throw new Error(`portrait for ${persona.tag} must be an embedded jpeg (${PORTRAIT_PREFIX}…)`);
+    }
+    const names = nameLines(persona.name);
+    const nameSize = Math.min(...names.map((line) => fit(line, names.length === 1 ? 24 : 19, 180)));
+    const nameY = names.length === 1 ? [246] : [236, 258];
+    // Three caption lines of the panel width sit exactly between the bottom corner pills.
+    const quoteLines = wrap(quote);
+    const firstQuoteY = 316 - 14 * (quoteLines.length - 1);
+    const id = `${persona.tag}-${suit.toLowerCase()}`;
+    const pill = `<rect x="10" y="12" width="40" height="42" rx="10" fill="#ffffff" fill-opacity="0.88"/>
+<rect x="${W - 50}" y="12" width="40" height="42" rx="10" fill="#ffffff" fill-opacity="0.88"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">
+<defs>
+<clipPath id="c-${id}"><rect x="8" y="8" width="${W - 16}" height="${H - 16}" rx="14"/></clipPath>
+<linearGradient id="b-${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000000" stop-opacity="0"/><stop offset="0.35" stop-color="#000000" stop-opacity="0.72"/><stop offset="1" stop-color="#000000" stop-opacity="0.9"/></linearGradient>
+</defs>
+${frame()}
+<g clip-path="url(#c-${id})">
+<image href="${portrait}" x="8" y="8" width="${W - 16}" height="${H - 16}" preserveAspectRatio="xMidYMid slice"/>
+<rect x="8" y="196" width="${W - 16}" height="${H - 204}" fill="url(#b-${id})"/>
+</g>
+<rect x="8" y="8" width="${W - 16}" height="${H - 16}" rx="14" fill="none" stroke="${persona.colour}" stroke-width="3"/>
+${names
+    .map(
+        (line, i) =>
+            `<text x="${W / 2}" y="${nameY[i]}" text-anchor="middle" ${FONT} font-weight="700" font-size="${nameSize}" letter-spacing="0.5" fill="#ffffff">${escapeXml(line)}</text>`,
+    )
+    .join('\n')}
+<text x="${W / 2}" y="272" text-anchor="middle" ${FONT} font-size="12" fill="#ffffff" fill-opacity="0.8">${escapeXml(persona.role)}</text>
+${quoteLines
+    .map(
+        (line, i) =>
+            `<text x="${W / 2}" y="${firstQuoteY + 14 * i}" text-anchor="middle" ${FONT} font-style="italic" font-size="12.5" fill="#ffd54f">${escapeXml(line)}</text>`,
+    )
+    .join('\n')}
+${pill}
+<g transform="rotate(180 ${W / 2} ${H / 2})">${pill}</g>
 ${stamp(186, 70)}
 ${corners(label, suit)}
 </svg>

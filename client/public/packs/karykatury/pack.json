@@ -1,0 +1,395 @@
+{
+  "id": "karykatury",
+  "version": 1,
+  "type": "DECK",
+  "name": { "uk": "Карикатури (сатира)" },
+  "back": "cards/back.svg",
+  "styles": "anim/fx.css",
+  "cards": {
+    "SIX_OF_CLUBS": {
+      "image": "cards/SIX_OF_CLUBS.svg",
+      "title": { "uk": "Акваріум з акулами" },
+      "tags": ["kolomoisky"]
+    },
+    "SEVEN_OF_CLUBS": {
+      "image": "cards/SEVEN_OF_CLUBS.svg",
+      "title": { "uk": "Гоблін з лимонами" },
+      "tags": ["horokhovskyi"]
+    },
+    "EIGHT_OF_CLUBS": {
+      "image": "cards/EIGHT_OF_CLUBS.svg",
+      "title": { "uk": "Вампір зі Львова" },
+      "tags": ["dantes"]
+    },
+    "NINE_OF_CLUBS": {
+      "image": "cards/NINE_OF_CLUBS.svg",
+      "title": { "uk": "Диванний критик" },
+      "tags": ["durnev"]
+    },
+    "TEN_OF_CLUBS": {
+      "image": "cards/TEN_OF_CLUBS.svg",
+      "title": { "uk": "Термінове звернення" },
+      "tags": ["honcharenko"]
+    },
+    "JACK_OF_CLUBS": {
+      "image": "cards/JACK_OF_CLUBS.svg",
+      "title": { "uk": "Міністр дронів" },
+      "tags": ["sternenko"]
+    },
+    "QUEEN_OF_CLUBS": {
+      "image": "cards/QUEEN_OF_CLUBS.svg",
+      "title": { "uk": "Нічна зміна" },
+      "tags": ["bezuhla"]
+    },
+    "KING_OF_CLUBS": {
+      "image": "cards/KING_OF_CLUBS.svg",
+      "title": { "uk": "Мер-боксер" },
+      "tags": ["klychko"]
+    },
+    "ACE_OF_CLUBS": {
+      "image": "cards/ACE_OF_CLUBS.svg",
+      "title": { "uk": "Сірий кардинал" },
+      "tags": ["yermak"]
+    },
+    "SIX_OF_DIAMONDS": {
+      "image": "cards/SIX_OF_DIAMONDS.svg",
+      "title": { "uk": "Сільський репер" },
+      "tags": ["petya"]
+    },
+    "SEVEN_OF_DIAMONDS": {
+      "image": "cards/SEVEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Карлсон" },
+      "tags": ["mindich"]
+    },
+    "EIGHT_OF_DIAMONDS": {
+      "image": "cards/EIGHT_OF_DIAMONDS.svg",
+      "title": { "uk": "Поп-діва" },
+      "tags": ["dorofeeva"]
+    },
+    "NINE_OF_DIAMONDS": {
+      "image": "cards/NINE_OF_DIAMONDS.svg",
+      "title": { "uk": "Орел і решка" },
+      "tags": ["nikitiuk"]
+    },
+    "TEN_OF_DIAMONDS": {
+      "image": "cards/TEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Два-три тижні" },
+      "tags": ["arestovych"]
+    },
+    "JACK_OF_DIAMONDS": {
+      "image": "cards/JACK_OF_DIAMONDS.svg",
+      "title": { "uk": "Збір на супутник" },
+      "tags": ["prytula"]
+    },
+    "QUEEN_OF_DIAMONDS": {
+      "image": "cards/QUEEN_OF_DIAMONDS.svg",
+      "title": { "uk": "Коса" },
+      "tags": ["tymoshenko"]
+    },
+    "KING_OF_DIAMONDS": {
+      "image": "cards/KING_OF_DIAMONDS.svg",
+      "title": { "uk": "Шоколадний король" },
+      "tags": ["poroshenko"]
+    },
+    "ACE_OF_DIAMONDS": {
+      "image": "cards/ACE_OF_DIAMONDS.svg",
+      "title": { "uk": "Голобородько" },
+      "tags": ["zelenskyi"]
+    },
+    "SIX_OF_HEARTS": {
+      "image": "cards/SIX_OF_HEARTS.svg",
+      "title": { "uk": "Сільський репер" },
+      "tags": ["petya"]
+    },
+    "SEVEN_OF_HEARTS": {
+      "image": "cards/SEVEN_OF_HEARTS.svg",
+      "title": { "uk": "Карлсон" },
+      "tags": ["mindich"]
+    },
+    "EIGHT_OF_HEARTS": {
+      "image": "cards/EIGHT_OF_HEARTS.svg",
+      "title": { "uk": "Поп-діва" },
+      "tags": ["dorofeeva"]
+    },
+    "NINE_OF_HEARTS": {
+      "image": "cards/NINE_OF_HEARTS.svg",
+      "title": { "uk": "Орел і решка" },
+      "tags": ["nikitiuk"]
+    },
+    "TEN_OF_HEARTS": {
+      "image": "cards/TEN_OF_HEARTS.svg",
+      "title": { "uk": "Два-три тижні" },
+      "tags": ["arestovych"]
+    },
+    "JACK_OF_HEARTS": {
+      "image": "cards/JACK_OF_HEARTS.svg",
+      "title": { "uk": "Збір на супутник" },
+      "tags": ["prytula"]
+    },
+    "QUEEN_OF_HEARTS": {
+      "image": "cards/QUEEN_OF_HEARTS.svg",
+      "title": { "uk": "Коса" },
+      "tags": ["tymoshenko"]
+    },
+    "KING_OF_HEARTS": {
+      "image": "cards/KING_OF_HEARTS.svg",
+      "title": { "uk": "Шоколадний король" },
+      "tags": ["poroshenko"]
+    },
+    "ACE_OF_HEARTS": {
+      "image": "cards/ACE_OF_HEARTS.svg",
+      "title": { "uk": "Голобородько" },
+      "tags": ["zelenskyi"]
+    },
+    "SIX_OF_SPADES": {
+      "image": "cards/SIX_OF_SPADES.svg",
+      "title": { "uk": "Акваріум з акулами" },
+      "tags": ["kolomoisky"]
+    },
+    "SEVEN_OF_SPADES": {
+      "image": "cards/SEVEN_OF_SPADES.svg",
+      "title": { "uk": "Гоблін з лимонами" },
+      "tags": ["horokhovskyi"]
+    },
+    "EIGHT_OF_SPADES": {
+      "image": "cards/EIGHT_OF_SPADES.svg",
+      "title": { "uk": "Вампір зі Львова" },
+      "tags": ["dantes"]
+    },
+    "NINE_OF_SPADES": {
+      "image": "cards/NINE_OF_SPADES.svg",
+      "title": { "uk": "Диванний критик" },
+      "tags": ["durnev"]
+    },
+    "TEN_OF_SPADES": {
+      "image": "cards/TEN_OF_SPADES.svg",
+      "title": { "uk": "Термінове звернення" },
+      "tags": ["honcharenko"]
+    },
+    "JACK_OF_SPADES": {
+      "image": "cards/JACK_OF_SPADES.svg",
+      "title": { "uk": "Міністр дронів" },
+      "tags": ["sternenko"]
+    },
+    "QUEEN_OF_SPADES": {
+      "image": "cards/QUEEN_OF_SPADES.svg",
+      "title": { "uk": "Нічна зміна" },
+      "tags": ["bezuhla"]
+    },
+    "KING_OF_SPADES": {
+      "image": "cards/KING_OF_SPADES.svg",
+      "title": { "uk": "Мер-боксер" },
+      "tags": ["klychko"]
+    },
+    "ACE_OF_SPADES": {
+      "image": "cards/ACE_OF_SPADES.svg",
+      "title": { "uk": "Сірий кардинал" },
+      "tags": ["yermak"]
+    }
+  },
+  "sounds": {
+    "fanfare": "sounds/fanfare.wav",
+    "applause": "sounds/applause.wav",
+    "blackout": "sounds/blackout.wav",
+    "ding": "sounds/ding.wav",
+    "lose_money": "sounds/lose_money.wav",
+    "beatbox": "sounds/beatbox.wav",
+    "whoosh": "sounds/whoosh.wav"
+  },
+  "animations": {
+    "blackout": { "kind": "css", "className": "fx-blackout", "durationMs": 1800 },
+    "money_rain": { "kind": "css", "className": "fx-money-rain", "durationMs": 1200 },
+    "coins": { "kind": "css", "className": "fx-coins", "durationMs": 1000 }
+  },
+  "rules": [
+    {
+      "id": "inseparable-clubs",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_CLUBS", "QUEEN_OF_CLUBS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_CLUBS", "QUEEN_OF_CLUBS"] }]
+    },
+    {
+      "id": "inseparable-diamonds",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_DIAMONDS", "QUEEN_OF_DIAMONDS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_DIAMONDS", "QUEEN_OF_DIAMONDS"] }]
+    },
+    {
+      "id": "inseparable-hearts",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_HEARTS", "QUEEN_OF_HEARTS"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_HEARTS", "QUEEN_OF_HEARTS"] }]
+    },
+    {
+      "id": "inseparable-spades",
+      "on": "hand_changed",
+      "if": { "handHas": ["ACE_OF_SPADES", "QUEEN_OF_SPADES"] },
+      "do": [{ "layout": "stick_together", "cards": ["ACE_OF_SPADES", "QUEEN_OF_SPADES"] }]
+    },
+    {
+      "id": "klychko-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "klychko" } },
+      "do": [
+        { "anim": "shake", "target": "beaten" },
+        { "bubble": { "uk": "Сьогодні в завтрашній день не всі можуть дивитися" }, "target": "beaten" },
+        { "say": { "uk": "Сьогодні в завтрашній день не всі можуть дивитися" }, "rate": 0.9 }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "poroshenko-played",
+      "on": "card_played",
+      "if": { "side": "you", "card": { "tag": "poroshenko" } },
+      "do": [{ "say": { "uk": "Армія! Мова! Віра!" }, "rate": 1.1 }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "zelenskyi-played",
+      "on": "card_played",
+      "if": { "side": "you", "card": { "tag": "zelenskyi" } },
+      "do": [
+        { "anim": "pulse", "target": "played" },
+        { "bubble": { "uk": "Вийди звідси, розбійник!" }, "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "bezuhla-played",
+      "on": "card_played",
+      "if": { "side": "opponent", "card": { "tag": "bezuhla" } },
+      "do": [
+        { "bubble": { "uk": "Вас треба звільнити" }, "target": "you" },
+        { "anim": "shake", "target": "you" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "honcharenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "honcharenko" } },
+      "do": [
+        { "sound": "ding" },
+        { "bubble": { "uk": "⚡ Термінове звернення" }, "target": "played" },
+        { "say": { "uk": "Терміново!" }, "rate": 1.3, "pitch": 1.2 }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "tymoshenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "tymoshenko" } },
+      "do": [
+        { "anim": "pulse", "target": "played" },
+        { "bubble": { "uk": "Коса — сила" }, "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "trump-reveal",
+      "on": "duel_started",
+      "if": { "random": 0.5 },
+      "do": [{ "bubble": { "uk": "Козир — Трамп. Перемир'я на 15 хвилин" }, "target": "table" }]
+    },
+    {
+      "id": "blackout",
+      "on": "cards_taken",
+      "if": { "side": "you" },
+      "do": [
+        { "sound": "blackout" },
+        { "anim": "blackout", "target": "felt" },
+        { "bubble": { "uk": "ДТЕК: стабілізаційне відключення" }, "target": "table" }
+      ],
+      "cooldownMs": 8000
+    },
+    {
+      "id": "won",
+      "on": "duel_finished",
+      "if": { "outcome": "WON" },
+      "do": [{ "sound": "fanfare" }, { "say": { "uk": "Перемога! Дякую кожному" } }, { "haptic": "success" }]
+    },
+    {
+      "id": "lost",
+      "on": "duel_finished",
+      "if": { "outcome": "LOST" },
+      "do": [{ "bubble": { "uk": "Все йде за планом" }, "target": "table" }]
+    },
+    {
+      "id": "fund-duo-clubs",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_CLUBS", "NINE_OF_CLUBS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_CLUBS", "NINE_OF_CLUBS"] }]
+    },
+    {
+      "id": "fund-duo-diamonds",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_DIAMONDS", "NINE_OF_DIAMONDS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_DIAMONDS", "NINE_OF_DIAMONDS"] }]
+    },
+    {
+      "id": "fund-duo-hearts",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_HEARTS", "NINE_OF_HEARTS"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_HEARTS", "NINE_OF_HEARTS"] }]
+    },
+    {
+      "id": "fund-duo-spades",
+      "on": "hand_changed",
+      "if": { "handHas": ["TEN_OF_SPADES", "NINE_OF_SPADES"] },
+      "do": [{ "layout": "stick_together", "cards": ["TEN_OF_SPADES", "NINE_OF_SPADES"] }]
+    },
+    {
+      "id": "horokhovskyi-beaten",
+      "on": "card_beaten",
+      "if": { "beaten": { "tag": "horokhovskyi" } },
+      "do": [
+        { "sound": "lose_money" },
+        { "anim": "money_rain", "target": "beaten" },
+        { "say": { "uk": "Мінус гроші" }, "pitch": 0.8 }
+      ],
+      "cooldownMs": 4000
+    },
+    {
+      "id": "petya-beats",
+      "on": "card_beaten",
+      "if": { "card": { "tag": "petya" } },
+      "do": [
+        { "sound": "beatbox" },
+        { "anim": "pulse", "target": "defence" },
+        { "say": { "uk": "Йоу" }, "rate": 1.2 }
+      ],
+      "cooldownMs": 4000
+    },
+    {
+      "id": "durnev-played",
+      "on": "card_played",
+      "if": { "side": "opponent", "card": { "tag": "durnev" } },
+      "do": [{ "bubble": { "uk": "Дурнєв дивиться на тебе" }, "target": "you" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "prytula-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "prytula" } },
+      "do": [
+        { "bubble": { "uk": "Збір закрито за дві години" }, "target": "played" },
+        { "anim": "coins", "target": "played" }
+      ],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "sternenko-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "sternenko" } },
+      "do": [{ "sound": "whoosh" }, { "bubble": { "uk": "Дрони вже летять" }, "target": "played" }],
+      "cooldownMs": 6000
+    },
+    {
+      "id": "nikitiuk-played",
+      "on": "card_played",
+      "if": { "card": { "tag": "nikitiuk" } },
+      "do": [{ "bubble": { "uk": "Хто зверху?" }, "target": "played" }],
+      "cooldownMs": 6000
+    }
+  ]
+}
